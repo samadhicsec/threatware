@@ -1,0 +1,7 @@
+---
+# The mapping of validator name to python module is kept separate to the configuration of each validator as the security requirements are different
+# i.e. who can specify what python code is different is likely different to who can create a new validator config that leverages an existing validator.
+validators:
+  regex: "validators.regex"
+  date: "validators.date"
+  template: "validators.template"

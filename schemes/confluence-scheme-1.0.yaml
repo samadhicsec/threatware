@@ -1,0 +1,518 @@
+---
+scheme:
+  version: 1.0
+  document-storage: confluence
+  verifiers:
+    disable:
+
+  map:
+    output-data:
+      type: dict
+    map-data:
+      - key: 
+          name: document_details
+          section: Document Details Table
+        value: 
+          get-data:
+            - query:
+                type: "html-table"
+                xpath: "//html/body/h1[text()='Details']/following::table[1]"
+            - query:
+                type: "html-table-transpose"
+            - query:
+                type: html-table-remove-header-row
+          output-data:
+            type: dict
+          map-data:
+            - key: "document-ID"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 0
+            - key: "document-name"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 1
+            - key: "current-version"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 2
+            - key: "approved-version"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 3
+      - key: 
+          name: scope
+          section: Scope Table
+        value:
+          meta:
+            friendly-name: "Scope Table"
+          get-data:
+            - query:
+                type: html-table
+                xpath: "//html/body/h1[text()='Scope']/following::table[1]"
+            - query:
+                type: "html-table-transpose"
+            - query:
+                type: html-table-remove-header-row
+          map-data:
+            - key: team
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 0
+            - key: tribe
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 1
+            - key: "repos"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 2
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - ","
+                          - "\n"
+                map-data:
+                  - key: "repo"
+                    value:
+            - key: "3rd Parties"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 1
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - ","
+                          - "\n"
+                map-data:
+                  - key: "3rd Party"
+                    value:
+      - key: 
+          name: system-overview
+          section: System Overview
+        value: 
+          get-data:
+            query:
+              type: html-text-section
+              xpath: "//html/body/h1[text()='Description']/following::p[following::h2[1][text()='References']]/text()"
+      - key: 
+          name: references
+          section: References
+        value:
+          get-data:
+            query:
+              type: html-ul
+              xpath: "//html/body/h2[text()='References']/following::ul/li"
+          map-data:
+            - key: "description"
+              value:
+                get-data:
+                  query:
+                    type: html-text
+                    xpath: ".//a/text()"
+            - key: "URL"
+              value:
+                get-data:
+                  query:
+                    type: html-text
+                    xpath: ".//a/@href"
+      - key: components
+        value:
+          map-data:
+            - key: 
+                name: details
+                section: Components Detail Table
+              value:
+                get-data:
+                  query:
+                    type: html-table
+                    xpath: "//html/body/h1[text()='Components']/following::h2[text()='Details']/following::table[1]"
+                    remove-header-row: True
+                    remove-rows-if-empty:
+                map-data:
+                  - key: "name"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 0
+                  - key: "location"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 1
+                  - key: "purpose"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 2
+                  - key: "in-scope"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 3
+                  - key: "tech-stack"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 4
+            - key: 
+                name: access-control
+                section: "Component AuthN and AuthZ Table"
+              value:
+                get-data:
+                  query:
+                    type: html-table
+                    xpath: "//html/body/h1[text()='Components']/following::h2[text()='AuthN and AuthZ']/following::table[1]"
+                    remove-header-row: True
+                    remove-rows-if-empty:
+                map-data:
+                  - key: "component"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 0
+                  - key: "identity"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 1
+                  - key: "authentication-method"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 2
+                  - key: "authorisation-method"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 3
+                output-data:
+                  post-processor:
+                    inherit-row-above-if-empty:
+                      key: component
+      - key: assets
+        value:
+          map-data:
+            - key: 
+                name: functional
+                section: Functional Assets Table
+              value:
+                get-data:
+                  query:
+                    type: html-table
+                    xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Functional Assets']/following::table[1]"
+                    remove-header-row: True
+                    remove-rows-if-empty:
+                      ignore-cols: 
+                        - 0
+                map-data:
+                  - key: "type"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 0
+                  - key: "name"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 1
+                  - key: "description"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 2
+                  - key: "security-impacts"
+                    value:
+                      get-data:
+                        - query:
+                            type: html-table-row
+                            column-num: 3
+                        - query:
+                            type: text-split
+                            split-by:
+                              char-separators: 
+                                - "\n"
+                      map-data:
+                        - key: "impact-type"
+                          value:
+                            get-data:
+                              - query:
+                                  type: value-extract
+                                  regex: "^(\\w):(.*)"
+                                  # group: 0 matches the whole string if it matches at all, so group: 1 is the first group i the regex
+                                  group: 1
+                              - query:
+                                  type: value-replace
+                                  match: "C"
+                                  replacement: "Confidentiality"
+                              - query:
+                                  type: value-replace
+                                  match: "I"
+                                  replacement: "Integrity"
+                              - query:
+                                  type: value-replace
+                                  match: "A"
+                                  replacement: "Availability"
+                        - key: "description"
+                          value:
+                            get-data:
+                              query:
+                                type: value-extract
+                                regex: "^(\\w):(.*)"
+                                group: 2
+                  - key: storage-locations
+                    value: 
+                      get-data:
+                        - query:
+                            type: html-table-row
+                            column-num: 4
+                        - query:
+                            type: text-split
+                            split-by:
+                              char-separators: 
+                                - ","
+                                - "\n"
+                      map-data:
+                        - key: storage-location
+                          value:
+                output-data:
+                  post-processor:
+                    inherit-row-above-if-empty:
+                      key: type
+            - key: 
+                name: technical
+                section: Technical Assets Table
+              value:
+                get-data:
+                  query:
+                    type: html-table
+                    xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Technical Assets']/following::table[1]"
+                    remove-header-row: True
+                    remove-rows-if-empty:
+                      ignore-cols: 
+                        - 0
+                map-data:
+                  - key: "type"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 0
+                  - key: "name"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 1
+                  - key: "description"
+                    value: 
+                      get-data:
+                        query:
+                          type: html-table-row
+                          column-num: 2
+                  - key: "security-impacts"
+                    value:
+                      get-data:
+                        - query:
+                            type: html-table-row
+                            column-num: 3
+                        - query:
+                            type: text-split
+                            split-by:
+                              char-separators: 
+                                - "\n"
+                      map-data:
+                        - key: "impact-type"
+                          value:
+                            get-data:
+                              - query:
+                                  type: value-extract
+                                  regex: "^(\\w):(.*)"
+                                  # group: 0 matches the whole string if it matches at all, so group: 1 is the first group in the regex
+                                  group: 1
+                            output-data:
+                              post-processor:
+                                value-replace:
+                                  - match: "C"
+                                    replacement: "Confidentiality"
+                                  - match: "I"
+                                    replacement: "Integrity"
+                                  - match: "A"
+                                    replacement: "Availability"
+                        - key: "description"
+                          value:
+                            get-data:
+                              query:
+                                type: value-extract
+                                regex: "^(\\w):(.*)"
+                                group: 2
+                  - key: storage-locations
+                    value: 
+                      get-data:
+                        - query:
+                            type: html-table-row
+                            column-num: 4
+                        - query:
+                            type: text-split
+                            split-by:
+                              char-separators: 
+                                - ","
+                                - "\n"
+                      map-data:
+                        - key: storage-location
+                          value:
+                  - key: "functional-assets-affected"
+                    value: 
+                      get-data:
+                        - query:
+                            type: html-table-row
+                            column-num: 5
+                        - query:
+                            type: text-split
+                            split-by:
+                              char-separators: 
+                                - ","
+                                - "\n"
+                      map-data:
+                        - key: functional-asset-affected
+                          value:
+                output-data:
+                  post-processor:
+                    inherit-row-above-if-empty:
+                      key: type
+      #- key: diagrams
+      #  value:
+      - key: 
+          name: "operational-security"
+          section: Operational Security Table
+        value:
+          get-data:
+            - query:
+                type: "html-table"
+                xpath: "//html/body/h1[text()='Operational Security']/following::table[1]"
+                remove-header-row: True
+            - query:
+                type: "html-split-table"
+                split-type: "distribute-header-col"
+                header-col-num: 0
+          map-data:
+            - key: "operational-activity"
+              value:
+                map-data:
+                  - key: "question"
+                    value: 
+                      get-data:
+                        query:
+                          type: "html-table-row"
+                          column-num: 0
+                  - key: "answer"
+                    value:
+                      get-data: 
+                        query:
+                          type: "html-table-row"
+                          column-num: 1
+      - key: 
+          name: threats-and-controls
+          section: Threats and Controls Table
+        value:
+          get-data:
+            query:
+              type: html-table
+              xpath: "//html/body/h1[text()='Threats and Controls']/following::table[1]"
+              remove-header-row: True
+              remove-rows-if-empty:
+          map-data:
+            - key: "components"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 0
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - ","
+                          - "\n"
+                map-data:
+                  - key: "component"
+                    value:
+            - key: "assets"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 1
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - ","
+                          - "\n"
+                map-data:
+                  - key: "asset"
+                    value:
+            - key: "threat-description"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 2
+            - key: "existing-controls"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 3
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - "\n"
+                map-data:
+                  - key: "control"
+                    value:
+            - key: "tickets"
+              value: 
+                get-data:
+                  - query:
+                      type: html-table-row
+                      column-num: 4
+                  - query:
+                      type: text-split
+                      split-by:
+                        char-separators: 
+                          - "\n"
+                map-data:
+                  - key: "ticket"
+                    value:

@@ -1,0 +1,110 @@
+Need to support
+
+- Detect empty entries in tables, or alternatively define which entries are mandatory
+- Document header
+    - Version number format is correct e.g. 1.2
+    - Table has correct number of rows i.e. no one has added a new row in order to specify more than 1 value - only valid on certain types of tables
+- Version History
+    - first entry is 1.0
+    - if version number then all cols need and entry
+- Approvals
+    - cols have values, but some much not have values
+- Details
+    - mandatory fields
+    - entries in rows have the right format e.g. status = Draft, Approved
+- Components
+    - conditional mandatory, if in-scope then populate all
+    - pairwise constraints e.g. if authn is not n/a then authz can't be n/a, if authn is n/a then authz must be n/a
+- Assets
+    - mandatory fields
+    - no newlines in names e.g. only 1 asset per row
+    - storage location must be from template or reference component
+    - func asset affected must match func asset
+- Threats and Controls
+    - mandatory columns
+    - Component and asset must reference actual entries
+    - coverage - func and tech assets must be covered by a threat
+- Global
+    - Unique names e.g. Component, Functional Asset, Technical Asset names must be globally unique
+
+Summary
+    - Field validation
+        - mandatory
+        - value validation e.g. enum, regex
+        - conditional mandatory - if other field exists then so must this
+        - conditional value validation - if other field has this value, then this field must have/have not this value
+    - Reference validation
+        - Field must not share its value with other fields e.g. globally unique
+        - Field must have value from known good List
+        - Field must have value that references another field
+    - Coverage
+        - Rows must exist that reference assets in other tables
+
+Ideas
+    - Want some configurability (so not all verifiers are custom code tha can't be re-used), but not tons of configurability
+    - Could have sensible defaults?
+        - "name" fields by default are globally unique
+        - All fields by default cannot be empty
+        - ?
+    - Rather than having really generic configuration for verifiers, instead have the notion of types of columns, and tag them as such.  So a type, name, storage, authn, authz etc.  The the config can can just tag fields with the type of data and the verifiers can then work on tags on fields.
+        - Means we can have something like conditional value validation for authn and authz information because those fields will have been tagged, and we don't have to create a generic way of expressing that this field depends on this other field in this particular way.
+        - Need to through each verifier type ...
+        - Can initially assign tags based on key names e.g. any keys named "component" can be automatically assigned the "component-name-ref" tag
+    - Each verifier needs a config file with the error messages they will produce
+
+Future
+    - Perhaps all the verification/validation could be done via cucumber/gherkin tests?
+
+Example 2:
+- key: threats-and-controls
+  value:
+    map-data:
+      - key: "components"
+        value: 
+          map-data:
+            - key: "component"
+              value:
+                validate-data:
+                  tags:
+                    - component-name-ref
+      - key: "assets"
+        value: 
+            validate-data:
+            tags:
+                - asset-name-ref
+                - storage-location-ref 
+
+
+
+Example 1:
+
+- key: threats-and-controls
+    value:
+        validate-data:
+            values-mandatory:
+                except:
+                    - existing-controls
+                    - tickets
+            referential-integrity:
+                - key: 
+                    value: components
+                    references:
+                        key: components
+                            name:
+                - assets:
+                    value-references:
+                        assets:
+                            functional:
+                                type:
+                                name:
+                            technical:
+                                type:
+                                name:
+                    group-reference:
+                        - text: "All assets stored in {}"
+                          references:
+                              assets:
+                                functional:
+                                    storage-location:
+                                technical:
+                                    storage-location:

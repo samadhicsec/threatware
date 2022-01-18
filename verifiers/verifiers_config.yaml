@@ -1,0 +1,77 @@
+---
+verifiers-config:
+  errors:
+    default-severity: error
+    location-text: "{}"
+    entry-text: "For entry with '{}' equal to '{}'"
+  references:
+    doc-tag-prefix: "ref"
+    templ-tag-prefix: "tref"
+  coverage-validation:
+    error-texts:
+      no-covering-threat: "No threat was found for asset '{}' in location '{}'.  The asset was not referenced either; directly by name, directly by type, or as part of a storage location."
+    asset-data-tag:
+      - functional-asset-data
+      - technical-asset-data
+    asset-location-tag: storage-location
+    component-data-tag: components-details-data
+    component-in-scope-tag: in-scope
+    component-in-scope-value: "Yes"
+    threats-data-tag: threats-and-controls-data
+    threat-asset-tag: threat-asset
+    threat-component-tag: threat-component
+    grouped-text:
+      start-assets-grouped-by-storage: 
+        - "All assets stored"
+      all-assets:
+        - "All assets"
+  field-validation-mandatory:
+    default: True
+    exceptions-tag: "not-mandatory"
+    error-texts:
+      missing-mandatory: "A value for the field '{}' is mandatory"
+  field-validation-conditional-mandatory:
+    error-texts:
+      missing-conditional-mandatory: "The value for the field '{}' is '{}', so a value for the field '{}' is mandatory"
+    tags:
+    # The following pairs of tag define a tag that is mandatory if another tag has a value
+      - tag: "tech-stack"
+        depends-on: "in-scope"
+        depends-on-value: "Yes"
+  field-validation-uniqueness:
+    error-texts:
+      document-unique: "The value '{}' in field '{}' must be unique in the document amongst the following section/field name pairs - {}.  Duplicate value(s) were found in the following section/field name pairs - {}"
+      not-unique: "The field '{}' with value '{}' must must be unique amongst the following table/entry name pairs - '{}'"
+    unique-tag-prefix: "unique"
+    tags:
+      # Any key tagged with this tag must have a value that is document unique amongst all values for keys with this tag
+      - tag: document-unique
+  field-validation-value:
+    error-texts:
+      major.minor: "The value for the field '{}' must be of the format 'X.Y' where X is the major version, Y the minor version, and both are positive integers"
+      date: "The value for the field '{}' must be a Date e.g. YYYY-MM-DD, YYYY-DD-MM, DD-MM-YYYY, MM-DD-YYYY etc."
+      yes-no: "The value for the field '{}' must be either 'Yes' or 'No'"
+      template-value: "The value for the field '{}' should come from the document template"
+    # Validations should fail with an empty value, but that's a problem if the value is not mandatory, 
+    # so validations still succeed for empty non-mandatory values if the 'not-mandatory-tag' tag is present on the key
+    not-mandatory-tag: "not-mandatory"  
+    tags:
+      - tag: validate-as-version
+        validator: validator.regex
+        config:
+          pattern: "^\\d+.\\d+$"
+      - tag: validate-as-date
+        validator: date
+      - tag: validate-as-yes-no
+        validator: regex
+        config:
+          pattern: "(?i)yes|no"
+      - tag: validate-from-template
+        validator: template
+        severity: warning
+  reference-validation:
+    # Will ensure for any tag beginning in 'doc-tag-prefix' or 'templ-tag-prefix' and of the form 'tag-prefix/data-tag/entry-tag(/method)' that the value corresponds (via 'method' - default is 'equals') to a value for a field tagged with 'entry-tag' under an entry with the 'data-tag', in either the document or the template (depending on 'tag-prefix').  A field can have multiple tags of this format, and only 1 need match.
+    doc-tag-prefix: "ref"
+    templ-tag-prefix: "tref"
+    error-texts:
+      reference-not-found: "The entry for '{}' with value '{}' must reference one of the following table/entry name pairs - '{}'"

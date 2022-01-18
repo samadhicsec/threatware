@@ -1,0 +1,8 @@
+---
+validator-config:
+  - tag: validate-as-test
+    validator: test_validator
+    config:
+  - tag: validate-as-bad-test
+  - tag: validate-as-no-validator-test
+    validator: does_not_exist

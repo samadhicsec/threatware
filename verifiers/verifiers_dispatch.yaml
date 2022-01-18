@@ -1,0 +1,8 @@
+---
+verifiers-dispatch:
+  coverage-validation: "verifiers.coverage_validation"
+  reference-validation: "verifiers.reference_validation"
+  field-validation-value: "verifiers.field_validation_value"
+  field-validation-mandatory: "verifiers.field_validation_mandatory"
+  field-validation-conditional-mandatory: "verifiers.field_validation_conditional_mandatory"
+  field-validation-uniqueness: "verifiers.field_validation_uniqueness"

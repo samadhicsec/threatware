@@ -1,0 +1,2 @@
+
+# We can tag fields with 'measure' or 'risk_analysis', and pass in a doc and a template, and compare values in these fields.  The template needn't be an actual template and could be any other TM, like a goldne TM

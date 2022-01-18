@@ -1,0 +1,67 @@
+---
+tag-mapping:
+  # Any key in the model called 'name' should be document unique when compared to all other keys called 'name'
+  # Any key in the model called 'name' should be used as the idenitifer for that row in any error messages
+  - key-name: name
+    tags:
+      - name
+      - document-unique
+      - row-identifier
+  # Any key in the model called 'type' should have a document unique value when compared to all other keys tagged 'document-unique'
+  - key-name: type
+    tags:
+      - type
+      - document-unique
+  # Any key in the model called 'details' is the key for data about Component Details
+  - key-name: details
+    tags:
+      - components-details-data
+  # Any key in the model called 'access-control' is the key for data about Component Access Control
+  - key-name: access-control
+    tags:
+      - components-access-control-data
+  # Any key in the model called 'component' should have a value that references a component name
+  - key-name: component
+    tags:
+      - ref/components-details-data/name
+  # Any key in the model called 'functional' is the key for data about Functional Assets
+  - key-name: functional
+    tags:
+      - functional-asset-data
+  # Any key in the model called 'technical' is the key for data about Technical Assets
+  - key-name: technical
+    tags:
+      - technical-asset-data
+  # Any key in the model called 'location' is the key for data about locations
+  - key-name: location
+    tags:
+      - location
+  # Any key in the model called 'asset' should have a value that references a asset name
+  - key-name: asset
+    tags:
+      - ref/functional-asset-data/name
+      - ref/functional-asset-data/type
+      - ref/functional-asset-data/location/endswith
+      - ref/technical-asset-data/name
+      - ref/technical-asset-data/type
+      - ref/technical-asset-data/location/endswith
+  # Any key in the model called 'threats-and-controls' is the key for data about Threats and Controls
+  - key-name: threats-and-controls
+    tags:
+      - threats-and-controls-data
+  - key-name: "tech-stack"
+    tags: 
+      - tech-stack
+      - not-mandatory
+  - key-name: "in-scope"
+    tags: 
+      - in-scope
+  - key-name: "ticket"
+    tags: 
+      - not-mandatory
+  - key-name: "tickets"
+    tags: 
+      - not-mandatory
+  - key-name: "current-version"
+    tags:
+      - validate-as-version

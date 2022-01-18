@@ -1,0 +1,89 @@
+---
+scheme:
+  version: 1.0
+  document-storage: confluence
+  map:
+    references:
+      meta:
+        friendly-name: "References List"
+      content:
+        query:
+          xpath: "//span[text()='References']/following::ul/li"
+        #location:
+        #  markup-type: "h2"
+        #  markup-value: "References"
+        content-type:
+          markup-type: "ul"
+      mapping:
+        - key: "description"
+          value:
+            query:
+              xpath: ".//a/text()"
+        - key: "location"
+          value:
+            query:
+              xpath: ".//a/@href"
+    system-overview:
+    components:
+      - meta:
+          friendly-name: "Components Table"
+        content:
+          query:
+            xpath: "//span[text()='Components']/following::span[text()='Details']/following::table[1]"
+          content-type:
+            markup-type: "table"
+        mapping:
+          - key: "name"
+            value: 
+              query:
+                column-num: 0
+          - key: "location"
+            value: 
+              query:
+                column-num: 1
+          - key: "purpose"
+            value: 
+              query:
+                column-num: 2
+          - key: "in-scope"
+            value: 
+              query:
+                column-num: 3
+          - key: "tech-stack"
+            value: 
+              query:
+                column-num: 4
+      - meta:
+          friendly-name: "AuthN and AuthZ Table"
+        content:
+          query:
+            xpath: "//span[text()='Components']/following::span[text()='AuthN and AuthZ']/following::table[1]"
+          content-type:
+            markup-type: "table"
+        mapping:
+          - key: "name"
+            value: 
+              query:
+                column-num: 0
+              inherit-row-above-if-empty: true
+              merge_on_match: true
+          - key: "access-control"
+            value:
+              mapping:
+                - key: "identity"
+                  value: 
+                    query:
+                      column-num: 1
+                - key: "authentication-method"
+                  value: 
+                    query:
+                      column-num: 2
+                - key: "authorisation-method"
+                  value: 
+                    query:
+                      column-num: 3
+    assets:
+    diagrams:
+    operational-security:
+    threats-and-controls:
+  meta:
