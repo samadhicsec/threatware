@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+from data.key import key as Key
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -73,10 +74,62 @@ def _value_replace(proc_def, output_data):
 
     return output_data
 
+def _remove_header_row(proc_def, output_data):
+    """
+    Removes the first row from the output data (must be a list).  Assumes values are column header names and sets the 'colname' property on all descendant 
+    Keys.
+    """
+
+    # output_data needs to be a list
+    if not isinstance(output_data, list):
+        logger.warning(f"Cannot run post-processor 'remove-header-row-but-record-col-names' on output data of type '{type(output_data)}', needs to be a list")
+        return output_data
+
+    # Get the list of col header names
+    colnames = []
+    for colname in output_data[0].values():
+        # The value might not be a string, it might be a dictionary, but that dict should just have 1 entry
+        if isinstance(colname, str):
+            colnames.append(colname)
+        else:
+            if isinstance(colname, list) and len(colname) > 0:
+                # Look at the first entry in the list, which should be a dict
+                colname = colname[0]
+            if isinstance(colname, dict):
+                if len(colname.values()) == 0:
+                    logger.warning(f"Expected 1 column name in dict '{colname}'.  Setting to empty")
+                    colnames.append("")
+                else:
+                    # Table rows that aren't read in as straight values but instead are processed further, can have multiple values
+                    #if len(colname.values()) > 1:
+                    #    logger.warning(f"Expected only 1 column name in dict '{colname}'.  Using first")
+                    colnames.append(list(colname.values())[0])
+            else:
+                logger.warning(f"Unknown column name type of  '{type(colname)}'.  Setting to empty")
+                colnames.append("")
+
+    for row in output_data[1:]:
+        for rowkey, rowvalue, colname in zip(row.keys(), row.values(), colnames):
+            rowkey.addProperty("colname", colname)
+            def _set_col_name(entry):
+
+                if isinstance(entry, list):
+                    for e in entry:
+                        _set_col_name(e)
+                if isinstance(entry, dict):
+                    for k, v in entry.items():
+                        if isinstance(k, Key):
+                            k.addProperty("colname", colname)
+                        _set_col_name(v)
+
+            _set_col_name(rowvalue)
+
+    return output_data[1:]
 
 post_processor_dispatch_table = {
     "inherit-row-above-if-empty":_inherit_row_above_if_empty,
-    "value-replace": _value_replace
+    "value-replace": _value_replace,
+    "remove-header-row": _remove_header_row
 }
 
 def process(output_def, output_data):

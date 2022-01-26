@@ -19,12 +19,12 @@ def validate(config:dict, key:Key, value:str, references:dict) -> bool:
 
     try:
         if re.search(pattern, value):
-            key.addProperty(references['validator-tag'], config["output_text_valid"].format(key, value, pattern))
+            #key.addProperty(references['validator-tag'], config["output_text_valid"].format(key, value, pattern))
             return True
     except re.error as err:
         logger.error(f"The pattern '{pattern}' passed to the regex validator caused an exception '{err}'")
         return False
 
-    key.addProperty(references['validator-tag'], config["output_text_invalid"].format(key, value, pattern))
+    #key.addProperty(references['validator-tag'], config["output_text_invalid"].format(key, value, pattern))
 
     return False

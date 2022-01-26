@@ -83,6 +83,8 @@ tag-mapping:
   - key-name: "current-version"
     tags:
       - validate-as-version
+      - validate-as-date
   - key-name: "approved-version"
     tags:
       - not-mandatory
+      - validate-as-version

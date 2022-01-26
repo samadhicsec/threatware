@@ -19,10 +19,6 @@ scheme:
                 xpath: "//html/body/h1[text()='Details']/following::table[1]"
             - query:
                 type: "html-table-transpose"
-            - query:
-                type: html-table-remove-header-row
-          output-data:
-            type: dict
           map-data:
             - key: "document-ID"
               value: 
@@ -48,6 +44,9 @@ scheme:
                   query:
                     type: html-table-row
                     column-num: 3
+          output-data:
+            post-processor:
+              remove-header-row:
       - key: 
           name: scope
           section: Scope Table
@@ -60,8 +59,6 @@ scheme:
                 xpath: "//html/body/h1[text()='Scope']/following::table[1]"
             - query:
                 type: "html-table-transpose"
-            - query:
-                type: html-table-remove-header-row
           map-data:
             - key: team
               value: 
@@ -105,6 +102,9 @@ scheme:
                 map-data:
                   - key: "3rd Party"
                     value:
+          output-data:
+            post-processor:
+              remove-header-row:
       - key: 
           name: system-overview
           section: System Overview
@@ -145,7 +145,6 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Components']/following::h2[text()='Details']/following::table[1]"
-                    remove-header-row: True
                     remove-rows-if-empty:
                 map-data:
                   - key: "name"
@@ -178,6 +177,9 @@ scheme:
                         query:
                           type: html-table-row
                           column-num: 4
+                output-data:
+                  post-processor:
+                    remove-header-row:
             - key: 
                 name: access-control
                 section: "Component AuthN and AuthZ Table"
@@ -186,7 +188,6 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Components']/following::h2[text()='AuthN and AuthZ']/following::table[1]"
-                    remove-header-row: True
                     remove-rows-if-empty:
                 map-data:
                   - key: "component"
@@ -217,6 +218,7 @@ scheme:
                   post-processor:
                     inherit-row-above-if-empty:
                       key: component
+                    remove-header-row:
       - key: assets
         value:
           map-data:
@@ -228,7 +230,6 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Functional Assets']/following::table[1]"
-                    remove-header-row: True
                     remove-rows-if-empty:
                       ignore-cols: 
                         - 0
@@ -309,6 +310,7 @@ scheme:
                   post-processor:
                     inherit-row-above-if-empty:
                       key: type
+                    remove-header-row:
             - key: 
                 name: technical
                 section: Technical Assets Table
@@ -317,7 +319,6 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Technical Assets']/following::table[1]"
-                    remove-header-row: True
                     remove-rows-if-empty:
                       ignore-cols: 
                         - 0
@@ -410,6 +411,7 @@ scheme:
                   post-processor:
                     inherit-row-above-if-empty:
                       key: type
+                    remove-header-row:
       #- key: diagrams
       #  value:
       - key: 
@@ -449,7 +451,6 @@ scheme:
             query:
               type: html-table
               xpath: "//html/body/h1[text()='Threats and Controls']/following::table[1]"
-              remove-header-row: True
               remove-rows-if-empty:
           map-data:
             - key: "components"
@@ -516,3 +517,6 @@ scheme:
                 map-data:
                   - key: "ticket"
                     value:
+          output-data:
+            post-processor:
+              remove-header-row:

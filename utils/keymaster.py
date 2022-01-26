@@ -37,6 +37,16 @@ def get_data_tag_for_key(row_key:Key) -> str:
 
     return None
 
+def get_row_identifier_for_key(row_key:Key):
+
+    if row_key is not None:
+        if row_key.hasTag("row-identifier"):
+            return row_key
+        elif row_key.getProperty("rowID") is not None:
+            return row_key.getProperty("rowID")
+
+    return None
+
 def get_row_identifiers_for_key(row_key:Key):
 
     if row_key is not None:

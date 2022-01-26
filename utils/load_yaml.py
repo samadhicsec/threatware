@@ -11,6 +11,12 @@ from ruamel.yaml import YAML
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+env = Environment(
+    loader = FileSystemLoader(searchpath=["/", "./"]),
+    autoescape=select_autoescape()
+)
+
 def yaml_file_to_dict(path:str):
 
     yaml=YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
@@ -27,8 +33,35 @@ def yaml_file_to_dict(path:str):
         yamldict = yaml.load(file)
         return yamldict
 
+def yaml_file_to_str(path:str):
+
+    try: 
+        file = open(path, 'r')
+    except OSError:
+        raise ThreatwareError
+
+    with file:
+        yamlstr = file.read()
+        return yamlstr
+
 def yaml_str_to_dict(yamlstr:str):
 
     yaml=YAML(typ='safe') 
     yamldict = yaml.load(yamlstr)
     return yamldict
+
+def yaml_templated_str_to_dict(yaml_template_str:str, context:dict):
+
+    templated_yaml = env.from_string(yaml_template_str)
+
+    render_yaml = templated_yaml.render(context)
+
+    return yaml_str_to_dict(render_yaml)
+
+def yaml_templated_file_to_dict(yaml_template_file_path:str, context:dict):
+
+    templated_yaml = env.get_template(yaml_template_file_path)
+
+    render_yaml = templated_yaml.render(context)
+
+    return yaml_str_to_dict(render_yaml)

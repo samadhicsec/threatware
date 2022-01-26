@@ -6,33 +6,39 @@ Loads verifiers dynamically
 import logging
 import importlib
 from pathlib import Path
-from utils.load_yaml import yaml_file_to_dict
+from utils.load_yaml import yaml_file_to_dict, yaml_templated_file_to_dict
 from utils import keymaster
 import data.find as find
 import verifiers.reference as reference
 
 import utils.logging
-from verifiers.verifier_error import VerifierError
+from verifiers.verifier_error import VerifierIssue
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 class Verifiers:
     """ Invokes a range of different configurable, extendable model verification methods
 
-    A class that uses 2 yaml files to configure and discover verification methods, that can then be invoked on models
+    A class that uses yaml files to configure and discover verification methods, that can then be invoked on models
     depending on the 'tags' associated with the keys of the model.
     """
 
     VERIFIERS_DISPATCH_YAML = "verifiers_dispatch.yaml"
     VERIFIER_CONFIG_YAML = "verifiers_config.yaml"
+    VERIFIER_VALUES_YAML = "verifiers_values.yaml"
+    VERIFIER_TEXTS_YAML = "verifiers_texts.yaml"
     DEFAULT_TAG_MAPPING_YAML = "default_tag_mapping.yaml"
     
     VERIFIERS_DISPATCH_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIERS_DISPATCH_YAML))
     VERIFIER_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_CONFIG_YAML))
+    VERIFIER_VALUES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_VALUES_YAML))
+    VERIFIER_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_TEXTS_YAML))
     DEFAULT_TAG_MAPPING_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(DEFAULT_TAG_MAPPING_YAML))
 
     def __init__(self, verifiers_config:dict):
         verifiers_dispatch_yaml_path = verifiers_config.get("verifiers_dispatch_yaml_config", self.VERIFIERS_DISPATCH_YAML_PATH)
         verifiers_config_yaml_path = verifiers_config.get("verifiers_config_yaml_config", self.VERIFIER_CONFIG_YAML_PATH)
+        verifiers_values_yaml_path = verifiers_config.get("verifiers_values_yaml_config", self.VERIFIER_VALUES_YAML_PATH)
+        verifiers_texts_yaml_path = verifiers_config.get("verifiers_texts_yaml_config", self.VERIFIER_TEXTS_YAML_PATH)
         default_tag_mapping_yaml_path = verifiers_config.get("tag_mapping_yaml_config", self.DEFAULT_TAG_MAPPING_YAML_PATH)
 
         self.disable = verifiers_config.get("disable", [])
@@ -43,15 +49,21 @@ class Verifiers:
         if self.validators_config is None:
             self.validators_config = {}
         
+        self.verifiers_values_dict = self._load_verifiers_values(verifiers_values_yaml_path)
         self.dispatch = self._load_verifiers_dispatch(verifiers_dispatch_yaml_path)
         self.verifiers_config_dict = self._load_verifiers_config(verifiers_config_yaml_path)
+        self.verifiers_texts_dict = self._load_verifiers_texts(verifiers_texts_yaml_path)
         self.tag_mapping = self._load_tag_mapping(default_tag_mapping_yaml_path)
 
-        VerifierError.error_config = self.verifiers_config_dict.get("errors", VerifierError.error_config)
+        #VerifierError.error_config = self.verifiers_config_dict.get("errors", VerifierError.error_config)
+        VerifierIssue.issue_config = self.verifiers_config_dict.get("common", {}).get("errors", VerifierIssue.issue_config)
+        VerifierIssue.pre_defined_template_values = self.verifiers_values_dict
+        VerifierIssue.templated_error_texts = self.verifiers_texts_dict.get("error-texts", {})
 
     def _load_verifiers_config(self, verifiers_config_yaml_path) -> dict:
         
-        yaml_config_dict = yaml_file_to_dict(verifiers_config_yaml_path) 
+        #yaml_config_dict = yaml_file_to_dict(verifiers_config_yaml_path) 
+        yaml_config_dict = yaml_templated_file_to_dict(verifiers_config_yaml_path, self.verifiers_values_dict)
 
         return yaml_config_dict["verifiers-config"]
 
@@ -82,6 +94,14 @@ class Verifiers:
                 logger.warning(f"Verifier file '{verifier_code}' did not have a 'verify' method")
 
         return verifiers_dict
+
+    def _load_verifiers_values(self, verifiers_values_yaml_path:str):
+
+        return yaml_file_to_dict(verifiers_values_yaml_path) 
+
+    def _load_verifiers_texts(self, verifiers_texts_yaml_path:str):
+
+        return yaml_file_to_dict(verifiers_texts_yaml_path) 
 
     def _load_tag_mapping(self, tag_mapping_yaml_path) -> list:
     
@@ -115,6 +135,9 @@ class Verifiers:
 
         verifier_errors_list = []
 
+        common_config = self.verifiers_config_dict["common"]
+        common_config["grouped-text"] = self.verifiers_texts_dict["grouped-text"]
+
         for verifier in self.dispatch:
 
             if verifier in self.disable:
@@ -122,7 +145,7 @@ class Verifiers:
 
             verifier_config = self.verifiers_config_dict[verifier]
 
-            errors_list = self.dispatch[verifier](verifier_config, model, template_model)
+            errors_list = self.dispatch[verifier](common_config, verifier_config, model, template_model)
 
             # Update errors to provide more useful output information
             for error in errors_list:
@@ -212,6 +235,8 @@ class Verifiers:
                             local_rowIDKey = dict_key
                             # We need to report errors with the value for the "row-identiifer" key, so let's store the value as a property of the key
                             dict_key.addProperty("value", dict_value)
+                            # We need to be able to get sibling data in a row, so also store a reference to the whole row against the 'row-identifier' key
+                            dict_key.addProperty("row", list_entry)
 
                             # There should only be 1 row-identifier per row
                             break
@@ -237,19 +262,19 @@ class Verifiers:
         #preApproved = {}
 
         # Search the template for key ending in the template prefix
-        for key_entry, value_entry in find.keys_with_tag_matching_regex(template_model, "^" + self.verifiers_config_dict["references"]["templ-tag-prefix"] + ".*$"):
+        for key_entry, value_entry in find.keys_with_tag_matching_regex(template_model, "^" + self.verifiers_config_dict["common"]["references"]["templ-tag-prefix"] + ".*$"):
 
             if value_entry == "":
                 continue
 
             # Check whether that key value references a value in the template (in this case the template is the doc, so we use the doc prefix)
-            if reference.check_reference(template_model, self.verifiers_config_dict["references"]["doc-tag-prefix"], key_entry, value_entry, None, None) is None:
+            if reference.check_reference(template_model, self.verifiers_config_dict["common"]["references"]["doc-tag-prefix"], key_entry, value_entry, None, None):
                 # No match.  So since this value does not correctly reference a value in the template, it must be a value added to the template
                 # that the template authors want to provide as an option for TM authors to use, without having to properly reference it
 
                 # Get the tags on this key that match the template reference
                 data_section_tag = keymaster.get_data_tag_for_key(key_entry)
-                matching_tags = reference.get_matching_tags(key_entry, self.verifiers_config_dict["references"]["templ-tag-prefix"], data_section_tag, "", "")
+                matching_tags = reference.get_matching_tags(key_entry, self.verifiers_config_dict["common"]["references"]["templ-tag-prefix"], data_section_tag, "", "")
 
                 # Set a property on the template key, marking it as a pre-approved value
                 key_entry.addProperty("templatePreApproved", matching_tags)

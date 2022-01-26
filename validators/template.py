@@ -32,11 +32,11 @@ def validate(config:dict, key:Key, value:str, references:dict) -> bool:
         # we are validating (could still possibly lead to issues)
         if tagged_key == key and match.equals(value, tagged_value):
             match_found = True
-            key.addProperty(references['validator-tag'], config["output_text_valid"].format(key, value, tagged_value))
+            #key.addProperty(references['validator-tag'], config["output_text_valid"].format(key, value, tagged_value))
             break
     
     if not match_found:
         tagged_values = [tagged_value for _, tagged_value in tagged_data]
-        key.addProperty(references['validator-tag'], config["output_text_invalid"].format(key, value, tagged_values))
+        #key.addProperty(references['validator-tag'], config["output_text_invalid"].format(key, value, tagged_values))
 
     return match_found

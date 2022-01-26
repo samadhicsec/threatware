@@ -8,7 +8,7 @@ from typing import Tuple
 import logging
 import importlib
 from pathlib import Path
-from utils.load_yaml import yaml_file_to_dict
+from utils.load_yaml import yaml_file_to_dict, yaml_templated_file_to_dict
 from data.key import key as Key
 from validators.validator_output import ValidatorOutput
 
@@ -22,27 +22,52 @@ class Validator:
     depending on the 'tags' associated with the value.
     """
 
-    VALIDATOR_CONFIG_YAML = "validators_config.yaml"
     VALIDATORS_YAML = "validators_dispatch.yaml"
+    VALIDATOR_CONFIG_YAML = "validators_config.yaml"
+    VALIDATORS_TEXT_YAML = "validators_text.yaml"
+    VALIDATORS_VALUES_YAML = "validators_values.yaml"
 
-    VALIDATOR_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATOR_CONFIG_YAML))
     VALIDATORS_DISPATCH_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_YAML))
+    VALIDATOR_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATOR_CONFIG_YAML))
+    VALIDATORS_TEXT_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_TEXT_YAML))
+    VALIDATORS_VALUES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_VALUES_YAML))
+    
 
     def __init__(self, validators_config:dict = {}):
-        validator_dispatch_yaml_path = validators_config.get("validator-dispatch-yaml-path", self.VALIDATORS_DISPATCH_YAML_PATH)
-        validator_config_yaml_path = validators_config.get("validator-config-yaml-path", self.VALIDATOR_CONFIG_YAML_PATH)
-        if validator_dispatch_yaml_path is None:
-            validator_dispatch_yaml_path = self.VALIDATORS_DISPATCH_YAML_PATH
-        if validator_config_yaml_path is None:
-            validator_config_yaml_path = self.VALIDATOR_CONFIG_YAML_PATH
-
-        self.dispatch, self.modules = self._load_validator_dispatch(validator_dispatch_yaml_path)
-        self.validator_config_dict = self._load_validator_config(validator_config_yaml_path)
+        validators_dispatch_yaml_path = validators_config.get("validator-dispatch-yaml-path", self.VALIDATORS_DISPATCH_YAML_PATH)
+        validators_config_yaml_path = validators_config.get("validator-config-yaml-path", self.VALIDATOR_CONFIG_YAML_PATH)
+        validators_text_yaml_path = validators_config.get("validator-text-yaml-path", self.VALIDATORS_TEXT_YAML_PATH)
+        validators_values_yaml_path = validators_config.get("validator-values-yaml-path", self.VALIDATORS_VALUES_YAML_PATH)
         
+        self.values_dict = yaml_file_to_dict(validators_values_yaml_path)
+        self.text_dict = self._load_validator_texts(validators_text_yaml_path)
+        self.validator_config_dict = self._load_validator_config(validators_config_yaml_path)
+        self.dispatch, self.modules = self._load_validator_dispatch(validators_dispatch_yaml_path)
+        
+        ValidatorOutput.templated_output_texts = self.text_dict
+        ValidatorOutput.validator_config = self.validator_config_dict
+    
+
+    def _load_validator_texts(self, validator_text_yaml_path) -> dict:
+
+        yaml_config_dict = yaml_file_to_dict(validator_text_yaml_path) 
+
+        if yaml_config_dict.get("validators-text") == None:
+            raise ValidatorsError(f"Validators text file '{validator_text_yaml_path}' did not have a root key of 'validators-text'")
+
+        # Convert to a dict for easy lookup
+        validators_text_dict = {}
+        for entry in yaml_config_dict["validators-text"]:
+            if entry.get("tag") == None:
+                raise ValidatorsError(f"The validators text file '{validator_text_yaml_path}' entry under the root 'validators-text' is missing a 'tag' key")
+            validators_text_dict[entry["tag"]] = entry
+
+        return validators_text_dict
+
 
     def _load_validator_config(self, validator_config_yaml_path) -> dict:
 
-        yaml_config_dict = yaml_file_to_dict(validator_config_yaml_path) 
+        yaml_config_dict = yaml_templated_file_to_dict(validator_config_yaml_path, self.values_dict) 
 
         if yaml_config_dict.get("validator-config") == None:
             raise ValidatorsError(f"Validator config file '{validator_config_yaml_path}' did not have a root key of 'validator-config'")
@@ -115,7 +140,7 @@ class Validator:
         ValidatorOutput class
         """
 
-        output = ValidatorOutput(validator_tag)
+        output = ValidatorOutput(validator_tag, key, value)
 
         # Check the validator tag can be found
         if (validator_entry := self.validator_config_dict.get(validator_tag)) is None:

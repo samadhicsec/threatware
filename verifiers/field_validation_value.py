@@ -6,7 +6,7 @@ Verifies that all keys tagged as requiring value validation have valid values
 from data import find
 import logging
 from verifiers.verifier_error import ErrorType
-from verifiers.verifier_error import VerifierError
+from verifiers.verifier_error import VerifierIssue
 from validators.validators import Validator
 from validators.validator_output import ValidatorOutput
 from utils import match
@@ -15,22 +15,17 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
-def verify(verifier_config:dict, model:dict, template_model:dict) -> list:
+def verify(common_config:dict, verifier_config:dict, model:dict, template_model:dict) -> list:
 
     verify_return_list = []
-
-    verifier_name = __file__.split(".")[0]
-
-    # Get a reference to all the possible error messages that can be returned
-    #errorTexts = verifier_config["error-texts"]
 
     validator_config = verifier_config.get("validator-config", {})
     vlad = Validator(validator_config)
 
     non_mandatory_tag = verifier_config["not-mandatory-tag"]
 
-    # Since a tagged key may have several validators configured (we OR the output), we don't find my tag,
-    # but rather find by "validators.*" glob, and then check each validator (as long as they are listed in config)
+    # Since a tagged key may have several validators configured (we OR the output), we don't find by tag,
+    # but rather find by "validate-.*" glob, and then check each validator (as long as they are listed in config)
 
     # Need to get all keys for a given tag
     tagged_data = find.keys_with_tag_matching_regex(model, "^validate\\-.*$")
@@ -67,16 +62,19 @@ def verify(verifier_config:dict, model:dict, template_model:dict) -> list:
             # Gather the responses from each validator so we can report them in the error
             validatorOutput_list.append(validatorOutput)
         
-        if not tagged_value_validates:
-            verify_return_list.append(VerifierError(verifier_config, 
-                                                    verifier_name,
-                                                    validatorOutput_list, 
-                                                    tagged_key))
+        issue_dict = {}
+        issue_dict["issue_key"] = tagged_key
+        issue_dict["issue_value"] = tagged_value
+        issue_dict["errordata"] = validatorOutput_list
+
+        if not tagged_value_validates:    
+            verify_return_list.append(VerifierIssue("value-invalid", 
+                                                    None,
+                                                    issue_dict))
         elif a_validator_failed:
-            verify_return_list.append(VerifierError(verifier_config, 
-                                                    verifier_name,
-                                                    validatorOutput_list, 
-                                                    tagged_key,
-                                                    ErrorType.WARNING))
+            verify_return_list.append(VerifierIssue("value-valid", 
+                                                    None,
+                                                    issue_dict,
+                                                    ErrorType.INFO))
 
     return verify_return_list

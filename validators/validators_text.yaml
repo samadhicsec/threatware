@@ -1,0 +1,18 @@
+---
+validators-text:
+  - tag: validate-as-version
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+  - tag: validate-as-date
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' is a valid date"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' is an invalid date"
+  - tag: validate-as-yes-no
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+  - tag: validate-from-template
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched value from template"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match a template value"
