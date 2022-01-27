@@ -230,9 +230,6 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Functional Assets']/following::table[1]"
-                    remove-rows-if-empty:
-                      ignore-cols: 
-                        - 0
                 map-data:
                   - key: "type"
                     value: 
@@ -310,6 +307,9 @@ scheme:
                   post-processor:
                     inherit-row-above-if-empty:
                       key: type
+                    remove-empty-rows:
+                      ignore-keys: 
+                        - type 
                     remove-header-row:
             - key: 
                 name: technical
@@ -319,9 +319,9 @@ scheme:
                   query:
                     type: html-table
                     xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Technical Assets']/following::table[1]"
-                    remove-rows-if-empty:
-                      ignore-cols: 
-                        - 0
+                    #remove-rows-if-empty:
+                    #  ignore-cols: 
+                    #    - 0
                 map-data:
                   - key: "type"
                     value: 
@@ -411,6 +411,9 @@ scheme:
                   post-processor:
                     inherit-row-above-if-empty:
                       key: type
+                    remove-empty-rows:
+                      ignore-keys: 
+                        - type                    
                     remove-header-row:
       #- key: diagrams
       #  value:
@@ -483,7 +486,10 @@ scheme:
                 map-data:
                   - key: "asset"
                     value:
-            - key: "threat-description"
+            - key: 
+                name: "threat-description"
+                tags:
+                  - "threat-description"
               value: 
                 get-data:
                   query:
@@ -501,7 +507,10 @@ scheme:
                         char-separators: 
                           - "\n"
                 map-data:
-                  - key: "control"
+                  - key: 
+                      name: "control"
+                      tags:
+                        - "threat-control"
                     value:
             - key: "tickets"
               value: 

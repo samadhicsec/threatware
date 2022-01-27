@@ -76,10 +76,18 @@ def lambda_handler(event, context):
             # Convert the TM document
             doc_model = convert.convert(schemeDict, docloc)
 
-            # Verify the TM document
-            issues =  verify.verify(schemeDict, doc_model, template_model)
+            config = verify.config(schemeDict)
 
-            body = verify.tojson(issues)
+            # Verify the TM document
+            issues =  verify.verify(config, doc_model, template_model)
+
+            # Analyse coverage of threats
+            coverage = verify.coverage(config, doc_model)
+
+            # Generate a report on verification issues and analysis
+            report = verify.report(config, issues, coverage)
+
+            body = report.tojson()
 
         elif action == ACTION_MANAGE:
             # Convert the TM template

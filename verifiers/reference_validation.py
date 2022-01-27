@@ -54,22 +54,14 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         doc_section_field_unref_error = []
         if not doc_reference_found:
             doc_section_field_unref_error = reference.get_reference_descriptions(model, doc_reference_tag_prefix, key_entry)
-            #doc_section_field_unref_error = [{'table':tablename, 'column':colname} for tablename, colname in reference.get_sections_description(model, doc_reference_tag_prefix, key_entry)]
 
         template_reference_found = reference.check_reference(template_model, template_reference_tag_prefix, key_entry, value_entry, reference_callback, None)
         template_section_field_unref_error = []
         if not template_reference_found:
             template_section_field_unref_error = reference.get_reference_descriptions(template_model, template_reference_tag_prefix, key_entry)
-            #template_section_field_unref_error = [{'table':tablename, 'column':colname} for tablename, colname in reference.get_sections_description(template_model, template_reference_tag_prefix, key_entry)]
 
         if not doc_reference_found and not template_reference_found:
             
-            #template_section_field_unref_error_edited = []
-            #for table, entry in template_section_field_unref_error:
-            #    template_section_field_unref_error_edited.append((table + " in template", entry))
-
-            #section_field_unref_error = doc_section_field_unref_error + template_section_field_unref_error_edited
-
             issue_dict = {}
             issue_dict["issue_key"] = key_entry
             issue_dict["issue_value"] = value_entry
@@ -79,7 +71,6 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             if len(template_section_field_unref_error) > 0:
                 issue_dict["fixdata"]["template"] = template_section_field_unref_error
 
-            #row_id_key = keymaster.get_row_identifier_key(key_entry)
             verify_return_list.append(VerifierIssue("reference-not-found", 
                                                     "reference-not-found-fix", 
                                                     issue_dict

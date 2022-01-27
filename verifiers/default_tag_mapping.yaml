@@ -12,12 +12,14 @@ tag-mapping:
       - unique/functional-asset-data/type
       - unique/technical-asset-data/name
       - unique/technical-asset-data/type
+      - validate-as-single-entry
   # Any key in the model called 'type' should have a document unique value when compared to all other keys tagged 'document-unique'
   - key-name: type
     tags:
       - type
       - unique/functional-asset-data/type/value_not_table
       - unique/technical-asset-data/type/value_not_table
+      - validate-as-single-entry
   # Any key in the model called 'details' is the key for data about Component Details
   - key-name: details
     tags:
@@ -31,6 +33,9 @@ tag-mapping:
     tags:
       - threat-component
       - ref/components-details-data/name
+  - key-name: "identity"
+    tags:
+      - validate-as-single-entry
   # Any key in the model called 'functional' is the key for data about Functional Assets
   - key-name: functional
     tags:
@@ -60,6 +65,9 @@ tag-mapping:
       - ref/technical-asset-data/name
       - ref/technical-asset-data/type
       - ref/technical-asset-data/storage-location/storage-expression
+  - key-name: impact-type
+    tags:
+      - validate-as-CIA
   # Any key in the model called 'threats-and-controls' is the key for data about Threats and Controls
   - key-name: threats-and-controls
     tags:
@@ -74,6 +82,7 @@ tag-mapping:
   - key-name: "in-scope"
     tags: 
       - in-scope
+      - validate-as-yes-no
   - key-name: "ticket"
     tags: 
       - not-mandatory
@@ -83,8 +92,9 @@ tag-mapping:
   - key-name: "current-version"
     tags:
       - validate-as-version
-      - validate-as-date
+      - validate-as-single-entry
   - key-name: "approved-version"
     tags:
       - not-mandatory
       - validate-as-version
+      - validate-as-single-entry

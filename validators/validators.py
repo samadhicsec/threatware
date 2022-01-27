@@ -44,6 +44,7 @@ class Validator:
         self.validator_config_dict = self._load_validator_config(validators_config_yaml_path)
         self.dispatch, self.modules = self._load_validator_dispatch(validators_dispatch_yaml_path)
         
+        ValidatorOutput.pre_defined_template_values = self.values_dict
         ValidatorOutput.templated_output_texts = self.text_dict
         ValidatorOutput.validator_config = self.validator_config_dict
     

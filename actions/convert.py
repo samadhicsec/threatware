@@ -38,14 +38,14 @@ def tojson(model):
 
     return jsonpickle.encode(model, unpicklable=False)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Threat Model Convertor')
+#     parser = argparse.ArgumentParser(description='Threat Model Convertor')
 
-    parser.add_argument('-s', '--scheme', required=True, help='Identifier for the scheme to load')
-    parser.add_argument('-d', '--docloc', required=True, help='Identifier for the document to verify')
-    args = parser.parse_args()
+#     parser.add_argument('-s', '--scheme', required=True, help='Identifier for the scheme to load')
+#     parser.add_argument('-d', '--docloc', required=True, help='Identifier for the document to verify')
+#     args = parser.parse_args()
 
-    output = convert(args.scheme, args.docloc)
+#     output = convert(args.scheme, args.docloc)
 
-    print(output)
+#     print(output)

@@ -20,10 +20,14 @@ def parse(map_data_def, input) -> dict:
             key_def = key.key(key_value["key"])
         elif isinstance(key_value["key"], dict):
             if (key_def := key.key(key_value["key"]["name"])) is None:
+                # TODO throw exception or handle
                 logger.error(f"The key {key_value['key']} must have a 'name' key with a non-empty value")
             if (section := key_value["key"].get("section")) is not None:
                 # Record a friendly section name for this key, if one exists e.g. a table name
                 key_def.addProperty("section", section)
+            if (tags := key_value["key"].get("tags")) is not None and isinstance(tags, list):
+                key_def.addTags(tags)
+
 
         logger.debug(f"Mapping data to '{key_def}'")
 

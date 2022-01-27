@@ -17,7 +17,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
     verify_return_list = []
 
     if verifier_config.get("default", True):
-        # Inner function here makes it easy to create VerifierError without passing lots of variables
+        # Inner function here makes it easy to create VerifierIssue without passing lots of variables
         def traverse_model(model):
 
             if isinstance(model, dict):

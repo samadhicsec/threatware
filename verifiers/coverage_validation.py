@@ -13,61 +13,7 @@ from utils import keymaster
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-
-#def _get_ref_tag_parts(reftag:str):
-
-    # Split tag into parts
-#    tag_parts = reftag.split("/")
-#    tag_prefix = tag_parts[0]
-#    tag_data_tag_name = tag_parts[1]
-#    tag_field_tag_name = tag_parts[2]
-#    tag_comparison = "equals"
-#    if len(tag_parts) == 4:
-#        tag_comparison = tag_parts[3]
-
-#    return tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison
-
-#def _valid_storage_expression(verifier_config, compare_to_value, compare_value):
-
-#    # Check if it's an expression that is independent of a value
-#    if match.equals(compare_to_value, verifier_config["grouped-text"]["all-assets"]):
-#        return True
-#    if match.starts_ends(compare_to_value, verifier_config["grouped-text"]["start-assets-grouped-by-storage"], compare_value):
-#        return True
-
-#    return False
-
-#def _check_tag_comparison(verifier_config, tag_comparison, compare_to_value, compare_value):
-
-#    if tag_comparison == "endswith":
-#        if match.endswith(compare_to_value, compare_value):
-#            return True
-#    elif tag_comparison == "storage-expression":
-#        return _valid_storage_expression(verifier_config, compare_to_value, compare_value)
-#    else:
-#        if match.equals(compare_to_value, compare_value):
-#            return True
-
-#    return False
-
-#def _check_reference(verifier_config, ref_tag, asset, asset_data_tag, threat_asset_entry_value):
-
-#    if not ref_tag.startswith("ref/"):
-        # We are only looking at reference tags
-#        return False
-
-#    tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = _get_ref_tag_parts(ref_tag)
-
-#    if tag_data_tag_name != asset_data_tag:
-#        return False
-
-#    found_key, found_value = find.key_with_tag(asset, tag_field_tag_name)
-
-#    if found_key is None:
-#        return False
-
-#    return _check_tag_comparison(verifier_config, tag_comparison, found_value, threat_asset_entry_value)
-    
+   
 def doc_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
@@ -170,14 +116,14 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                             # Then the asset can match on name or type, but the storage location must match the component
                             if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, None, None) is not None and match.equals(matching_in_scope_component, storage_location_value):
                                 if entry not in covering_threats:
-                                        covering_threats.append(entry)
+                                    covering_threats.append(entry)
                         else:
                             # Scenario D
                             # The asset can only match on grouped storage type e.g. All assets stored in env vars
                             callback_config = {"storage_location_value":storage_location_value}
                             if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, doc_reference_callback, callback_config) is not None:
                                 if entry not in covering_threats:
-                                        covering_threats.append(entry)
+                                    covering_threats.append(entry)
 
                 if len(covering_threats) == 0:
                     issue_dict = {}
@@ -199,6 +145,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
                     verify_return_list.append(VerifierIssue("no-covering-threat", "no-covering-threat-fix", issue_dict, ErrorType.NOT_SET))
             
-            # TODO: If covering threats found return as analysis object.
+                else:
+                    # Store covering threats
+                    storage_location_key.addProperty("covering-threats", covering_threats)
 
     return verify_return_list

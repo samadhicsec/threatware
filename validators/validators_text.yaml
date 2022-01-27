@@ -8,10 +8,18 @@ validators-text:
     text:
       output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' is a valid date"
       output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' is an invalid date"
+  - tag: validate-as-single-entry
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matches just a single entry i.e. no newlines were found"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' must contain a single value, which does not contain a newline.  If you need to enter two or more values then please use multiple rows (if supported by the table)"
   - tag: validate-as-yes-no
     text:
       output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
       output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+  - tag: validate-as-CIA
+    text:
+      output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+      output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' must begin with either; '{{ values.confidentiality }}:', '{{ values.integrity }}:' or '{{ values.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
   - tag: validate-from-template
     text:
       output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched value from template"

@@ -2,6 +2,8 @@
 
 import logging
 from data.key import key as Key
+import utils.match as match
+import utils.model as model
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -56,6 +58,35 @@ def _inherit_row_above_if_empty(proc_def, output_data):
                             row_above_value = value
 
     return output_data
+
+def _remove_empty_rows(proc_def, output_data):
+
+    # output_data needs to be a list
+    if not isinstance(output_data, list):
+        logger.warning(f"Cannot run post-processor 'remove-empty-rows' on output data of type '{type(output_data)}', needs to be a list")
+        return output_data
+
+    # Get list of any columns to ignore the value of
+    ignore_list = []
+    if proc_def:
+        ignore_list = proc_def.get("ignore-keys", [])
+
+    def _inner_is_empty(key, value, context):
+        if isinstance(value, str):
+            if key.name not in ignore_list:
+                if not match.is_empty(value):
+                    return False, False
+
+        return True, True
+
+    new_output_data = []
+    for row in output_data:
+        empty = model.recurse(row, _inner_is_empty, None)
+        # False will be returned if a non-empty found (we add these to the output), otherwise None will be returned if all empty
+        if empty is False:
+            new_output_data.append(row)
+
+    return new_output_data
 
 def _value_replace(proc_def, output_data):
 
@@ -128,6 +159,7 @@ def _remove_header_row(proc_def, output_data):
 
 post_processor_dispatch_table = {
     "inherit-row-above-if-empty":_inherit_row_above_if_empty,
+    "remove-empty-rows": _remove_empty_rows,
     "value-replace": _value_replace,
     "remove-header-row": _remove_header_row
 }

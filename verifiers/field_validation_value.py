@@ -31,6 +31,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
     tagged_data = find.keys_with_tag_matching_regex(model, "^validate\\-.*$")
 
     configured_validators = verifier_config["tags"]
+    logger.info(f"Configured validators in verifier config - {configured_validators}")
 
     references = {}
     references['model'] = model
@@ -48,7 +49,15 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         validatorOutput_list =[]
 
         # For each configured validator, check if it is a tag on the current key
-        for validator_entry in [v for v in configured_validators if tagged_key.hasTag(v["tag"])]:
+        tagged_key_validator = [v for v in configured_validators if tagged_key.hasTag(v["tag"])]
+        logger.debug(f"Validators configured for key '{tagged_key.name}' - {tagged_key_validator}")
+
+        # Since we get data passed on tag prefix and not configured validators, it's possible that this tagged data has no configured validator.  No validator means no error
+        at_least_one_validator_ran = False
+        
+        for validator_entry in tagged_key_validator:
+
+            at_least_one_validator_ran = True
 
             validatorOutput = vlad.validate(validator_entry["tag"], tagged_key, tagged_value, references)
 
@@ -67,14 +76,15 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         issue_dict["issue_value"] = tagged_value
         issue_dict["errordata"] = validatorOutput_list
 
-        if not tagged_value_validates:    
-            verify_return_list.append(VerifierIssue("value-invalid", 
-                                                    None,
-                                                    issue_dict))
-        elif a_validator_failed:
-            verify_return_list.append(VerifierIssue("value-valid", 
-                                                    None,
-                                                    issue_dict,
-                                                    ErrorType.INFO))
+        if at_least_one_validator_ran:
+            if not tagged_value_validates:    
+                verify_return_list.append(VerifierIssue("value-invalid", 
+                                                        None,
+                                                        issue_dict))
+            elif a_validator_failed:
+                verify_return_list.append(VerifierIssue("value-valid", 
+                                                        None,
+                                                        issue_dict,
+                                                        ErrorType.INFO))
 
     return verify_return_list

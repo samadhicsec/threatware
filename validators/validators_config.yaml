@@ -4,21 +4,23 @@ validator-config:
     validator: regex
     config:
       pattern: "^\\d+.\\d+$"
-      #output_text_valid: "Key '{}' with value '{}' matched the regular expression pattern '{}'"
-      #output_text_invalid: "Key '{}' with value '{}' does not match the regular expression pattern '{}'"
   - tag: validate-as-date
     validator: date
     config:
-      #output_text_valid: "Key '{}' with value '{}' is a valid date"
-      #output_text_invalid: "Key '{}' with value '{}' is an invalid date"
+  - tag: validate-as-single-entry
+    validator: string
+    config:
+      method: "count"
+      input-parameter: "\n"
+      expected-result: 0
   - tag: validate-as-yes-no
     validator: regex
     config:
       pattern: "(?i){{ values.yes }}|{{ values.no }}"
-      #output_text_valid: "Key '{}' with value '{}' matched the regular expression pattern '{}'"
-      #output_text_invalid: "Key '{}' with value '{}' does not match the regular expression pattern '{}'"
+  - tag: validate-as-CIA
+    validator: regex
+    config:
+      pattern: "(?i){{ values.confidentiality }}|{{ values.integrity }}|{{ values.availability }}"
   - tag: validate-from-template
     validator: template
     config:
-      #output_text_valid: "Key '{}' with value '{}' matched value from template '{}'"
-      #output_text_invalid: "Key '{}' with value '{}' does not match a template value {}"

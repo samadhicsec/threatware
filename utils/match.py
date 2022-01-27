@@ -4,6 +4,7 @@ Utility methods for string matching
 """
 
 import logging
+from utils.model import recurse
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -43,6 +44,20 @@ def equals(str_to_match:str, possible) -> bool:
 def is_empty(str_to_match:str) -> bool:
 
     return equals(str_to_match, "")
+
+# Returns True if all descendents of 'data' are empty
+def is_empty_recursive(data:object) -> bool:
+
+    def _inner_is_empty(key, value, context):
+        if isinstance(value, str):
+            if is_empty(value):
+                return True, True
+            else:
+                return False, False
+
+    _, result = recurse(data, _inner_is_empty, None)
+
+    return result
 
 def endswith(str_to_match:str, ends_with) -> bool:
 

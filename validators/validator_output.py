@@ -18,10 +18,10 @@ class ValidatorOutput:
     Holds the output of a validator and is used to format output of validator
     """
 
+    pre_defined_template_values = {}    # Will be read from file
     templated_output_texts = {}
     validator_config = {}
 
-    #def __init__(self, validator_tag:str = None, validator_name:str = None, validator_module:str = None, result:bool = False, description:str = None, error:str = None):
     def __init__(self, validator_tag:str = None, validating_key = None, validating_value = None):
         """
         Create a ValidatorOutput object
@@ -30,16 +30,10 @@ class ValidatorOutput:
         ----------
         validator_tag : str
             The tag that will be looked up in the validator config YAML to get the validator method and config to use
-        validator_name : str
-            The name of the validator
-        validator_module : str
-            The module where the validator was laded from
-        result : bool
-            True if validation was succeeded, False otherwise (and in the case of error)
-        description: str
-            Description text about the resultof validation
-        error: str
-            Error text if the validator failed for some reason
+        validating_key : 
+            The key of the entry being validated
+        validating_value : 
+            The value of the entry being validated
         """
 
         self.validator_tag = validator_tag
@@ -51,7 +45,6 @@ class ValidatorOutput:
         self.description = None
         self.error = None
 
-    # TODO: sort out the format of the validator error messages
 
     def _get_state(self):
 
@@ -66,6 +59,7 @@ class ValidatorOutput:
                 templ_desc = validator_output_texts.get("output_text_invalid")
 
             context = {}
+            context["values"] = self.pre_defined_template_values["values"]
             context["key"] = {}
             context["key"]["name"] = self.validating_key.name
             context["key"]["colname"] = self.validating_key.getProperty("colname")
