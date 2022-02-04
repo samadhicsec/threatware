@@ -1,0 +1,14 @@
+---
+manage-config:
+  storage:
+    gitrepo:
+      remote: "git@github.com-threat-models:samadhicsec/threat-models.git"
+      default-branch: "approved"
+      base-storage-dir: "/tmp"
+    index:
+      index-create-branch: "create"
+  metadata:
+    index-filename: "threatmodels.yaml"
+    metadata-filename: "metadata.yaml"
+  output:
+    template-text-file: "manage/manage_texts.yaml"

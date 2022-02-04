@@ -21,6 +21,10 @@ validator-config:
     validator: regex
     config:
       pattern: "(?i){{ values.confidentiality }}|{{ values.integrity }}|{{ values.availability }}"
+  - tag: validate-as-status
+    validator: regex
+    config:
+      pattern: "(?i){{ values.draft }}|{{ values.approved }}|{{ values.obsolete }}"
   - tag: validate-from-template
     validator: template
     config:

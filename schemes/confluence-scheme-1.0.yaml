@@ -12,6 +12,8 @@ scheme:
       - key: 
           name: document_details
           section: Document Details Table
+          tags:
+            - document-details-data
         value: 
           get-data:
             - query:
@@ -20,19 +22,28 @@ scheme:
             - query:
                 type: "html-table-transpose"
           map-data:
-            - key: "document-ID"
+            - key: 
+                name: "document-ID"
+                tags:
+                  - document-id
               value: 
                 get-data:
                   query:
                     type: html-table-row
                     column-num: 0
-            - key: "document-name"
+            - key: 
+                name: "document-name"
+                tags:
+                  - document-title
               value: 
                 get-data:
                   query:
                     type: html-table-row
                     column-num: 1
-            - key: "current-version"
+            - key: 
+                name: "current-version"
+                tags:
+                  - "current-version"
               value: 
                 get-data:
                   query:
@@ -47,6 +58,100 @@ scheme:
           output-data:
             post-processor:
               remove-header-row:
+      - key: 
+          name: version_history
+          section: Version History Table
+          tags:
+            - version-history-data
+        value: 
+          get-data:
+            - query:
+                type: "html-table"
+                xpath: "//html/body/h1[text()='Version History']/following::table[1]"
+          map-data:
+            - key: 
+                name: "version"
+                tags:
+                  - row-identifier
+                  - validate-as-version
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 0
+            - key: 
+                name: "author"
+                tags:
+                  - "version-author"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 1
+            - key: 
+                name: "author-role"
+                tags:
+                  - "version-author-role"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 2
+            - key: 
+                name: "version-date"
+                tags:
+                  - "version-date"
+                  - "validate-as-data"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 3
+            - key: 
+                name: "change-log"
+                tags:
+                  - version-changelog
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 4
+            - key: 
+                name: "version-status"
+                tags:
+                  - "version-status"
+                  - validate-as-status
+                  - validate-as-single-entry
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 5
+            - key: 
+                name: "approver-name"
+                tags:
+                  - not-mandatory
+                  - "version-approver"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 6
+            - key: 
+                name: "approved-date"
+                tags:
+                  - not-mandatory
+                  - validate-as-date
+                  - "version-approved-date"
+              value: 
+                get-data:
+                  query:
+                    type: html-table-row
+                    column-num: 7
+          output-data:
+            post-processor:
+              remove-header-row:
+              remove-empty-rows:
       - key: 
           name: scope
           section: Scope Table

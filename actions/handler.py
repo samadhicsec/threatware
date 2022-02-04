@@ -11,6 +11,7 @@ import utils.logging
 from schemes.schemes import load_scheme
 import actions.convert as convert
 import actions.verify as verify
+import actions.manage as manage
 
 utils.logging.configureLogging()
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -90,9 +91,18 @@ def lambda_handler(event, context):
             body = report.tojson()
 
         elif action == ACTION_MANAGE:
+            
+            config = manage.config()
+
+            output = manage.output(config)
+
             # Convert the TM template
             doc_model = convert.convert(schemeDict, docloc)
-            body = str(doc_model)
+
+            result = manage.submit(config, output, docloc, schemeDict, doc_model)
+
+            body = output.tojson(result)
+
         elif action == ACTION_MEASURE:
             # Convert the TM template
             doc_model = convert.convert(schemeDict, docloc)

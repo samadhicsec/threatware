@@ -89,6 +89,13 @@ tag-mapping:
   - key-name: "tickets"
     tags: 
       - not-mandatory
+  - key-name: "version"
+    tags:
+      - validate-as-version
+      - validate-as-single-entry
+  - key-name: "version-date"
+    tags: 
+      - validate-as-date
   - key-name: "current-version"
     tags:
       - validate-as-version

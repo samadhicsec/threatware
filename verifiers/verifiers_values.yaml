@@ -1,6 +1,9 @@
 ---
 values:
   # This file should not contain any templated values, as it will be used to provide values to the other templated files
+  draft: "DRAFT"
+  approved: "APPROVED"
+  obsolete: "OBSOLETE"
   yes: "Yes"
   no: "No"
   confidentiality: "confidentiality"

@@ -65,3 +65,11 @@ def yaml_templated_file_to_dict(yaml_template_file_path:str, context:dict):
     render_yaml = templated_yaml.render(context)
 
     return yaml_str_to_dict(render_yaml)
+
+def class_to_yaml_file(output_classes, output_instance, file_location):
+
+    yaml=YAML(typ='safe')
+    yaml.default_flow_style = False
+    for output_class in output_classes:
+        yaml.register_class(output_class)
+    yaml.dump(output_instance, file_location)

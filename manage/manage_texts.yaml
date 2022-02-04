@@ -1,0 +1,6 @@
+---
+output-texts:
+  success: "The following metadata was submitted as the approved version of threat model with ID '{{ ID }}'"
+  no-version-history: "Could not find entry in version history table for threat model current version '{{ current_version }}'"
+  no-index-ID: "Could not find metadata index entry for ID '{{ ID }}'.  Valid IDs must exist in the metadata index file.  New IDs can be created using manage.craete"
+  cant-update-approved-version: "The threat model with ID '{{ ID }}' submitted has a current version of '{{ approved-version }}' which is the same as the currently approved version for this threat model.  Updating approved versions of threat models is not supported."
