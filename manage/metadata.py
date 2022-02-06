@@ -26,6 +26,35 @@ class MetadataIndexEntry:
         self.approved_version = entry.get("approved-version", "")
         self.approved_date = entry.get("approved-date", "")     
 
+    def fromModel(self, scheme, location, model):
+        """ This extracts the data as if the current version is being submitted for approval """
+
+        _, ddd_value = find.key_with_tag(model, "document-details-data")
+        _, id_value = find.key_with_tag(ddd_value, "document-id")
+        _, current_version_value = find.key_with_tag(ddd_value, "current-version")
+        _, approved_version_value = find.key_with_tag(ddd_value, "approved-version")
+
+        self.ID = id_value
+        self.scheme = scheme
+        self.location = location
+        self.approved_version = current_version_value
+
+        vhd_key, vhd_value = find.key_with_tag(model, "version-history-data")
+        versions = find.keys_with_tag(vhd_value, "row-identifier")
+        match_found = False
+        for version_key, version_value in versions:
+            if match.equals(current_version_value, version_value):
+                version_row = version_key.getProperty("row")
+                self.version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
+                match_found = True
+                break
+
+        if not match_found:
+            logger.error(f"Could not find entry in version history table for threat model current version '{current_version_value}'")
+            raise ManageError("no-version-history", {"current_version":current_version_value})
+
+        return current_version_value, approved_version_value
+
     def _get_state(self):
         output = {}
         output["ID"] = self.ID
@@ -57,18 +86,20 @@ class ThreatModelVersionMetaData:
         self.version_approver = None
         self.version_approved_date = None
 
-    def fromModel(self, location, model):
+    def fromModel(self, scheme, location, model):
 
-        ddd_key, ddd_value = find.key_with_tag(model, "document-details-data")
+        _, ddd_value = find.key_with_tag(model, "document-details-data")
         _, id_value = find.key_with_tag(ddd_value, "document-id")
-        title_key, title_value = find.key_with_tag(ddd_value, "document-title")
-        current_version_key, current_version_value = find.key_with_tag(ddd_value, "current-version")
+        _, title_value = find.key_with_tag(ddd_value, "document-title")
+        _, current_version_value = find.key_with_tag(ddd_value, "current-version")
+        _, approved_version_value = find.key_with_tag(ddd_value, "approved-version")
 
         self.doc_title = title_value
+        self.doc_scheme = scheme
         self.doc_location = location
         self.version = current_version_value
 
-        vhd_key, vhd_value = find.key_with_tag(model, "version-history-data")
+        _, vhd_value = find.key_with_tag(model, "version-history-data")
         versions = find.keys_with_tag(vhd_value, "row-identifier")
         match_found = False
         for version_key, version_value in versions:
@@ -88,12 +119,13 @@ class ThreatModelVersionMetaData:
             logger.error(f"Could not find entry in version history table for threat model current version '{current_version_value}'")
             raise ManageError("no-version-history", {"current_version":current_version_value})
 
-        return id_value
+        return id_value, current_version_value, approved_version_value
 
     def fromDict(self, version:str, meta_dict:dict) -> None:
 
         self.version = version
         self.doc_title = meta_dict.get("title", None)
+        self.doc_scheme = meta_dict.get("scheme", None)
         self.doc_location = meta_dict.get("location", None)
         
         self.version_author = meta_dict.get("author", None)
@@ -107,6 +139,7 @@ class ThreatModelVersionMetaData:
     def _get_state(self):
         output = {}
         output["title"] = self.doc_title
+        output["scheme"] = self.doc_scheme
         output["location"] = self.doc_location
         output["author"] = self.version_author
         output["author-role"] = self.version_author_role
@@ -134,6 +167,8 @@ class IndexMetaData:
         self.index_filename = config.get("index-filename", "threatmodels.yaml")
         self.storage = storage
 
+        self._load_index()
+
     def _load_index(self):
 
         threatmodels = load_yaml.yaml_file_to_dict(Path(self.storage.repodir).joinpath(self.index_filename))
@@ -143,8 +178,31 @@ class IndexMetaData:
             mdie = MetadataIndexEntry(TMindex_list_entry)
             self.indexdata[mdie.ID] = mdie
 
-    def getIndexEntry(self, ID:str):
+    def getIndexEntry(self, ID:str) -> MetadataIndexEntry:
         return self.indexdata.get(ID, None)
+
+    def getIndexEntryByLocation(self, scheme:str, location:str) -> MetadataIndexEntry:
+
+        location_based_index = {(entry.scheme, entry.location):entry for entry in self.indexdata}
+
+        return location_based_index.get((scheme, location), None)
+
+    def createIndexEntryID(self, IDprefix:str):
+
+        #last_entry_ID = list(self.indexdata.keys())[-1]
+
+        try:
+            entry_ID_numbers = [int(entryID.split(".")[-1]) for entryID in self.indexdata.keys()]
+
+            #last_ID_num = int(last_entry_ID.split(".")[-1])
+        except ValueError as ex:
+            logger.error(f"Could not convert last part of an ID to an int")
+            raise ManageError("internal-error", {})
+
+        last_ID_num = sorted(entry_ID_numbers)[-1]
+
+        return IDprefix + str(last_ID_num + 1)
+
 
     def setIndexEntry(self, ID:str, entry:MetadataIndexEntry):
         self.indexdata[ID] = entry
@@ -190,6 +248,10 @@ class ThreatModelMetaData:
         self.ID = ID
         self._set_empty()
 
+        self.index._load_index()
+
+        self._load_metadata() 
+
     def _set_empty(self):
         self.IDmetadata = {}
         self.IDmetadata["ID"] = self.ID
@@ -199,68 +261,47 @@ class ThreatModelMetaData:
 
         # If the directory or file don't exist, that's fine as they'll be created when we write out changes.
 
-        # Does the dir exist?
-        if Path(self.storage.repodir).joinpath(self.ID).is_dir():
-            metadata_file = Path(self.storage.repodir).joinpath(self.ID, self.metadata_filename)
-            # and the file?
-            if metadata_file.exists():
-                # then load
-                contents_dict = load_yaml.yaml_file_to_dict(metadata_file)
+        if (contents_dict := self.storage.load_yaml(Path(self.ID).joinpath(self.metadata_filename))) is not None:
 
-                if (tm_metadata := contents_dict.get("threatmodel-metadata", None)) is None:
-                    logger.error("Could not find key 'threatmodel-metadata'")
-                    return
+            if (tm_metadata := contents_dict.get("threatmodel-metadata", None)) is None:
+                logger.error("Could not find key 'threatmodel-metadata'")
+                return
 
-                if not match.equals(self.ID, tm_metadata.get("ID", None)):
-                    logger.error("The 'ID' in the threatmodel metadata file did not match the ID of the threat model")
-                    return
+            if not match.equals(self.ID, tm_metadata.get("ID", None)):
+                logger.error("The 'ID' in the threatmodel metadata file did not match the ID of the threat model")
+                return
 
-                for version_key, version_value in tm_metadata.get("versions", {}).items():
-                    tmvm = ThreatModelVersionMetaData()
-                    tmvm.fromDict(version_key, version_value)
-                    self.IDmetadata["versions"][version_key] = tmvm
+            for version_key, version_value in tm_metadata.get("versions", {}).items():
+                tmvm = ThreatModelVersionMetaData()
+                tmvm.fromDict(version_key, version_value)
+                self.IDmetadata["versions"][version_key] = tmvm
 
     def _write_metadata(self):
 
-        if not Path(self.storage.repodir).joinpath(self.ID).is_dir():
-            os.mkdir(Path(self.storage.repodir).joinpath(self.ID))
+        self.storage.write_yaml([ThreatModelMetaData, ThreatModelVersionMetaData], Path(self.ID).joinpath(self.metadata_filename), self)
 
-        load_yaml.class_to_yaml_file([ThreatModelMetaData, ThreatModelVersionMetaData], self, Path(self.storage.repodir).joinpath(self.ID, self.metadata_filename))
 
-    def __enter__(self):
+    def setApprovedVersion(self, ID:str, indexEntry:MetadataIndexEntry, version:ThreatModelVersionMetaData):
 
-        # This is going to checkout the relevant parts of the repo
-        self.storage.__enter__()
+        currentIndexEntry = self.index.getIndexEntry(ID)
 
-        self.index._load_index()
-
-        self._load_metadata()      
-
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-
-        if exc_type is None:
-            self.index._write_index()
-            self._write_metadata()
-
-        # This is going to commit any changes
-        self.storage.__exit__(exc_type, exc_value, traceback)
-
-    def setApprovedVersion(self, ID:str, version:ThreatModelVersionMetaData):
-
-        indexEntry = self.index.getIndexEntry(ID)
-
-        if match.equals(indexEntry.approved_version, version.version):
+        if match.equals(currentIndexEntry.approved_version, version.version):
             logger.error(f"Submitted Threat Model version is the same as current approved version.  Cannot overwrite current approved version.")
-            return
+            raise ManageError("cant-update-approved-version", {"ID":ID, "approved-version":currentIndexEntry.approved_version})
 
-        indexEntry.location = version.doc_location
-        indexEntry.approved_version = version.version
-        indexEntry.approved_version_date = version.version_approved_date
+        if not match.equals(indexEntry.approved_version, version.version):
+            logger.error(f"Submitted Threat Model version has a different version to the submitted index entry")
+            raise ManageError("internal-error", {})
+
         self.index.setIndexEntry(ID, indexEntry)
 
         self.IDmetadata["versions"][version.version] = version
+
+    def persist(self):
+        """ Writes any changes to the underlying storage layer """
+
+        self.index._write_index()
+        self._write_metadata()
 
 
     def getVersion(self, versionID:str) -> ThreatModelVersionMetaData:

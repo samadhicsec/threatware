@@ -99,7 +99,7 @@ def lambda_handler(event, context):
             # Convert the TM template
             doc_model = convert.convert(schemeDict, docloc)
 
-            result = manage.submit(config, output, docloc, schemeDict, doc_model)
+            result = manage.submit(config, output, docloc, schemeID, doc_model)
 
             body = output.tojson(result)
 

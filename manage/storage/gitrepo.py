@@ -7,11 +7,14 @@ import os
 from pathlib import Path
 from io import StringIO
 from re import T
+from tkinter.font import BOLD
 from sh.contrib import git
 from sh import pushd
 from sh import rm
 from sh import ErrorReturnCode
 import utils.match as match
+from utils import load_yaml
+from utils.error import ManageError
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -29,56 +32,47 @@ class GitStorage:
     def _not_entered(self):
         if not self.is_entered:
             logger.error(f"Cannot perform action outside of 'with' statement")
-            return True
+            raise ManageError("internal-error", {})
+
         return False
 
-    def _run(self, directory, command, *args, out=None):
+    def _run(self, directory, command, *args, **kwargs):
 
-        #cwd = os.getcwd()
-        #os.chdir(dir)
-
-        if out is None:
-            out = logger.debug
+        if "_out" not in kwargs:
+            kwargs["_out"] = logger.debug
 
         with pushd(directory):  
             try:
                 logger.debug(f"Running '{command.__name__}' with args '{args}'")
-                command(*args, _out=out)
+                command(*args, **kwargs)
             except ErrorReturnCode as erc:
                 logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and output '{erc.stdout}'")
-            #finally:
-            #    os.chdir(cwd)
-        
+                return False
+
+        return True        
 
     def __enter__(self):
 
         buf = StringIO()
 
-        cwd = os.getcwd()
-        os.chdir(self.base_storage_dir)
+        if not self._run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote], _out=buf, _err_to_out=True):
+            logger.error(f"Could not clone repo '{self.remote}'")
+            raise ManageError("internal-error", {})
 
-        try:
-            logger.debug(f"git clone --no-checkout {self.remote}")
-            git.clone("--no-checkout", self.remote, _out=buf, _err_to_out=True)
+        outdata = buf.getvalue()
+        logger.debug(f"{outdata}")
 
-            outdata = buf.getvalue()
-            logger.debug(f"{outdata}")
+        # Get the directory where the code was cloned into
+        for line in outdata.splitlines():
+            if line.startswith("Cloning into '") and line .endswith("'..."):
+                self.repodirname = line.split("'")[1]
+                break
 
-            # Get the directory where the code was cloned into
-            for line in outdata.splitlines():
-                if line.startswith("Cloning into '") and line .endswith("'..."):
-                    self.repodirname = line.split("'")[1]
-                    break
+        self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
 
-            os.chdir(self.repodirname)
-            self.repodir = os.getcwd()
-
-            git("sparse-checkout", "init", "--cone")
-
-        except ErrorReturnCode as erc:
-            logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and output '{erc.stdout}'")
-        finally:
-            os.chdir(cwd)
+        if not self._run(self.repodir, git, ["sparse-checkout", "init", "--cone"]):
+            logger.error(f"Could not sparse-checkout init")
+            raise ManageError("internal-error", {})
 
         self.is_entered = True
 
@@ -94,14 +88,16 @@ class GitStorage:
                         remote_branch_exists_var = True
                         return
 
-        self._run(os.getcwd(), git, ["ls-remote", "--heads", self.remote], out=_check_for_remote_branch)
+        if not self._run(os.getcwd(), git, ["ls-remote", "--heads", self.remote], _out=_check_for_remote_branch):
+            logger.error(f"Could not get list of remote heads for '{self.remote}'")
+            raise ManageError("internal-error", {})
         
         return remote_branch_exists_var
 
     def _is_default_branch(self, branch:str):
         if match.is_empty(branch) or match.equals(self.default_branch, branch):
             logger.error(f"Cannot commit directly to default branch")
-            return True
+            raise ManageError("internal-error", {})
 
         return False
 
@@ -117,22 +113,13 @@ class GitStorage:
         self.branch = branch
 
         if self.remote_branch_exists(branch):
-            self._run(self.repodir, git.checkout, ["-b", self.branch, "origin/" + self.branch], out=logger.debug)
+            if not self._run(self.repodir, git.checkout, ["-b", self.branch, "origin/" + self.branch]):
+                logger.error(f"Could not checkout remote branch '{self.branch}'")
+                raise ManageError("internal-error", {})
         else:
-            self._run(self.repodir, git.checkout, ["-b", self.branch], out=logger.debug)
-
-        # cwd = os.getcwd()
-        # os.chdir(self.base_storage_dir)
-        # os.chdir(self.repodir)
-        # try:
-        #     if remote_branch_exists:
-        #         git.checkout("-b", self.branch, "origin/" + self.branch, _out=logger.debug)
-        #     else:
-        #         git.checkout("-b", self.branch, _out=logger.debug)
-        # except ErrorReturnCode as erc:
-        #     logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and output '{erc.stdout}'")
-        # finally:
-        #     os.chdir(cwd)
+            if not self._run(self.repodir, git.checkout, ["-b", self.branch]):
+                logger.error(f"Could not checkout local branch '{self.branch}'")
+                raise ManageError("internal-error", {})
     
     def branch_replace(self, branch:str):
         """ Switches to a local branch, deleting any existing remote branch (ignroing any existing changes on that branch) """
@@ -146,9 +133,13 @@ class GitStorage:
         self.branch = branch
 
         if self.remote_branch_exists(branch):
-            self._run(self.repodir, git.push, ["origin", "-d", self.branch], out=logger.debug)
+            if not self._run(self.repodir, git.push, ["origin", "-d", self.branch]):
+                logger.error(f"Failed to delete remote branch '{self.branch}'")
+                raise ManageError("internal-error", {})
 
-        self._run(self.repodir, git.checkout, ["-b", self.branch], out=logger.debug)
+        if not self._run(self.repodir, git.checkout, ["-b", self.branch]):
+            logger.error(f"Failed to checkout local branch '{self.branch}'")
+            raise ManageError("internal-error", {})
 
     def commit(self, message:str = ""):
 
@@ -158,42 +149,54 @@ class GitStorage:
         if self._is_default_branch(self.branch):
             return
 
-        cwd = os.getcwd()
-        os.chdir(self.base_storage_dir)
-        os.chdir(self.repodir)
-
-        try:
-            git.add(".", _out=logger.debug)
-            git.commit("-m", message, _out=logger.debug)
-            git.push("-u", "origin", self.branch, _out=logger.debug)
-        except ErrorReturnCode as erc:
-            logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and output '{erc.stdout}'")
-        finally:
-            os.chdir(cwd)
+        if not self._run(self.repodir, git.add, ["."]):
+            logger.error(f"Failed to git add local changes")
+            raise ManageError("internal-error", {})
+        if not self._run(self.repodir, git.commit, ["-m", message]):
+            logger.error(f"Failed to git commit local changes")
+            raise ManageError("internal-error", {})
+        if not self._run(self.repodir, git.push, ["-u", "origin", self.branch]):
+            logger.error(f"Failed to git push local changes to remote")
+            raise ManageError("internal-error", {})
     
     def __exit__(self, exc_type, exc_value, traceback):
 
-        cwd = os.getcwd()
-        os.chdir(self.base_storage_dir)
-
-        rm("-rf", self.repodir)
-
-        os.chdir(cwd)
+        # Delete the repo we checked out.  
+        self._run(self.base_storage_dir, rm, ["-rf", self.repodir])
 
         self.is_entered = False
 
+    def load_yaml(self, relative_file_path:str) -> dict:
+
+        file_path = Path(self.repodir).joinpath(relative_file_path)
+        if file_path.is_file():
+            return load_yaml.yaml_file_to_dict(file_path)
+
+        return None
+
+    def write_yaml(self, class_list:list, relative_file_path:str, contents):
+
+        file_path = Path(self.repodir).joinpath(relative_file_path)
+        if not file_path.is_file():
+            # Try to make the directory, as that at least needs to exist
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        load_yaml.class_to_yaml_file(class_list, contents, file_path)
 
 class IndexStorage(GitStorage):
 
-    def __init__(self, config:dict):
+    def __init__(self, config:dict, persist_changes:bool = True):
         super().__init__(config)
 
         indexstorage_config = config.get("index", {})
         self.index_create_branch_name = indexstorage_config.get("index-create-branch", "create")
+        self.persist_changes = persist_changes
 
-        #self.metadata_filename = config.get("metadata-filename", "threatmodels.yaml")
         self.entered = False
-        
+
+    def persistChanges(self, value:bool):
+        self.persist_changes = value
+
     def __enter__(self):
         
         if self.entered:
@@ -202,41 +205,18 @@ class IndexStorage(GitStorage):
 
         super().__enter__(self)
 
-        self.can_commit = False
-
-        #threatmodels = load_yaml.yaml_file_to_dict(self.metadata_filename)
-
-        #self.metadata = {}
-        #for TMid, TMentry in threatmodels["threatmodels"].items():
-        #    self.metadata[TMid] = MetadataIndexEntry(TMentry)
-
         super().branch_update(self.index_create_branch_name)
 
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
 
-        if exc_type is None:
+        if exc_type is None and self.persist_changes:
             super().commit(f"Updated index file")
 
         super().__exit__(exc_type, exc_value, traceback)
 
         self.entered = False
-
-    #def getIndexEntry(self, ID:str):
-    #    return self.metadata.get(ID, None)
-
-    #def setEntry(self, ID:str, entry:MetadataIndexEntry):
-    #    self.metadata[ID] = entry
-
-    #def getIndexEntryByLocation(self, location:str):
-
-    #    for keyvalue, entryvalue in self.metadata.items():
-    #        if match.equals(location, entryvalue.location):
-    #            return entryvalue
-
-    #    return None
-
     
 
 class ThreatModelStorage(GitStorage):
@@ -245,8 +225,6 @@ class ThreatModelStorage(GitStorage):
         super().__init__(config)
 
         self.ID = ID
-        #self.metadata_file = Path.joinpath(self.repodir, self.ID, config["metadata-filename"])
-        #self.metadata_dict = load_yaml.yaml_file_to_dict(self.metadata_file)
         self.entered = False
 
     
@@ -261,24 +239,16 @@ class ThreatModelStorage(GitStorage):
         self.can_commit = False
 
         # Fetch the directory containing the metadata for the TM ID.  If it doesn't exist, nothing is downloaded
-        self._run(self.repodir, git, ["sparse-checkout", "set", self.ID])
-
-        # Does the dir exist?
-        #if not Path.joinpath(self.repodir, self.ID).is_dir():
-        #    self.tm_metadata = ThreatModelMetaData.skeleton(self.ID)
-        #else:
-        #    self.tm_metadata = ThreatModelMetaData(self.metadata_dict)
+        if not self._run(self.repodir, git, ["sparse-checkout", "set", self.ID]):
+            logger.error(f"Could not sparse-checkout directory '{self.ID}'")
+            raise ManageError("internal-error", {})
 
         super().branch_replace(self.ID)
 
         return self
 
-    #def getMetadata(self):
-    #    return self.tm_metadata
-
     def __exit__(self, exc_type, exc_value, traceback):
 
-        #if self.can_commit:
         if exc_type is None:
             super().commit(f"Update to {self.ID}")
 

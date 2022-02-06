@@ -3,14 +3,16 @@
 Manage a threat model
 """
 
+from curses import meta
 import logging
 from pathlib import Path
 from utils.error import ManageError
 from utils.model import assign_row_identifiers
+from utils import match
 from manage import manage_config
 from manage.manage_output import ManageOutput
-from manage.metadata import ThreatModelMetaData
-from manage.metadata import ThreatModelVersionMetaData
+from manage.metadata import IndexMetaData, ThreatModelMetaData
+from manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
 from manage.storage.gitrepo import IndexStorage
 from manage.storage.gitrepo import ThreatModelStorage
 
@@ -29,38 +31,81 @@ def output(config:dict):
     return ManageOutput(config.get("output", {}))
 
 
-def metadata(config:dict, ID:str, location:str):
-    """ Given a document ID or a location retrieve the metadata associated with the threat model """
+def indexdata(config:dict, ID:str) -> MetadataIndexEntry:
+    """ Given a document ID retrieve the metadata associated with the threat model """
 
-    metadata = IndexStorage(config)
+    if ID is None:
+        logger.error(f"An ID must be provided")
+        raise ManageError("internal-error", {})
 
-    if ID is not None:    
-        entry = metadata.getIndexEntry(ID)
-        if entry is not None:
-            return entry
-        else:
-            return f"No management data exists for {ID}"
-    elif location is not None:
-        entry = metadata.getIndexEntryByLocation(location)
-        if entry is not None:
-            return entry
-        else:
-            return f"No management data exists for {location}"
-    else:
-        return f"Either an ID or location must be provided"
+    with IndexStorage(config.get("storage", {}), False) as storage:
+    
+        index = IndexMetaData(config.get("metadata", {}), storage)
+        
+        entry = index.getIndexEntry(ID)
+        if entry is None:
+            logger.error(f"An entry with ID '{ID}' was not found")
+            raise ManageError("no-index-ID", {"ID":ID})
 
-def create(config:dict, IDprefix:str, location:str):
+        return entry
+            
+
+def create(config:dict, IDprefix:str, scheme:str, location:str):
     """ Given a document location and id format, generate the unique document ID, and store and return the result """
 
-    with IndexStorage(config) as metadata:
-        entry = metadata.getIndexEntryByLocation(location)
+    if IDprefix is None or scheme is None or location is None:
+        logger.error(f"An ID prefix, scheme and location, must all be provided")
+        raise ManageError("internal-error", {})
+
+    with IndexStorage(config.get("storage", {})) as storage:
+
+        index = IndexMetaData(config.get("metadata", {}), storage)
+
+        entry = index.getIndexEntryByLocation(scheme, location)
         if entry is not None:
             logger.info(f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}'")
-            return f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}'"
+            raise ManageError("index-entry-exists", {"scheme":scheme, "location":location, "ID":entry.ID})
     
+        new_ID = index.createIndexEntryID(IDprefix)
+
+        new_entry = MetadataIndexEntry()
+        new_entry.ID = new_ID
+        new_entry.scheme = scheme
+        new_entry.location = location
+
+        index.setIndexEntry(new_ID, new_entry)
 
 
-def submit(config:dict, output:ManageOutput, location:str, scheme:dict, model:dict):
+# def submit_old(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
+#     """ 
+#     Submit the threat model for approval 
+    
+#     Given config and a threat model ID, check to see this TM has been submitted before, and if not create dir.  Otherwise, get the TM, get the version,
+#     and metadata, and create/update metadata for that version.
+#     """
+#     try:
+#         assign_row_identifiers(model)
+
+#         # Parse for complete metadata to store
+#         tmvmd = ThreatModelVersionMetaData()
+#         docID, current_version, approved_version = tmvmd.fromModel(schemeID, location, model)
+
+#         storage = ThreatModelStorage(config.get("storage", {}), docID)
+
+#         with ThreatModelMetaData(config.get("metadata", {}), storage, docID) as tm_metadata:                
+#             # Add/update the metadata related to this version
+#             tm_metadata.setApprovedVersion(docID, tmvmd)
+
+#     except ManageError as error:
+#         return output.getError(error.text_key, error.template_values)
+
+#     if match.equals(current_version, approved_version):
+#         return output.getSuccess("success-approver", {"ID":docID, "tm_version":tmvmd})
+#     else:
+#         return output.getSuccess("success-submitter", {"ID":docID, "tm_version":tmvmd})
+
+
+def submit(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
     """ 
     Submit the threat model for approval 
     
@@ -70,43 +115,30 @@ def submit(config:dict, output:ManageOutput, location:str, scheme:dict, model:di
     try:
         assign_row_identifiers(model)
 
+        # Parse for the index metadata to store
+        imd = MetadataIndexEntry({})
+        current_version, approved_version = imd.fromModel(schemeID, location, model)
+
         # Parse for complete metadata to store
         tmvmd = ThreatModelVersionMetaData()
-        docID = tmvmd.fromModel(location, model)
+        tmvmd.fromModel(schemeID, location, model)
 
-        storage = ThreatModelStorage(config.get("storage", {}), docID)
+        with ThreatModelStorage(config.get("storage", {}), imd.ID) as storage:
 
-        with ThreatModelMetaData(config.get("metadata", {}), storage, docID) as tm_metadata:
-                
-            # Get the approved version of the TM
-            #tm_index_entry = tm_metadata.getIndexEntry(ID)
-
-            #if tm_index_entry is None:
-            #    logger.error(f"Could not find metadata index entry for ID '{ID}'")
-            #    return output.tojson(output.getError("no-index-ID", {"ID":ID}))
-
-            
-            # Make sure the submitted version is not the approved version
-            #if tm_index_entry.approved_version == tmvmd.version:
-            #    logger.error(f"Version of submitted threat model '{tmvmd.version}' is not allowed to match approved version of threat model '{tm_index_entry.approved_version}'")
-            #    return output.tojson(output.getError("cant-update-approved-version", {"ID":ID, "approved-version":tm_index_entry.approved_version}))
-
-            # Get the submitted version
-
+            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imd.ID)
 
             # Add/update the metadata related to this version
-            tm_metadata.setApprovedVersion(docID, tmvmd)
+            tm_metadata.setApprovedVersion(imd.ID, imd, tmvmd)
 
-            # Finish submission
-            tm_metadata.can_commit = True
-
-            #TODO output different messages with 'Approved Version' != 'Current Version' -> tell user change submitted, but needs approval, whereas
-            # 'Approved Version' == 'Current Version' this is a message to the approver
+            tm_metadata.persist()
 
     except ManageError as error:
         return output.getError(error.text_key, error.template_values)
 
-    return output.getSuccess("success", {"ID":docID, "tm_version":tmvmd})
+    if match.equals(current_version, approved_version):
+        return output.getSuccess("success-approver", {"ID":imd.ID, "tm_version":tmvmd})
+    else:
+        return output.getSuccess("success-submitter", {"ID":imd.ID, "tm_version":tmvmd})
 
 def check():
     """ Given a document, check if the threat model has changed enough from teh approved version as to require re-approval """

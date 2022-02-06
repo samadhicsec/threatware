@@ -49,7 +49,10 @@ scheme:
                   query:
                     type: html-table-row
                     column-num: 2
-            - key: "approved-version"
+            - key: 
+                name: "approved-version"
+                tags:
+                  - "approved-version"
               value: 
                 get-data:
                   query:
