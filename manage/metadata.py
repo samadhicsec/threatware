@@ -3,9 +3,8 @@
 Classes to manipulate for threat model metadata
 """
 import logging
-import os
 from pathlib import Path
-from ruamel.yaml import YAML
+from data.key import key as Key
 from utils import match
 from utils import load_yaml
 from data import find
@@ -26,34 +25,109 @@ class MetadataIndexEntry:
         self.approved_version = entry.get("approved-version", "")
         self.approved_date = entry.get("approved-date", "")     
 
-    def fromModel(self, scheme, location, model):
-        """ This extracts the data as if the current version is being submitted for approval """
+    def _populate(self, scheme, location, model, version_tag):
+        """ 
+        This populates using the current version data from the model 
+        
+        """
 
         _, ddd_value = find.key_with_tag(model, "document-details-data")
         _, id_value = find.key_with_tag(ddd_value, "document-id")
-        _, current_version_value = find.key_with_tag(ddd_value, "current-version")
-        _, approved_version_value = find.key_with_tag(ddd_value, "approved-version")
+        _, version_tag_value = find.key_with_tag(ddd_value, version_tag)
 
         self.ID = id_value
         self.scheme = scheme
         self.location = location
-        self.approved_version = current_version_value
+        #self.approved_version = current_version_value
 
-        vhd_key, vhd_value = find.key_with_tag(model, "version-history-data")
+        version_approver = None
+        version_approved_date = None
+
+        _, vhd_value = find.key_with_tag(model, "version-history-data")
         versions = find.keys_with_tag(vhd_value, "row-identifier")
-        match_found = False
+        #match_found = False
         for version_key, version_value in versions:
-            if match.equals(current_version_value, version_value):
+            if match.equals(version_tag_value, version_value):
                 version_row = version_key.getProperty("row")
-                self.version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
-                match_found = True
+                version_approver = find.key_with_tag(version_row, "version-approver")[1]
+                version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
+                #match_found = True
                 break
 
-        if not match_found:
-            logger.error(f"Could not find entry in version history table for threat model current version '{current_version_value}'")
-            raise ManageError("no-version-history", {"current_version":current_version_value})
+        if version_approver is not None and version_approved_date is not None:
+            self.approved_version = version_tag_value
+            self.approved_date = version_approved_date
 
-        return current_version_value, approved_version_value
+        #if not match_found:
+        #    logger.error(f"Could not find entry in version history table for threat model approved version '{current_version_value}'")
+        #    raise ManageError("no-version-history", {"current_version":current_version_value})
+
+        return version_tag_value
+
+    def createCurrentVersionEntryFromModel(self, scheme, location, model):
+        """ 
+        This populates using the current version data from the model 
+        
+        """
+
+        return self._populate(scheme, location, model, "current-version")
+
+    def createApprovedVersionEntryFromModel(self, scheme, location, model):
+        """ 
+        This populates using the approved version data from the model 
+        
+        """
+
+        return self._populate(scheme, location, model, "approved-version")
+
+    def isApproved(self) -> bool:
+        """ An entry is considered approved if both the Approved Version and Approved Date fields are set """
+        if not match.is_empty(self.approved_version) and not match.is_empty(self.approved_date):
+            return True
+
+        return False
+
+    # def fromModel(self, scheme, location, model):
+    #     """ 
+    #     This extracts approval data dependant on whether approval has been given 
+        
+    #     approved_version and approved_date are only set if version-approver and version-approved-date have been set
+    #     for the document-details-data approved-version value
+    #     """
+
+    #     _, ddd_value = find.key_with_tag(model, "document-details-data")
+    #     _, id_value = find.key_with_tag(ddd_value, "document-id")
+    #     _, current_version_value = find.key_with_tag(ddd_value, "current-version")
+    #     _, approved_version_value = find.key_with_tag(ddd_value, "approved-version")
+
+    #     self.ID = id_value
+    #     self.scheme = scheme
+    #     self.location = location
+    #     #self.approved_version = current_version_value
+
+    #     version_approver = None
+    #     version_approved_date = None
+
+    #     _, vhd_value = find.key_with_tag(model, "version-history-data")
+    #     versions = find.keys_with_tag(vhd_value, "row-identifier")
+    #     #match_found = False
+    #     for version_key, version_value in versions:
+    #         if match.equals(approved_version_value, version_value):
+    #             version_row = version_key.getProperty("row")
+    #             version_approver = find.key_with_tag(version_row, "version-approver")[1]
+    #             version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
+    #             #match_found = True
+    #             break
+
+    #     if version_approver is not None and version_approved_date is not None:
+    #         self.approved_version = approved_version_value
+    #         self.approved_date = version_approved_date
+
+    #     #if not match_found:
+    #     #    logger.error(f"Could not find entry in version history table for threat model approved version '{current_version_value}'")
+    #     #    raise ManageError("no-version-history", {"current_version":current_version_value})
+
+    #     return current_version_value, approved_version_value
 
     def _get_state(self):
         output = {}
@@ -75,8 +149,9 @@ class ThreatModelVersionMetaData:
     def __init__(self) -> None:
 
         self.doc_title = None
+        self.doc_scheme = None
         self.doc_location = None
-        self.doc_current_version = None
+        self.version = None
         self.version_row = None
         self.version_author = None
         self.version_author_role = None
@@ -98,6 +173,7 @@ class ThreatModelVersionMetaData:
         self.doc_scheme = scheme
         self.doc_location = location
         self.version = current_version_value
+        self.approved_version = approved_version_value
 
         _, vhd_value = find.key_with_tag(model, "version-history-data")
         versions = find.keys_with_tag(vhd_value, "row-identifier")
@@ -245,6 +321,7 @@ class ThreatModelMetaData:
 
         self.metadata_filename = config.get("metadata-filename", "metadata.yaml")
         self.storage = storage
+        self.approvedStatus = config.get("approved-status", "Approved")
         self.ID = ID
         self._set_empty()
 
@@ -256,6 +333,10 @@ class ThreatModelMetaData:
         self.IDmetadata = {}
         self.IDmetadata["ID"] = self.ID
         self.IDmetadata["versions"] = {}
+
+    def setModel(self, version:str, model:dict):
+        self.model_version = version
+        self.model = model
 
     def _load_metadata(self):
 
@@ -280,20 +361,80 @@ class ThreatModelMetaData:
 
         self.storage.write_yaml([ThreatModelMetaData, ThreatModelVersionMetaData], Path(self.ID).joinpath(self.metadata_filename), self)
 
+    def _write_model(self):
 
-    def setApprovedVersion(self, ID:str, indexEntry:MetadataIndexEntry, version:ThreatModelVersionMetaData):
+        self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
 
-        currentIndexEntry = self.index.getIndexEntry(ID)
+    def _load_model(self, version:str):
 
-        if match.equals(currentIndexEntry.approved_version, version.version):
-            logger.error(f"Submitted Threat Model version is the same as current approved version.  Cannot overwrite current approved version.")
-            raise ManageError("cant-update-approved-version", {"ID":ID, "approved-version":currentIndexEntry.approved_version})
+        self.model = self.storage.load_yaml(Path(self.ID).joinpath(version))
+        if self.model is None:
+            logger.error(f"Unable to load model for version '{version}'")
+        else:
+            self.model_version = version
+            
 
-        if not match.equals(indexEntry.approved_version, version.version):
-            logger.error(f"Submitted Threat Model version has a different version to the submitted index entry")
-            raise ManageError("internal-error", {})
+    def setApprovedVersion(self, ID:str, currentModelIndexEntry:MetadataIndexEntry, approvedModelIndexEntry:MetadataIndexEntry, version:ThreatModelVersionMetaData):
 
-        self.index.setIndexEntry(ID, indexEntry)
+        currentMetadataIndexEntry = self.index.getIndexEntry(ID)
+
+        # Several scenarios to consier
+        # Common legitimate update scenario by author
+        # model cur ver = 1.1 (not approved in model)
+        # model app ver = 1.0 (approved in model)
+        # index app ver = 1.0
+
+        # Common legitimate update scenario by approver
+        # model cur ver = 1.1 (approved in model)
+        # model app ver = 1.1 (approved in model)
+        # index app ver = 1.0
+
+        # Common mistake update scenario by approver - forgot to update approved version in model
+        # model cur ver = 1.1 (approved in model)
+        # model app ver = 1.0 (approved in model)
+        # index app ver = 1.0
+    
+        # Common mistake update scenario by author/approver - tried to update existing approved version
+        # model cur ver = 1.1 (approved in model)
+        # model app ver = 1.1 (approved in model)
+        # index app ver = 1.1
+
+        if currentModelIndexEntry.isApproved() and approvedModelIndexEntry.isApproved():
+            if not match.equals(currentModelIndexEntry.approved_version, approvedModelIndexEntry.approved_version):
+                # In the model, the current version is approved, and is different to the approved version from the model
+                logger.error(f"Submitted Threat Model has different current and approved versions, but both are approved.  If the current version is approved it must match the approved version.")
+                raise ManageError("current-approved-mismatched-version", {"ID":ID, "current_version":currentModelIndexEntry.approved_version, "approved_version":approvedModelIndexEntry.approved_version})
+            elif match.equals(approvedModelIndexEntry.approved_version, currentMetadataIndexEntry.approved_version):
+                # The model is correct, but we the index says the version is already approved
+                logger.error(f"Submitted Threat Model approved version in the document is the same as the officially recorded approved version.  Submitting new versions requires a version increase.")
+                raise ManageError("cant-update-approved-version", {"ID":ID, "approved_version":currentMetadataIndexEntry.approved_version})
+        elif match.equals(version.version, version.approved_version) and not approvedModelIndexEntry.isApproved():
+            # The current version = approved version, but it's not approved.  Probably forgot to approve the version in the version history table
+            logger.error(f"Submitted Threat Model approved version in the document is not marked as approved in the Version History table.")
+            raise ManageError("approved-version-not-approved", {"ID":ID, "approved_version":version.approved_version})
+        elif not match.equals(version.version, version.approved_version) and currentModelIndexEntry.isApproved():
+            # The current version != approved version, but current version approved.  Probably forgot to increase the approved version the version in the version history table
+            logger.error(f"Submitted Threat Model current version is approved, but differs from the approved version.")
+            raise ManageError("approved-version-not-updated", {"ID":ID, "current_version":currentModelIndexEntry.approved_version, "approved_version":version.approved_version})
+
+        # TODO make sure the status is APPROVED
+        if approvedModelIndexEntry.isApproved() and not match.equals(self.approvedStatus, version.version_status):
+            logger.error(f"Submitted Threat Model approved version is approved, but status is not set to '{self.approvedStatus}'.")
+            raise ManageError("status-not-approved", {"ID":ID, "approved_version":version.approved_version, "approved_status":self.approvedStatus})
+
+        # if match.equals(currentMetadataIndexEntry.approved_version, version.version):
+        #     logger.error(f"Submitted Threat Model version is the same as current approved version.  Cannot overwrite current approved version.")
+        #     raise ManageError("cant-update-approved-version", {"ID":ID, "approved-version":currentMetadataIndexEntry.approved_version})
+
+        # if not match.is_empty(approvedModelIndexEntry.approved_version) and not match.is_empty(currentModelIndexEntry.approved_version):
+        #     if not match.equals(approvedModelIndexEntry.approved_version, currentModelIndexEntry.approved_version):
+        #         logger.error(f"Submitted Threat Model version has different current version and approved version numbers")
+        #         raise ManageError("current-and-approved-not-equal", {"current-version":version.version, "approved-version":approvedModelIndexEntry.approved_version})    
+        # if not match.is_empty(indexEntry.approved_version) and not match.equals(indexEntry.approved_version, version.version):
+        #     logger.error(f"Submitted Threat Model version has different current version and approved version numbers")
+        #     raise ManageError("current-and-approved-not-equal", {"current-version":version.version, "approved-version":indexEntry.approved_version})
+
+        self.index.setIndexEntry(ID, currentModelIndexEntry)
 
         self.IDmetadata["versions"][version.version] = version
 
@@ -302,6 +443,7 @@ class ThreatModelMetaData:
 
         self.index._write_index()
         self._write_metadata()
+        self._write_model()
 
 
     def getVersion(self, versionID:str) -> ThreatModelVersionMetaData:

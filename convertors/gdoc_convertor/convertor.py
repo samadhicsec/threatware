@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 import os.path
 import logging
-import gdoc_convertor.reader as reader
-import html_convertor.query as query
-from html_convertor.convertor import doc_to_model
+import convertors.gdoc_convertor.reader as reader
+import convertors.html_convertor.query as query
+from convertors.html_convertor.convertor import doc_to_model
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials

@@ -1,0 +1,9 @@
+---
+providers:
+  cli:
+    confluence_creds_file: "~/.atlassian"
+    confluence_creds_section: "DEFAULT"
+  aws.lambda:
+    secret_name: "threatware"
+    region: "eu-west-2"
+  provider: aws.lambda

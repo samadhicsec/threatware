@@ -1,5 +1,6 @@
 ---
 manage-config:
+  template-values-file: "verifiers/verifiers_values.yaml"
   storage:
     gitrepo:
       remote: "git@github.com-threat-models:samadhicsec/threat-models.git"
@@ -10,5 +11,6 @@ manage-config:
   metadata:
     index-filename: "threatmodels.yaml"
     metadata-filename: "metadata.yaml"
+    approved-status: {{ approved }}
   output:
     template-text-file: "manage/manage_texts.yaml"

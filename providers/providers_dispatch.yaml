@@ -1,0 +1,4 @@
+---
+providers:
+  cli: providers.cli
+  aws.lambda: providers.aws_lambda

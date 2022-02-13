@@ -9,30 +9,30 @@ import jsonpickle
 import argparse
 from utils.load_yaml import yaml_file_to_dict
 from schemes.schemes import load_scheme
-import confluence_convertor.convertor
-import gdoc_convertor.convertor
+import convertors.confluence_convertor.convertor
+import convertors.gdoc_convertor.convertor
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def convert(scheme:dict, doc_location:str):
+def convert(execution_env, scheme:dict, doc_location:str):
    
     if scheme['document-storage'] == "confluence":
-        output = confluence_convertor.convertor.convert({}, scheme, {"id":doc_location})
+        output = convertors.confluence_convertor.convertor.convert(execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location})
     elif scheme['document-storage'] == "googledoc":
-        output = gdoc_convertor.convertor.convert({}, scheme, {"id":doc_location})
+        output = convertors.gdoc_convertor.convertor.convert(execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location})
     else:
         logger.error("Unknown document type '{}'".format(scheme['document-storage']))
 
     return output
 
-def convert_template(scheme:dict, doc_location:str):
+def convert_template(execution_env, scheme:dict, doc_location:str):
 
     if not doc_location:
         doc_location = scheme['template-id']
         if not doc_location:
             logger.error("No template document location provided as input or defined in the scheme")
     
-    return convert(scheme, doc_location)
+    return convert(execution_env, scheme, doc_location)
 
 def tojson(model):
 
