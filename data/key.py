@@ -65,3 +65,7 @@ class key:
 
     def __hash__(self):
         return hash(self.name)
+
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_str(node.name)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-import html_convertor.query
+import convertors.html_convertor.query
 import utils.text_query
 import utils.value_query
 
@@ -12,9 +12,9 @@ def _process_query(query_def, input):
 
     query_type = query_def.get("type")
 
-    if query_type in html_convertor.query.html_dispatch_table:
+    if query_type in convertors.html_convertor.query.html_dispatch_table:
         # Get document content
-        content = html_convertor.query.html_dispatch_table[query_type](input, query_def)
+        content = convertors.html_convertor.query.html_dispatch_table[query_type](input, query_def)
         return content
 
     if query_type in utils.text_query.text_dispatch_table:

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-from pathlib import Path
 import configparser
 import logging
-import confluence_convertor.reader as reader
-import html_convertor.query as query
-from html_convertor.convertor import doc_to_model
+import convertors.confluence_convertor.reader as reader
+import convertors.html_convertor.query as query
+from convertors.html_convertor.convertor import doc_to_model
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -24,20 +23,16 @@ def _getCredentials(config_file = '~/.atlassian', section = 'DEFAULT'):
     
     return config.get(section, 'url'), config.get(section, 'username'), config.get(section, 'api_token')
 
-def _yaml_to_dict(path:str):
-
-    yaml=YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
-    with open(path, 'r') as file:
-        threat_models = yaml.load(file)
-        return threat_models
-
 def convert(connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
-    cfg_url, cfg_username, cfg_token = _getCredentials()
-    url = connection.get('url', cfg_url)
-    username = connection.get('username', cfg_username)
-    token = connection.get('api_token', cfg_token)
+    # cfg_url, cfg_username, cfg_token = _getCredentials()
+    # url = connection.get('url', cfg_url)
+    # username = connection.get('username', cfg_username)
+    # token = connection.get('api_token', cfg_token)
+    url = connection.get('url')
+    username = connection.get('username')
+    token = connection.get('api_token')
     doc_store = reader.connect(url, username, token)
 
     # Check the document exists
@@ -54,9 +49,3 @@ def convert(connection:dict, mapping:dict, doc_identifers:dict):
     # Convert the document
     return doc_to_model(query_document, mapping)
 
-if __name__ == "__main__":
-    tm = convert({}, {"id":"65538"})
-
-    #root = ET.fromstring(doc)
-    #print("{}".format(doc))
-    print(tm)

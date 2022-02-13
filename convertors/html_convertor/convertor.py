@@ -2,7 +2,7 @@
 
 import logging
 import data.value
-import html_convertor.query as query
+import convertors.html_convertor.query as query
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))

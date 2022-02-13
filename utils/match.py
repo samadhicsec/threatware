@@ -17,6 +17,8 @@ def get_equals(str_to_match:str, possible) -> str:
 
     if str_to_match is None:
         str_to_match = ""
+    if possible is None:
+        possible = ""
 
     if isinstance(str_to_match, str):
         str_to_match = c14n(str_to_match)

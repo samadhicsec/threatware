@@ -6,8 +6,6 @@ import logging
 import os
 from pathlib import Path
 from io import StringIO
-from re import T
-from tkinter.font import BOLD
 from sh.contrib import git
 from sh import pushd
 from sh import rm
@@ -203,7 +201,7 @@ class IndexStorage(GitStorage):
             return self
         self.entered = True        
 
-        super().__enter__(self)
+        super().__enter__()
 
         super().branch_update(self.index_create_branch_name)
 
