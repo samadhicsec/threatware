@@ -31,14 +31,14 @@ def get_ref_tag_parts(reftag:str):
 
     return tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison
 
-def _check_tag_comparison(tag_tuple, compare_value, compare_to_key, compare_to_value, callback, callback_config):
+def _check_tag_comparison(tag_tuple, compare_value, compare_to_key, compare_to_value, callback, callback_config, only_callback = False):
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
-    if tag_comparison == "" or tag_comparison == "equals":
+    if not only_callback and tag_comparison == "" or tag_comparison == "equals":
         if match.equals(compare_value, compare_to_value):
             return True
-    if tag_comparison == "endswith":
+    if not only_callback and tag_comparison == "endswith":
         if match.endswith(compare_value, compare_to_value):
             return True
     else:
@@ -111,7 +111,7 @@ def check_reference(model, ref_type, ref_key, ref_value, callback, callback_conf
     return len(get_references(model, ref_type, ref_key, ref_value, callback, callback_config)) > 0
     
 
-def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_config):
+def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_config, only_callback):
     """
     Checks whether a reference tag references a value in a row that matches/compares to the passed in value
 
@@ -131,6 +131,8 @@ def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_co
         A callback to do do custom comparisons between referenced values and ref_value
     callback_config : dict
         Configuration for callback
+    only_callback: bool
+        Only use the callback to do the comparison, and ignore default comparison methods
 
     Returns
     -------
@@ -160,7 +162,7 @@ def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_co
                 continue
 
             for found_key, found_value in result_list:
-                if _check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config):
+                if _check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config, only_callback):
                     return tag
     
     return None

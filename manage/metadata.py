@@ -259,7 +259,7 @@ class IndexMetaData:
 
     def getIndexEntryByLocation(self, scheme:str, location:str) -> MetadataIndexEntry:
 
-        location_based_index = {(entry.scheme, entry.location):entry for entry in self.indexdata}
+        location_based_index = {(entry.scheme, entry.location):entry for entry in self.indexdata.values()}
 
         return location_based_index.get((scheme, location), None)
 
@@ -277,6 +277,9 @@ class IndexMetaData:
 
         last_ID_num = sorted(entry_ID_numbers)[-1]
 
+        if not IDprefix.endswith("."):
+            IDprefix = IDprefix + "."
+
         return IDprefix + str(last_ID_num + 1)
 
 
@@ -293,6 +296,11 @@ class IndexMetaData:
 
     def _write_index(self):
         load_yaml.class_to_yaml_file([IndexMetaData, MetadataIndexEntry], self, Path(self.storage.repodir).joinpath(self.index_filename))
+
+    def persist(self):
+        """ Writes any changes to the underlying storage layer """
+
+        self._write_index()
 
     def __exit__(self, exc_type, exc_value, traceback):
 

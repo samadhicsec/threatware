@@ -16,15 +16,30 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
+def template_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
+
+    tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
+
+    if tag_comparison == "template-approved":
+        preApproved = compare_to_key.getProperty("templatePreApproved")
+        if preApproved is not None and match.equals(compare_value, compare_to_value):
+            # TODO: Does not currently validate that the tag of the preApproved value matches the tag of the reference being checked e.g. pre-approved in functional assets table wouldn't match a ref tagged with just the the technical assets table.  This would restrict ref matches, so may not be a good thing.
+            return True
+
+    return False
+
 def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
-    # TODO this just checks the value endswith the value from where it has a tag referencing, but reallyt we should check for a complete
-    # text match e.g. "All assets stored in environment variables"
-    if tag_comparison == "template-approved":
-        preApproved = compare_to_key.getProperty("templatePreApproved")
-        if preApproved is not None and match.equals(compare_value, compare_to_value):
+    if tag_comparison == "storage-expression":
+        # TODO this just checks the value endswith the value from where it has a tag referencing, but really we should check for a complete
+        # text match e.g. "All assets stored in environment variables"
+        grouped_text = callback_config.get("grouped-text")
+
+        if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
+            return True
+        if match.equals(compare_value, grouped_text.get("all-assets")):
             return True
 
     return False
@@ -36,6 +51,9 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     doc_reference_tag_prefix = common_config["references"]["doc-tag-prefix"]
     template_reference_tag_prefix = common_config["references"]["templ-tag-prefix"]
+
+    reference_callback_config = {}
+    reference_callback_config["grouped-text"] = common_config["grouped-text"]
 
     # Find every key with a tag that starts with the configured prefix.
     all_reference_tagged_keys = find.keys_with_tag_matching_regex(model, "^(" + doc_reference_tag_prefix + "|" + template_reference_tag_prefix + ").*$")
@@ -50,12 +68,12 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         # A key value might be allowed to reference several other fields e.g. asset might be functional or technical,
         # so success boolean will be true if any of the references is valid
 
-        doc_reference_found = reference.check_reference(model, doc_reference_tag_prefix, key_entry, value_entry, None, None)
+        doc_reference_found = reference.check_reference(model, doc_reference_tag_prefix, key_entry, value_entry, reference_callback, reference_callback_config)
         doc_section_field_unref_error = []
         if not doc_reference_found:
             doc_section_field_unref_error = reference.get_reference_descriptions(model, doc_reference_tag_prefix, key_entry)
 
-        template_reference_found = reference.check_reference(template_model, template_reference_tag_prefix, key_entry, value_entry, reference_callback, None)
+        template_reference_found = reference.check_reference(template_model, template_reference_tag_prefix, key_entry, value_entry, template_reference_callback, reference_callback_config)
         template_section_field_unref_error = []
         if not template_reference_found:
             template_section_field_unref_error = reference.get_reference_descriptions(template_model, template_reference_tag_prefix, key_entry)

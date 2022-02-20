@@ -23,11 +23,11 @@ verifiers-config:
       threat-component-tag: threat-component
       threat-description-tag: threat-description
       threat-control-tag: threat-control
-    grouped-text:
-      start-assets-grouped-by-storage: 
-        - "All assets stored"
-      all-assets:
-        - "All assets"
+    #grouped-text:
+    #  start-assets-grouped-by-storage: 
+    #    - "All assets stored"
+    #  all-assets:
+    #    - "All assets"
   coverage-validation:
   field-validation-mandatory:
     default: True
@@ -37,7 +37,7 @@ verifiers-config:
     # The following pairs of tag define a tag that is mandatory if another tag has a value
       - tag: "tech-stack"
         depends-on: "in-scope"
-        depends-on-value: "Yes"
+        depends-on-value: {{ values.yes }}
   field-validation-uniqueness:
     unique-tag-prefix: "unique"
     tags:

@@ -3,7 +3,6 @@
 Manage a threat model
 """
 
-from curses import meta
 import logging
 from pathlib import Path
 from utils.error import ManageError
@@ -19,8 +18,6 @@ from manage.storage.gitrepo import ThreatModelStorage
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-MANAGE_CONFIG_YAML = "manage_config.yaml"
-MANAGE_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(MANAGE_CONFIG_YAML))
 
 def config(translator):
 
@@ -73,12 +70,16 @@ def create(config:dict, output:ManageOutput, IDprefix:str, scheme:str, location:
         
             new_ID = index.createIndexEntryID(IDprefix)
 
-            new_entry = MetadataIndexEntry()
+            new_entry = MetadataIndexEntry({})
             new_entry.ID = new_ID
             new_entry.scheme = scheme
             new_entry.location = location
 
             index.setIndexEntry(new_ID, new_entry)
+
+            index.persist()
+
+            return new_entry
 
     except ManageError as error:
         return output.getError(error.text_key, error.template_values)
@@ -155,4 +156,16 @@ def submit(config:dict, output:ManageOutput, location:str, schemeID:str, model:d
         return output.getSuccess("success-submitter", {"ID":imdCurrent.ID, "tm_version":tmvmd})
 
 def check(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
-    """ Given a document, check if the threat model has changed enough from teh approved version as to require re-approval """
+    """ Given a document, check if the threat model has changed enough from the approved version as to require re-approval """
+
+    # Get approved version
+
+    # Potentially need to add 'measure' tags in the right place
+
+    # Use measure code to find things that don't match between a current TM and the most recent approved version
+
+    # is a quick check just to compare string of printed current TM to string of approved threat table?
+
+    # Are there new threats in the current TM
+
+    # Are there new controls in the current TM

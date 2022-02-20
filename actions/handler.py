@@ -14,6 +14,7 @@ from schemes.schemes import load_scheme
 import actions.convert as convert
 import actions.verify as verify
 import actions.manage as manage
+import actions.measure as measure
 
 utils.logging.configureLogging()
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -35,7 +36,7 @@ def lambda_handler(event, context):
     docloc = qsp.get("docloc", None)
     doctemplate = qsp.get("doctemplate", None)
     id = qsp.get("ID", None)
-    IDprefix = qsp.get("IPprefix", None)
+    IDprefix = qsp.get("IDprefix", None)
     #verifiers = qsp.get("verifiers", "").split(",")
 
     logger.info(f"Threatware called with parameters = '{qsp}'")
@@ -119,6 +120,16 @@ def lambda_handler(event, context):
 
             body = output.tojson(result)
 
+        elif action == ACTION_MANAGE_CREATE:
+            
+            config = manage.config(translator)
+
+            output = manage.output(config)
+
+            result = manage.create(config, output, IDprefix, schemeID, docloc)
+
+            body = output.tojson(result)
+        
         elif action == ACTION_MANAGE_SUBMIT:
             
             config = manage.config(translator)
@@ -133,9 +144,17 @@ def lambda_handler(event, context):
             body = output.tojson(result)
 
         elif action == ACTION_MEASURE:
+
+            config = measure.config(translator)
+
+            output = measure.output(config)
+
             # Convert the TM template
             doc_model = convert.convert(execution_env, schemeDict, docloc)
-            body = str(doc_model)
+
+            result = measure.distance_to_approved(config, output, doc_model)
+
+            body = output.tojson(result)
 
     # Respond
     return {
@@ -149,7 +168,7 @@ if __name__ == "__main__":
 
     subparsers = parser.add_subparsers(dest="command")
 
-    #convert
+    # convert
     parser_convert = subparsers.add_parser("convert", help='Convert a threat model for analysis')
     parser_convert.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
     parser_convert.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
@@ -180,6 +199,10 @@ if __name__ == "__main__":
     parser_manage_submit.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
     parser_manage_submit.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
     
+    # measure
+    parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its approved version')
+    parser_measure.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
+    parser_measure.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
 
     #parser.add_argument('-a', '--action', required=True, help='The action to perform', choices=[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE, ACTION_MEASURE])
     #parser.add_argument('-s', '--scheme', required=True, help='Identifier for the template scheme to load')
