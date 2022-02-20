@@ -46,6 +46,10 @@ class key:
     def __str__(self):
         return self.name
     
+    # def __getstate__(self):
+    #     # To customise jsonpickle output
+    #     return {"name":self.__str__()}
+
     def __repr__(self):
         if not self.tags:
             return self.name
@@ -66,6 +70,10 @@ class key:
     def __hash__(self):
         return hash(self.name)
 
+    # @classmethod
+    # def to_yaml(cls, representer, node):
+    #     return representer.represent_str(node.name)
+
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_str(node.name)
+        return representer.represent_dict({"name":node.name, "tags":node.tags, "properties":node.properties})

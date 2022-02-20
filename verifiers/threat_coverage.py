@@ -4,6 +4,7 @@ Reports on threats covering assets in location
 """
 
 import logging
+from utils import match
 from verifiers.verifiers_config import VerifiersConfig
 from data import find
 from data import key as Key
@@ -68,6 +69,15 @@ class ThreatCoverage:
 
         common_config = self.config.verifiers_config_dict["common"]
 
+        # Get a list of out-of-scope components
+        out_of_scope_components = []
+        components_key, components_data = find.key_with_tag(model, common_config["component-tags"]["component-data-tag"])
+        for component_row in components_data:
+            component_row_id_key, component_row_id_data = find.key_with_tag(component_row, "row-identifier")
+            in_scope_key, in_scope_data = find.key_with_tag(component_row, common_config["component-tags"]["component-in-scope-tag"])
+            if not match.equals(in_scope_data, common_config["component-tags"]["component-in-scope-value"]):
+                out_of_scope_components.append(component_row_id_data)
+
         # Get all the data required to do the validation
         tagged_asset_data_list = common_config["asset-tags"]["asset-data-tag"]
         all_assets = []
@@ -95,6 +105,10 @@ class ThreatCoverage:
 
                 # Get the storage-locations for the asset
                 for storage_location_key, storage_location_value in find.keys_with_tag(asset, common_config["asset-tags"]['asset-location-tag']):
+
+                    if storage_location_value in out_of_scope_components:
+                        logger.debug(f"Ignoring coverage report on asset '{row_id_key.name}' in storage location '{storage_location_value}' as '{storage_location_value}' is out of scope")
+                        continue
 
                     covering_threats = storage_location_key.getProperty("covering-threats")
 

@@ -14,17 +14,37 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
    
-def doc_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
+def location_storage_expression_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     if tag_comparison == "storage-expression":
-        # TODO this just checks the value endswith the value from where it has a tag referencing, but really we should check for a complete
-        # text match e.g. "All assets stored in environment variables"
+        
         storage_location_value = callback_config.get("storage_location_value")
         if match.equals(storage_location_value, compare_to_value):
-            if match.endswith(compare_value, compare_to_value):
+
+            grouped_text = callback_config.get("grouped-text")
+
+            if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
                 return True
+            if match.equals(compare_value, grouped_text.get("all-assets")):
+                return True
+            #if match.endswith(compare_value, compare_to_value):
+            #    return True
+
+    return False
+
+def component_storage_expression_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
+
+    tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
+
+    if tag_comparison == "storage-expression":
+        grouped_text = callback_config.get("grouped-text")
+
+        if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
+            return True
+        if match.equals(compare_value, grouped_text.get("all-assets")):
+            return True
 
     return False
 
@@ -54,14 +74,19 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
     if threats_and_controls_data is None:
         logger.error(f"Could not find threat data tagged with '{common_config['threat-tags']['threats-data-tag']}'")
 
-    # Get a list of in-scope components
+    # Get a list of in-scope and out-of-scope components
     in_scope_components = []
+    out_of_scope_components = []
     components_key, components_data = find.key_with_tag(model, common_config["component-tags"]["component-data-tag"])
     for component_row in components_data:
         component_row_id_key, component_row_id_data = find.key_with_tag(component_row, "row-identifier")
         in_scope_key, in_scope_data = find.key_with_tag(component_row, common_config["component-tags"]["component-in-scope-tag"])
         if match.equals(in_scope_data, common_config["component-tags"]["component-in-scope-value"]):
             in_scope_components.append(component_row_id_data)
+        else:
+            out_of_scope_components.append(component_row_id_data)
+
+    callback_config = {"grouped-text":common_config["grouped-text"]}
 
     # Loop through the asset data tables
     for asset_data_tag, asset_data_key, asset_data_value in all_assets:
@@ -76,6 +101,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
             # Get the storage-locations for the asset
             for storage_location_key, storage_location_value in find.keys_with_tag(asset, common_config["asset-tags"]['asset-location-tag']):
+
+                if storage_location_value in out_of_scope_components:
+                    logger.debug(f"Ignoring threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}' as '{storage_location_value}' is out of scope")
+                    continue
 
                 logger.debug(f"Checking threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}'")
 
@@ -114,14 +143,17 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                         if matching_in_scope_component is not None:
                             # Scenario A, B, C
                             # Then the asset can match on name or type, but the storage location must match the component
-                            if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, None, None) is not None and match.equals(matching_in_scope_component, storage_location_value):
+                            
+                            # This checks if any 'ref' tag in 'threat_asset_entry_key' can be found in row 'asset' for value 'threat_asset_entry_value'
+                            if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, component_storage_expression_callback, callback_config, only_callback=False) is not None and match.equals(matching_in_scope_component, storage_location_value):
                                 if entry not in covering_threats:
                                     covering_threats.append(entry)
                         else:
                             # Scenario D
                             # The asset can only match on grouped storage type e.g. All assets stored in env vars
-                            callback_config = {"storage_location_value":storage_location_value}
-                            if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, doc_reference_callback, callback_config) is not None:
+                            callback_config["storage_location_value"] = storage_location_value
+
+                            if (matched_tag := reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, location_storage_expression_callback, callback_config, only_callback=True)) is not None and match.endswith(matched_tag, "storage-expression"):
                                 if entry not in covering_threats:
                                     covering_threats.append(entry)
 

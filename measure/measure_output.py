@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Class ManageOutput
+Class MeasureOutput
 """
 
 import logging
@@ -16,7 +16,7 @@ env = Environment(
     autoescape=select_autoescape()
 )
 
-class ManageOutput:
+class MeasureOutput:
 
     def __init__(self, config):
 

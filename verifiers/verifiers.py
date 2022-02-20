@@ -271,7 +271,7 @@ class Verifiers:
                 continue
 
             # Check whether that key value references a value in the template (in this case the template is the doc, so we use the doc prefix)
-            if reference.check_reference(template_model, self.config.verifiers_config_dict["common"]["references"]["doc-tag-prefix"], key_entry, value_entry, None, None):
+            if not reference.check_reference(template_model, self.config.verifiers_config_dict["common"]["references"]["doc-tag-prefix"], key_entry, value_entry, None, None):
                 # No match.  So since this value does not correctly reference a value in the template, it must be a value added to the template
                 # that the template authors want to provide as an option for TM authors to use, without having to properly reference it
 
