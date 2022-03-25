@@ -37,7 +37,7 @@ def recurse(model, key_value_callback, list_entry_callback):
                             
                 # If an entry of a row is itself a complex structure we recurse into it
                 if isinstance(dict_value, dict) or isinstance(dict_value, list):
-                    keep_going, loop_return_value = _internal_recurse(dict_value, value)
+                    keep_going, loop_return_value = _internal_recurse(dict_value, return_value)
                     if not keep_going:
                         return keep_going, loop_return_value
 
@@ -68,7 +68,7 @@ def assign_row_identifiers(model):
         if rowIDKey is not None:
             dict_key.addProperty("rowID", rowIDKey)
 
-        return True, None
+        return True, rowIDKey
 
     def _list_entry_callback(list_entry, rowIDKey):
         if isinstance(list_entry, dict):
@@ -95,38 +95,19 @@ def assign_row_identifiers(model):
 
     return recurse(model, _key_value_callback, _list_entry_callback)
 
-    # if isinstance(model, dict):
-    #     for dict_key, dict_value in model.items():
-    #         # We dont know where in the hierarchy we are, but for dicts we just add the rowIDKey
-    #         if rowIDKey is not None:
-    #             dict_key.addProperty("rowID", rowIDKey)
-                        
-    #         if isinstance(dict_value, dict) or isinstance(dict_value, list):
-    #             self.assign_row_identifiers(rowIDKey, dict_value)
 
-    # if isinstance(model, list):
-    #     # This could be a row, let's try and find a "row-identifier" tag
-    #     for list_entry in model:
-    #         if isinstance(list_entry, dict):
-    #             local_rowIDKey = rowIDKey
-    #             # Rows are stored as dict
-    #             for dict_key, dict_value in list_entry.items():
-    #                 if dict_key.hasTag("row-identifier"):
-    #                     #print(f"Found key tagged with 'row-identifier - {dict_key}")
-    #                     # We found a "row-identifier" for an entry in this row, let's use that from now on
-    #                     local_rowIDKey = dict_key
-    #                     # We need to report errors with the value for the "row-identiifer" key, so let's store the value as a property of the key
-    #                     dict_key.addProperty("value", dict_value)
-    #                     # We need to be able to get sibling data in a row, so also store a reference to the whole row against the 'row-identifier' key
-    #                     dict_key.addProperty("row", list_entry)
+# In order to find the location of certain tagged data we need to tag keys with their parent keys
+def assign_parent_keys(model):
 
-    #                     # There should only be 1 row-identifier per row
-    #                     break
-    #             # Let's assign the the rowIDKey to all elements of this row (the 'row-identifier' field might not have been the first)
-    #             # This will include child elements as well
-    #             self.assign_row_identifiers(local_rowIDKey, list_entry)
-    #         else:
-    #             # Not a row so recurse using existing rowIDKey
-    #             self.assign_row_identifiers(rowIDKey, list_entry)
+    def _key_value_callback(dict_key, dict_value, parentKey):
+        # For every key, assign it a parentKey
+        dict_key.addProperty("parentKey", parentKey)
+        # If we recurse further, then this dict_key becomes the parentKey for descendants
+        return True, dict_key
+
+    def _list_entry_callback(list_entry, parentKey):
+        # Descendants of a list entry share the same parentKey, so just pass it along
+        return True, parentKey
         
-    #return
+    return recurse(model, _key_value_callback, _list_entry_callback)
+    

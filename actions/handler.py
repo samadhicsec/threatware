@@ -54,7 +54,7 @@ def lambda_handler(event, context):
         error_str = "docloc is a mandatory parameter"
         logger.error(error_str)
         body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_VERIFY] and  doctemplate is None:
+    elif action in [ACTION_VERIFY, ACTION_MEASURE] and  doctemplate is None:
         error_str = f"doctemplate is a mandatory parameter when action = {action}"
         logger.error(error_str)
         body = json.dumps({"message":"{}".format(error_str)})
@@ -129,6 +129,19 @@ def lambda_handler(event, context):
             result = manage.create(config, output, IDprefix, schemeID, docloc)
 
             body = output.tojson(result)
+
+        elif action == ACTION_MANAGE_CHECK:
+            
+            # Convert the TM document
+            doc_model = convert.convert(execution_env, schemeDict, docloc)
+            
+            config = manage.config(translator)
+
+            output = manage.output(config)
+
+            result = manage.check(translator, config, output, docloc, schemeID, doc_model)
+
+            body = output.tojson(result)
         
         elif action == ACTION_MANAGE_SUBMIT:
             
@@ -136,7 +149,7 @@ def lambda_handler(event, context):
 
             output = manage.output(config)
 
-            # Convert the TM template
+            # Convert the TM document
             doc_model = convert.convert(execution_env, schemeDict, docloc)
 
             result = manage.submit(config, output, docloc, schemeID, doc_model)
@@ -150,11 +163,14 @@ def lambda_handler(event, context):
             output = measure.output(config)
 
             # Convert the TM template
+            template_model = convert.convert_template(execution_env, schemeDict, doctemplate)
+
+            # Convert the TM document
             doc_model = convert.convert(execution_env, schemeDict, docloc)
 
-            result = measure.distance_to_approved(config, output, doc_model)
+            measure.distance_to_template(config, output, doc_model, template_model)
 
-            body = output.tojson(result)
+            body = output.tojson()
 
     # Respond
     return {
@@ -164,20 +180,24 @@ def lambda_handler(event, context):
 
 if __name__ == "__main__":
 
+    scheme_help = 'Identifier for the threat model scheme (which contains location information)'
+    doc_help = 'Location identifier of the document'
+    template_help = 'Identifier for the document template (overrides template in scheme)'
+
     parser = argparse.ArgumentParser(description='Threat Model Verifier')
 
     subparsers = parser.add_subparsers(dest="command")
 
     # convert
     parser_convert = subparsers.add_parser("convert", help='Convert a threat model for analysis')
-    parser_convert.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_convert.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
+    parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
 
     # verify
     parser_convert = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval')
-    parser_convert.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_convert.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
-    parser_convert.add_argument('-t', '--doctemplate', help='Identifier for the document template (overrides template in scheme)')
+    parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_convert.add_argument('-t', '--doctemplate', help=template_help)
 
     # manage
     parser_manage = subparsers.add_parser("manage", help='Manage the status of threat models')
@@ -188,21 +208,22 @@ if __name__ == "__main__":
     # manage.createdata
     parser_manage_create = manage_subparsers.add_parser("create", help='Create a new document ID for a new threat model')
     parser_manage_create.add_argument('-idprefix', required=True, help='The prefix of the document ID e.g. "CMP.TMD"')
-    parser_manage_create.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_manage_create.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
+    parser_manage_create.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_manage_create.add_argument('-d', '--docloc', required=True, help=doc_help)
     # manage.check
     parser_manage_check = manage_subparsers.add_parser("check", help='Check whether the current threat model requires re-approval')
-    parser_manage_check.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_manage_check.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
+    parser_manage_check.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_manage_check.add_argument('-d', '--docloc', required=True, help=doc_help)
     # manage.submit
     parser_manage_submit = manage_subparsers.add_parser("submit", help='Submit a threat model for approval')
-    parser_manage_submit.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_manage_submit.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
+    parser_manage_submit.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_manage_submit.add_argument('-d', '--docloc', required=True, help=doc_help)
     
     # measure
-    parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its approved version')
-    parser_measure.add_argument('-s', '--scheme', required=True, help='Identifier for the threat model scheme (which contains location information)')
-    parser_measure.add_argument('-d', '--docloc', required=True, help='Location identifier of the document')
+    parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its template')
+    parser_measure.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_measure.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_measure.add_argument('-t', '--doctemplate', help=template_help)
 
     #parser.add_argument('-a', '--action', required=True, help='The action to perform', choices=[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE, ACTION_MEASURE])
     #parser.add_argument('-s', '--scheme', required=True, help='Identifier for the template scheme to load')

@@ -6,6 +6,7 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 class key:
+    yaml_tag = u'!Key'
 
     def __init__(self, name:str, tags:list = None):
         # Fun python fact, don't have default value be somethign you want to change e.g. list, 
@@ -76,4 +77,16 @@ class key:
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_dict({"name":node.name, "tags":node.tags, "properties":node.properties})
+        return representer.represent_mapping(cls.yaml_tag, {"name":node.name, "tags":node.tags, "properties":node.properties})
+
+    @classmethod
+    def from_yaml(cls, constructor, node):
+
+        key_dict = constructor.construct_mapping(node)
+
+        key_obj = cls(key_dict["name"], key_dict["tags"])
+
+        for prop_name, prop_value in key_dict["properties"].items():
+            key_obj.addProperty(prop_name, prop_value)
+
+        return key_obj

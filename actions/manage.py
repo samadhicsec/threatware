@@ -4,9 +4,11 @@ Manage a threat model
 """
 
 import logging
-from pathlib import Path
+from datetime import datetime
+from dateutil.parser import parse
 from utils.error import ManageError
-from utils.model import assign_row_identifiers
+from utils.model import assign_row_identifiers, assign_parent_keys
+from data import find
 from utils import match
 from manage import manage_config
 from manage.manage_output import ManageOutput
@@ -14,6 +16,7 @@ from manage.metadata import IndexMetaData, ThreatModelMetaData
 from manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
 from manage.storage.gitrepo import IndexStorage
 from manage.storage.gitrepo import ThreatModelStorage
+from actions import measure
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -155,17 +158,72 @@ def submit(config:dict, output:ManageOutput, location:str, schemeID:str, model:d
     else:
         return output.getSuccess("success-submitter", {"ID":imdCurrent.ID, "tm_version":tmvmd})
 
-def check(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
+def check(translator, config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
     """ Given a document, check if the threat model has changed enough from the approved version as to require re-approval """
 
-    # Get approved version
+    approval_expiry_days = config["check"]["approval-expiry-days"]
 
-    # Potentially need to add 'measure' tags in the right place
+    try:
+        assign_row_identifiers(model)
+        assign_parent_keys(model)
 
-    # Use measure code to find things that don't match between a current TM and the most recent approved version
+        # Get the Doc ID
+        if (docIDtuple := find.key_with_tag(model, "document-id")) is None:
+            logger.error(f"No document ID was found for the threat model at location {location}")
+            raise ManageError("no-document-id", {"location":location})
+        _, docID = docIDtuple
 
-    # is a quick check just to compare string of printed current TM to string of approved threat table?
+        with ThreatModelStorage(config.get("storage", {}), docID, persist_changes=False) as storage:
 
-    # Are there new threats in the current TM
+            # Get the index data and metadata for the ID
+            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, docID)
 
-    # Are there new controls in the current TM
+            indexentry = tm_metadata.index.getIndexEntryByLocation(schemeID, location)
+
+            # Check if there is an approved version
+            if (approved_version := indexentry.approved_version) is None or indexentry.approved_date is None:
+                # Need an approval
+                raise ManageError("no-approved-version", {})
+
+            # Check if approved version has expired
+            if indexentry.approved_date is not None:
+                approvedDate = parse(indexentry.approved_date)
+                if approvedDate is not None and (datetime.now() - approvedDate).days > approval_expiry_days:
+                    raise ManageError("approved-version-expired", {"approval_expiry_days":approval_expiry_days})
+
+            # Get approved version
+            if (approved_model := tm_metadata.load_model(approved_version)) is None:
+                raise ManageError("approved-version-didnt-load", {})
+                      
+            # Potentially need to add 'measure' tags in the right place
+            
+            # Use measure code to find things that don't match between a current TM and the most recent approved version
+            measure_config = measure.config(translator)
+            # Update the tag prefix to not collide with any other measures configured
+            measure_config["measure-tag"]["prefix"] = "check"
+            measure_output = measure.output(measure_config)
+            measure.distance(measure_config, measure_output, model, approved_model)            
+
+            # Are there new threats in the current TM
+            # Are there new controls in the current TM
+            meaure_metric = measure_output.get_measure_metric()
+            if meaure_metric != "0%":
+                # An approval is required
+                return output.getInformation("approval-required", {}, measure_output)
+            else:
+                # An approval is not required
+                return output.getInformation("no-approval-required", {})
+
+
+    except ManageError as error:
+        return output.getError(error.text_key, error.template_values)
+
+    
+
+    
+
+    
+    
+    
+
+    

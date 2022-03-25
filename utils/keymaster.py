@@ -62,6 +62,9 @@ def get_row_identifiers_for_key(row_key:Key):
 
     return None, None
 
+def get_column_name_for_key(row_key:Key) -> str:
+    return row_key.getProperty("colname")
+
 # def get_row_identifier_key(row_key:Key):
 
 #     row_identifier_key, row_identifier_value = get_row_identifiers_for_key(row_key)
