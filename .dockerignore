@@ -1,0 +1,9 @@
+*/pytest_cache*
+*/venv*
+*/.vscode/*
+*/.whiteboard/*
+.gitignore
+dockerfile
+README.md
+*/*/__pycache__/*
+*/*/*/__pycache__/*

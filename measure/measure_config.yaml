@@ -1,0 +1,19 @@
+---
+measure-config:
+  #template-values-file: "verifiers/verifiers_values.yaml"
+  measure-tag:
+    prefix: "measure"
+    measure-this-model-against-other-model: "from-this"
+    measure-other-model-against-this-model: "from-other"
+    measure-compare-tuple: "tuple"
+    measure-compare-missing: "missing"
+    measure-compare-extra: "extra"
+  filters:
+    3rd-parties:
+      - {{ third_party }}
+      - {{ threerd_party }}
+      - {{ SaaS }}
+    internal-service:
+      - {{ internal_service }}
+  output:
+    template-text-file: "measure/measure_texts.yaml"
