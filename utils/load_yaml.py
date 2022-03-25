@@ -17,9 +17,10 @@ env = Environment(
     autoescape=select_autoescape()
 )
 
-def yaml_file_to_dict(path:str):
+def yaml_file_to_dict(path:str, output_classes:list = []):
 
     yaml=YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
+    yaml.default_flow_style = False
     logger.debug("Loading YAML '{}'".format(path))
 
     try: 
@@ -29,6 +30,9 @@ def yaml_file_to_dict(path:str):
 
     #with open(str(Path(__file__).absolute().parent.joinpath(path)), 'r') as file:
     #with open(path, 'r') as file:
+    for output_class in output_classes:
+        yaml.register_class(output_class)
+    
     with file:
         yamldict = yaml.load(file)
         return yamldict

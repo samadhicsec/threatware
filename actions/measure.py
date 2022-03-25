@@ -1,22 +1,24 @@
 
 #!/usr/bin/env python3
 """
-Manage a threat model
+Measure a threat model
 """
 
 
 # We can tag fields with 'measure' or 'risk_analysis', and pass in a doc and a template, and compare values in these fields.  The template needn't be an actual template and could be any other TM, like a golden TM
 
 import logging
-import measure.measure_config as manage_config
+import measure.measure_config as measure_config
+import measure.measure_distance as measure_distance
 from measure.measure_output import MeasureOutput
+from utils.model import assign_row_identifiers, assign_parent_keys
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
 def config(translator):
 
-    return manage_config.config(translator)
+    return measure_config.config(translator)
 
 def output(config:dict):
 
@@ -24,7 +26,12 @@ def output(config:dict):
 
 def distance(config:dict, output:MeasureOutput, doc_model:dict, ref_model:dict):
 
-    pass
+    assign_row_identifiers(doc_model)
+    assign_parent_keys(doc_model)
+    assign_row_identifiers(ref_model)
+    assign_parent_keys(ref_model)
+
+    measure_distance.distances(config, output, doc_model, ref_model)
 
 def distance_to_approved(config:dict, output:MeasureOutput, doc_model:dict):
     """ 
@@ -39,3 +46,16 @@ def distance_to_approved(config:dict, output:MeasureOutput, doc_model:dict):
     # Get the approved version and hydrate it (not sure how to do this?)
 
     # Measure distance between two
+
+def distance_to_template(config:dict, output:MeasureOutput, doc_model:dict, template:dict):
+    """ 
+    Measure the distance of the passed in threat model to a template
+
+    """
+
+    assign_row_identifiers(doc_model)
+    assign_parent_keys(doc_model)
+    assign_row_identifiers(template)
+    assign_parent_keys(template)
+
+    measure_distance.distances(config, output, doc_model, template)

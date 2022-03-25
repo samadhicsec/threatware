@@ -248,6 +248,8 @@ scheme:
             - key: 
                 name: details
                 section: Components Detail Table
+                tags:
+                  - components-details-data
               value:
                 get-data:
                   query:
@@ -255,13 +257,22 @@ scheme:
                     xpath: "//html/body/h1[text()='Components']/following::h2[text()='Details']/following::table[1]"
                     remove-rows-if-empty:
                 map-data:
-                  - key: "name"
+                  - key: 
+                      name: "name"
+                      tags:
+                        - row-identifier
+                        - measure/from-this/tuple-extra-3rdparty
+                        - measure/from-this/tuple-extra-internalsvc
                     value: 
                       get-data:
                         query:
                           type: html-table-row
                           column-num: 0
-                  - key: "location"
+                  - key: 
+                      name: "location"
+                      tags:
+                        - measure/from-this/tuple-extra-3rdparty/3rd-parties
+                        - measure/from-this/tuple-extra-internalsvc/internal-service
                     value: 
                       get-data:
                         query:
@@ -291,6 +302,8 @@ scheme:
             - key: 
                 name: access-control
                 section: "Component AuthN and AuthZ Table"
+                tags:
+                  - components-access-control-data
               value:
                 get-data:
                   query:
@@ -298,7 +311,10 @@ scheme:
                     xpath: "//html/body/h1[text()='Components']/following::h2[text()='AuthN and AuthZ']/following::table[1]"
                     remove-rows-if-empty:
                 map-data:
-                  - key: "component"
+                  - key: 
+                      name: "component"
+                      tags:
+                        - row-identifier
                     value: 
                       get-data:
                         query:
@@ -310,13 +326,19 @@ scheme:
                         query:
                           type: html-table-row
                           column-num: 1
-                  - key: "authentication-method"
+                  - key: 
+                      name: "authentication-method"
+                      tags:
+                        - "measure/from-this/tuple-extra"
                     value: 
                       get-data:
                         query:
                           type: html-table-row
                           column-num: 2
-                  - key: "authorisation-method"
+                  - key: 
+                      name: "authorisation-method"
+                      tags:
+                        - "measure/from-this/tuple-extra"
                     value: 
                       get-data:
                         query:
@@ -333,6 +355,8 @@ scheme:
             - key: 
                 name: functional
                 section: Functional Assets Table
+                tags:
+                  - functional-asset-data
               value:
                 get-data:
                   query:
@@ -422,6 +446,8 @@ scheme:
             - key: 
                 name: technical
                 section: Technical Assets Table
+                tags:
+                  - technical-asset-data
               value:
                 get-data:
                   query:
@@ -557,6 +583,8 @@ scheme:
       - key: 
           name: threats-and-controls
           section: Threats and Controls Table
+          tags:
+            - threats-and-controls-data
         value:
           get-data:
             query:
@@ -597,7 +625,10 @@ scheme:
             - key: 
                 name: "threat-description"
                 tags:
+                  - row-identifier
                   - "threat-description"
+                  - "measure/from-other/tuple-extra"
+                  - "check/from-this/extra-threats"
               value: 
                 get-data:
                   query:
@@ -619,6 +650,8 @@ scheme:
                       name: "control"
                       tags:
                         - "threat-control"
+                        - "measure/from-other/tuple-extra"
+                        - "check/from-this/extra-controls"
                     value:
             - key: "tickets"
               value: 

@@ -9,3 +9,7 @@ values:
   confidentiality: "confidentiality"
   integrity: "integrity"
   availability: "availability"
+  third_party: "Third Party"
+  threerd_party: "3rd Party"
+  SaaS: "SaaS"
+  internal_service: "Internal Service"

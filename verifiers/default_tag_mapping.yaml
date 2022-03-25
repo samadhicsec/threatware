@@ -21,13 +21,13 @@ tag-mapping:
       - unique/technical-asset-data/type/value_not_table
       - validate-as-single-entry
   # Any key in the model called 'details' is the key for data about Component Details
-  - key-name: details
-    tags:
-      - components-details-data
+  #- key-name: details
+  #  tags:
+  #    - components-details-data
   # Any key in the model called 'access-control' is the key for data about Component Access Control
-  - key-name: access-control
-    tags:
-      - components-access-control-data
+  #- key-name: access-control
+  #  tags:
+  #    - components-access-control-data
   # Any key in the model called 'component' should have a value that references a component name
   - key-name: component
     tags:
@@ -37,13 +37,13 @@ tag-mapping:
     tags:
       - validate-as-single-entry
   # Any key in the model called 'functional' is the key for data about Functional Assets
-  - key-name: functional
-    tags:
-      - functional-asset-data
+  #- key-name: functional
+  #  tags:
+  #    - functional-asset-data
   # Any key in the model called 'technical' is the key for data about Technical Assets
-  - key-name: technical
-    tags:
-      - technical-asset-data
+  #- key-name: technical
+  #  tags:
+  #    - technical-asset-data
   # Any key in the model called 'location' is the key for data about locations
   - key-name: storage-location
     tags:
@@ -69,12 +69,12 @@ tag-mapping:
     tags:
       - validate-as-CIA
   # Any key in the model called 'threats-and-controls' is the key for data about Threats and Controls
-  - key-name: threats-and-controls
-    tags:
-      - threats-and-controls-data
-  - key-name: threat-description
-    tags:
-      - row-identifier
+  #- key-name: threats-and-controls
+  #  tags:
+  #    - threats-and-controls-data
+  #- key-name: threat-description
+  #  tags:
+  #    - row-identifier
   - key-name: "tech-stack"
     tags: 
       - tech-stack

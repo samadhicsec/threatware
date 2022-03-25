@@ -350,7 +350,7 @@ class ThreatModelMetaData:
 
         # If the directory or file don't exist, that's fine as they'll be created when we write out changes.
 
-        if (contents_dict := self.storage.load_yaml(Path(self.ID).joinpath(self.metadata_filename))) is not None:
+        if (contents_dict := self.storage.load_yaml([], Path(self.ID).joinpath(self.metadata_filename))) is not None:
 
             if (tm_metadata := contents_dict.get("threatmodel-metadata", None)) is None:
                 logger.error("Could not find key 'threatmodel-metadata'")
@@ -373,13 +373,15 @@ class ThreatModelMetaData:
 
         self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
 
-    def _load_model(self, version:str):
+    def load_model(self, version:str):
 
-        self.model = self.storage.load_yaml(Path(self.ID).joinpath(version))
+        self.model = self.storage.load_yaml([Key], Path(self.ID).joinpath(version + ".yaml"))
         if self.model is None:
             logger.error(f"Unable to load model for version '{version}'")
         else:
             self.model_version = version
+
+        return self.model
             
 
     def setApprovedVersion(self, ID:str, currentModelIndexEntry:MetadataIndexEntry, approvedModelIndexEntry:MetadataIndexEntry, version:ThreatModelVersionMetaData):

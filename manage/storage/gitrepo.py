@@ -120,7 +120,7 @@ class GitStorage:
                 raise ManageError("internal-error", {})
     
     def branch_replace(self, branch:str):
-        """ Switches to a local branch, deleting any existing remote branch (ignroing any existing changes on that branch) """
+        """ Switches to a local branch, deleting any existing remote branch (ignoring any existing changes on that branch) """
 
         if self._not_entered():
             return
@@ -138,6 +138,28 @@ class GitStorage:
         if not self._run(self.repodir, git.checkout, ["-b", self.branch]):
             logger.error(f"Failed to checkout local branch '{self.branch}'")
             raise ManageError("internal-error", {})
+
+    def is_merged_to_default(self, branch:str):
+
+        if self._not_entered():
+            return
+
+        buf = StringIO()
+
+        # i.e. git branch -r --merged approved
+        if not self._run(self.repodir, git.branch, ["-r", "--merged", self.default_branch], _out=buf, _err_to_out=True):
+            logger.error(f"Could not determine if '{self.branch}' has been merged or not")
+            raise ManageError("internal-error", {})
+
+        outdata = buf.getvalue()
+        logger.debug(f"{outdata}")
+
+        for line in outdata.splitlines():
+            if line.endswith(branch):
+                return True
+
+        return False
+
 
     def commit(self, message:str = ""):
 
@@ -164,11 +186,11 @@ class GitStorage:
 
         self.is_entered = False
 
-    def load_yaml(self, relative_file_path:str) -> dict:
+    def load_yaml(self, class_list:list, relative_file_path:str) -> dict:
 
         file_path = Path(self.repodir).joinpath(relative_file_path)
         if file_path.is_file():
-            return load_yaml.yaml_file_to_dict(file_path)
+            return load_yaml.yaml_file_to_dict(file_path, class_list)
 
         return None
 
@@ -203,7 +225,13 @@ class IndexStorage(GitStorage):
 
         super().__enter__()
 
-        super().branch_update(self.index_create_branch_name)
+        # Need to check if the remote branch has been merged i.e. git branch -r --merged approved, if so create a new branch
+        # Once create branch merged the official approved branch may have been changed, so we need to us that, as opposed to the old create branch.  This
+        # can still happen if the create branch has not been updated, but someone will be merging at some stage and can review
+        if super().is_merged_to_default(self.index_create_branch_name):
+            super().branch_replace(self.index_create_branch_name)
+        else:
+            super().branch_update(self.index_create_branch_name)
 
         return self
 
@@ -219,11 +247,12 @@ class IndexStorage(GitStorage):
 
 class ThreatModelStorage(GitStorage):
 
-    def __init__(self, config:dict, ID:str):
+    def __init__(self, config:dict, ID:str, persist_changes:bool = True):
         super().__init__(config)
 
         self.ID = ID
         self.entered = False
+        self.persist_changes = persist_changes
 
     
     def __enter__(self):
@@ -247,7 +276,7 @@ class ThreatModelStorage(GitStorage):
 
     def __exit__(self, exc_type, exc_value, traceback):
 
-        if exc_type is None:
+        if exc_type is None and self.persist_changes:
             super().commit(f"Update to {self.ID}")
 
         super().__exit__(exc_type, exc_value, traceback)
