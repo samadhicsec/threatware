@@ -69,7 +69,7 @@ def lambda_handler(event, context):
 
     else:
         # If we are being called locally then we'll pull credentials locally
-        if context.get("threatware.cli", False):
+        if getattr(context, "threatware.cli", False):
             # Get creds locally
             execution_env = provider.get_provider("cli")
         else:
@@ -234,7 +234,11 @@ if __name__ == "__main__":
 
     # Build input for handler
     event ={}
-    context = {"threatware.cli":True}
+
+    class Object(object):
+        pass
+    context = Object()
+    setattr(context, "threatware.cli", True)
 
     action = args.command
     if action == "manage":
