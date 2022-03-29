@@ -3,14 +3,11 @@
 Converts a Threat Model document into a model
 """
 
-import os, logging
-from pathlib import Path
+import logging
 import jsonpickle
-import argparse
-from utils.load_yaml import yaml_file_to_dict
-from schemes.schemes import load_scheme
 import convertors.confluence_convertor.convertor
 import convertors.gdoc_convertor.convertor
+
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 

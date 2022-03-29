@@ -4,13 +4,34 @@ from atlassian import Confluence
 from requests import HTTPError
 import unicodedata
 
-def connect(url, username, api_token):
-    confluence = Confluence(
-        url=url,
-        username=username,
-        password=api_token,
-        cloud=True)
+def connect(connection:dict):
 
+    confluence = None
+
+    if (connection.get("cloud", "True")).lower() == "true":
+
+        # For connecting to Cloud Confluence
+        confluence = Confluence(
+            url=connection["url"],
+            username=connection["username"],
+            password=connection["api_token"],
+            cloud=True)
+
+    elif "password" in connection:
+
+        # For connecting to Server or Cloud Confluence (but don't use passwords! for this)
+        confluence = Confluence(
+            url=connection["url"],
+            username=connection["username"],
+            password=connection["password"])
+
+    elif "token" in connection:
+
+        # For connecting to Server Confluence using Personal Access Token (PAT)
+        confluence = Confluence(
+            url=connection["url"],
+            token=connection["token"])
+    
     return confluence
 
 def exists(confluence, space, title):

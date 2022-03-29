@@ -26,14 +26,10 @@ def _getCredentials(config_file = '~/.atlassian', section = 'DEFAULT'):
 def convert(connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
-    # cfg_url, cfg_username, cfg_token = _getCredentials()
-    # url = connection.get('url', cfg_url)
-    # username = connection.get('username', cfg_username)
-    # token = connection.get('api_token', cfg_token)
-    url = connection.get('url')
-    username = connection.get('username')
-    token = connection.get('api_token')
-    doc_store = reader.connect(url, username, token)
+    doc_store = reader.connect(connection)
+
+    if doc_store == None:
+        logger.error("Connection details inappropriately formatted")
 
     # Check the document exists
     if not reader.exists(doc_store, doc_identifers.get('id', '')):
