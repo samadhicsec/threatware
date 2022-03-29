@@ -19,7 +19,7 @@ class CLIContext:
         self.secret_name = config.get("secret_name")
         self.region = config.get("region")
 
-        self.secret_dict = json.loads(self._get_secret_get())
+        self.secret_dict = json.loads(self._get_secret())
 
     def _get_secret(self):
 
