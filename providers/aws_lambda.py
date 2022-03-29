@@ -62,7 +62,7 @@ class CLIContext:
 
     def getConfluenceConnectionCredentials(self):
         
-        confluence_conn = self.secret_dict.get("confluence")
+        confluence_conn = json.loads(self.secret_dict.get("confluence"))
 
         return confluence_conn
 
