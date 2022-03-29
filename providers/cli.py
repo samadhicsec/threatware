@@ -25,14 +25,16 @@ class CLIContext:
         config = configparser.ConfigParser()
         config.read(self.confluence_creds_file)
     
-        if not config.has_option(self.confluence_creds_section, 'url'):
-            logger.error(f"No 'url' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
-        if not config.has_option(self.confluence_creds_section, 'username'):
-            logger.error(f"No 'username' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
-        if not config.has_option(self.confluence_creds_section, 'api_token'):
-            logger.error(f"No 'api_token' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
+        return dict(config.items(self.confluence_creds_section))
+
+        # if not config.has_option(self.confluence_creds_section, 'url'):
+        #     logger.error(f"No 'url' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
+        # if not config.has_option(self.confluence_creds_section, 'username'):
+        #     logger.error(f"No 'username' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
+        # if not config.has_option(self.confluence_creds_section, 'api_token'):
+        #     logger.error(f"No 'api_token' field found in the '{self.confluence_creds_file}' config file in section '{self.confluence_creds_section}'")
     
-        return {"url":config.get(self.confluence_creds_section, 'url'), "username":config.get(self.confluence_creds_section, 'username'), "api_token":config.get(self.confluence_creds_section, 'api_token')}
+        # return {"url":config.get(self.confluence_creds_section, 'url'), "username":config.get(self.confluence_creds_section, 'username'), "api_token":config.get(self.confluence_creds_section, 'api_token')}
 
 
 
