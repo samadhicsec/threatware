@@ -60,8 +60,8 @@ class Verifiers:
         self.config = config
 
         VerifierIssue.issue_config = self.config.verifiers_config_dict.get("common", {}).get("errors", VerifierIssue.issue_config)
-        VerifierIssue.pre_defined_template_values = self.config.verifiers_values_dict
-        VerifierIssue.templated_error_texts = self.config.verifiers_texts_dict.get("error-texts", {})
+        VerifierIssue.templated_translations = self.config.translations
+        VerifierIssue.templated_error_texts = self.config.verifiers_texts_dict.get("output-texts", {})
 
     # def _load_verifiers_config(self, verifiers_config_yaml_path) -> dict:
         

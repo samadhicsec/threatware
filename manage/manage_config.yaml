@@ -11,7 +11,7 @@ manage-config:
   metadata:
     index-filename: "threatmodels.yaml"
     metadata-filename: "metadata.yaml"
-    approved-status: {{ approved }}
+    approved-status: {{ translate.approved }}
   check:
     approval-expiry-days: 365
   output:

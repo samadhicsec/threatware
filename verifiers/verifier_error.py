@@ -43,7 +43,7 @@ class VerifierIssue:
 
     # This will be set as a class variable so all Verifier instances use the same config
     issue_config = {"default-severity":"ERROR"}
-    pre_defined_template_values = {}    # Will be read from file
+    templated_translations = {}    # Will be read from file
     templated_error_texts = {}  # Will be read from file
 
     known_error_keys = [
@@ -107,7 +107,7 @@ class VerifierIssue:
             else:
                 context[keyentry] = valueentry
 
-        context["values"] = self.pre_defined_template_values["values"]
+        context["translate"] = self.templated_translations["translate"]
 
         #for known_key in self.known_error_keys:
         #    setattr(self, known_key, issue_dict.get(known_key, None))
@@ -143,7 +143,15 @@ class VerifierIssue:
         if fix_text_key is not None and self.templated_error_texts.get(fix_text_key, None) is not None:
             self.fix_desc = env.from_string(self.templated_error_texts.get(fix_text_key)).render(context)
         self.fixdata = issue_dict.get("fixdata")
-        
+
+    def isError(self):
+        return self.errortype == ErrorType.ERROR
+
+    def isWarning(self):
+        return self.errortype == ErrorType.WARNING
+
+    def isInfo(self):
+        return self.errortype == ErrorType.INFO
 
     def _get_state(self):
 

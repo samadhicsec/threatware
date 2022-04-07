@@ -6,7 +6,13 @@ Custom Exception
 class ThreatwareError(Exception):
     pass
 
+class ConvertError(ThreatwareError):
+    pass
+
 class ValidatorsError(ThreatwareError):
+    pass
+
+class VerifyError(ThreatwareError):
     pass
 
 class ManageError(ThreatwareError):

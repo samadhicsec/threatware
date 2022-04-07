@@ -19,9 +19,12 @@ class Translate:
         yaml_config_dict = yaml_file_to_dict(TRANSLATE_CONFIG_YAML_PATH)
 
         if not match.is_empty(languageCode):
+            if languageCode not in yaml_config_dict:
+                logger.warning(f"Could not find language code '{languageCode}' in translation file '{TRANSLATE_CONFIG_YAML_PATH}'.  Using default.")
             yaml_config_dict = yaml_config_dict.get(languageCode, yaml_config_dict)
 
-        self.values = yaml_config_dict.get("values", {})
+        #self.values = yaml_config_dict.get("values", {})
+        self.translations = yaml_config_dict
 
     def localiseYamlFile(self, filepath:Path) -> dict:
-       return yaml_templated_file_to_dict(filepath, self.values)
+       return yaml_templated_file_to_dict(filepath, self.translations)

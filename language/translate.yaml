@@ -1,14 +1,27 @@
 ---
-values:
+translate:
   # This file should not contain any templated values, as it will be used to provide values to the other templated files
+
+  # Response output message types
+  information: "Information"
+  success: "Success"
+  error: "Error"
+
+  # Threat Model approval states
   draft: "DRAFT"
   approved: "APPROVED"
   obsolete: "OBSOLETE"
+
+  # Used in a variety of locations e.g. in-scope or not
   yes: "Yes"
   no: "No"
+
+  # Security properties of an asset
   confidentiality: "confidentiality"
   integrity: "integrity"
   availability: "availability"
+
+  # Component location types
   third_party: "Third Party"
   threerd_party: "3rd Party"
   SaaS: "SaaS"

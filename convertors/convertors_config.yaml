@@ -1,0 +1,4 @@
+---
+convertors-config:
+  output:
+    template-text-file: "convertors/convertors_texts.yaml"

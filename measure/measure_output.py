@@ -5,6 +5,7 @@ Class MeasureOutput
 
 import logging
 import utils.load_yaml
+from utils.output import FormatOutput
 import jsonpickle
 
 import utils.logging
@@ -104,13 +105,15 @@ class Measurement:
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
 
-class MeasureOutput:
+class MeasureOutput(FormatOutput):
 
-    def __init__(self, config):
+    def __init__(self, output_config:dict):
 
-        template_text_file = config.get("template-text-file")
+        super().__init__(output_config)
 
-        self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
+        #template_text_file = output_config.get("template-text-file")
+
+        #self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
 
         self.measures = []
 
@@ -123,28 +126,39 @@ class MeasureOutput:
             total_distances = total_distances + len(measurement.distances)
         return "{0:.0%}".format(total_distances/total_count)
 
+    def getMeasureDetails(self):
+
+        details = {}
+        details["measure-metric"] = self.get_measure_metric()
+        details["measurements"] = self.measures
+
+        return details
+
     def _get_state(self):
 
-        output = {}
-        output["measure-metric"] = self.get_measure_metric()
-        output["measurements"] = self.measures
+        #details = {}
+        #details["measure-metric"] = self.get_measure_metric()
+        #details["measurements"] = self.measures
+        self.details = self.getMeasureDetails()
+
+        output = super()._get_state()
 
         return output
 
     def addMeasure(self, measurement:Measurement):
         self.measures.append(measurement)
 
-    def getSuccess(self, text_key:str, template_values:dict) -> dict:
+    # def getSuccess(self, text_key:str, template_values:dict) -> dict:
 
-        success_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
+    #     success_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
 
-        return self._getOutput("Success", success_text, template_values["tm_version"])
+    #     return self._getOutput("Success", success_text, template_values["tm_version"])
 
-    def getError(self, text_key:str, template_values:dict) -> dict:
+    # def getError(self, text_key:str, template_values:dict) -> dict:
 
-        error_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
+    #     error_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
 
-        return self._getOutput("Error", error_text)
+    #     return self._getOutput("Error", error_text)
 
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """

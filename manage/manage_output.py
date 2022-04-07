@@ -34,19 +34,19 @@ class ManageOutput:
 
         return output
 
-    def getInformation(self, text_key:str, template_values:dict, details = None) -> dict:
+    def setInformation(self, text_key:str, template_values:dict, details = None) -> dict:
 
         info_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
 
         return self._getOutput("Information", info_text, details)
 
-    def getSuccess(self, text_key:str, template_values:dict) -> dict:
+    def setSuccess(self, text_key:str, template_values:dict) -> dict:
 
         success_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
 
         return self._getOutput("Success", success_text, template_values["tm_version"])
 
-    def getError(self, text_key:str, template_values:dict) -> dict:
+    def setError(self, text_key:str, template_values:dict) -> dict:
 
         error_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
 

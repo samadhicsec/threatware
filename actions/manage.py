@@ -6,12 +6,12 @@ Manage a threat model
 import logging
 from datetime import datetime
 from dateutil.parser import parse
+from utils.output import FormatOutput
 from utils.error import ManageError
 from utils.model import assign_row_identifiers, assign_parent_keys
 from data import find
 from utils import match
 from manage import manage_config
-from manage.manage_output import ManageOutput
 from manage.metadata import IndexMetaData, ThreatModelMetaData
 from manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
 from manage.storage.gitrepo import IndexStorage
@@ -26,13 +26,15 @@ def config(translator):
 
     return manage_config.config(translator)
 
-def output(config:dict):
+def _output(config:dict):
 
-    return ManageOutput(config.get("output", {}))
+    return FormatOutput(config.get("output", {}))
 
 
-def indexdata(config:dict, output:ManageOutput, ID:str) -> MetadataIndexEntry:
+def indexdata(config:dict, ID:str) -> MetadataIndexEntry:
     """ Given a document ID retrieve the metadata associated with the threat model """
+
+    output = _output(config)
 
     try: 
         if ID is None:
@@ -48,14 +50,18 @@ def indexdata(config:dict, output:ManageOutput, ID:str) -> MetadataIndexEntry:
                 logger.error(f"An entry with ID '{ID}' was not found")
                 raise ManageError("no-index-ID", {"ID":ID})
 
-            return entry
+            output.setSuccess("success-indexdata", {"ID":ID}, entry)
     
     except ManageError as error:
-        return output.getError(error.text_key, error.template_values)
+        output.setError(error.text_key, error.template_values)
+
+    return output
 
 
-def create(config:dict, output:ManageOutput, IDprefix:str, scheme:str, location:str):
+def create(config:dict, IDprefix:str, scheme:str, location:str):
     """ Given a document location and id format, generate the unique document ID, and store and return the result """
+
+    output = _output(config)
 
     try:
         if IDprefix is None or scheme is None or location is None:
@@ -82,10 +88,12 @@ def create(config:dict, output:ManageOutput, IDprefix:str, scheme:str, location:
 
             index.persist()
 
-            return new_entry
+        output.setSuccess("success-create", {}, new_entry)
 
     except ManageError as error:
-        return output.getError(error.text_key, error.template_values)
+        output.setError(error.text_key, error.template_values)
+
+    return output
 
 
 # def submit_old(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
@@ -117,13 +125,16 @@ def create(config:dict, output:ManageOutput, IDprefix:str, scheme:str, location:
 #         return output.getSuccess("success-submitter", {"ID":docID, "tm_version":tmvmd})
 
 
-def submit(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
+def submit(config:dict, location:str, schemeID:str, model:dict):
     """ 
     Submit the threat model for approval 
     
     Given config and a threat model ID, check to see this TM has been submitted before, and if not create dir.  Otherwise, get the TM, get the version,
     and metadata, and create/update metadata for that version.
     """
+
+    output = _output(config)
+
     try:
         assign_row_identifiers(model)
 
@@ -150,16 +161,20 @@ def submit(config:dict, output:ManageOutput, location:str, schemeID:str, model:d
 
             tm_metadata.persist()
 
+        if match.equals(current_version, approved_version):
+            output.setSuccess("success-approver", {"ID":imdCurrent.ID}, tmvmd)
+        else:
+            output.setSuccess("success-submitter", {"ID":imdCurrent.ID}, tmvmd)
+
     except ManageError as error:
-        return output.getError(error.text_key, error.template_values)
+        output.setError(error.text_key, error.template_values)
 
-    if match.equals(current_version, approved_version):
-        return output.getSuccess("success-approver", {"ID":imdCurrent.ID, "tm_version":tmvmd})
-    else:
-        return output.getSuccess("success-submitter", {"ID":imdCurrent.ID, "tm_version":tmvmd})
+    return output
 
-def check(translator, config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
+def check(config:dict, location:str, schemeID:str, model:dict, measure_config:dict, distance):
     """ Given a document, check if the threat model has changed enough from the approved version as to require re-approval """
+
+    output = _output(config)
 
     approval_expiry_days = config["check"]["approval-expiry-days"]
 
@@ -198,26 +213,27 @@ def check(translator, config:dict, output:ManageOutput, location:str, schemeID:s
             # Potentially need to add 'measure' tags in the right place
             
             # Use measure code to find things that don't match between a current TM and the most recent approved version
-            measure_config = measure.config(translator)
+            #measure_config = measure.config(config.translator)
             # Update the tag prefix to not collide with any other measures configured
             measure_config["measure-tag"]["prefix"] = "check"
-            measure_output = measure.output(measure_config)
-            measure.distance(measure_config, measure_output, model, approved_model)            
+            #measure_output = measure.output(measure_config)
+            #measure.distance(measure_config, measure_output, model, approved_model)
+            measure_output = distance(measure_config, model, approved_model)
 
             # Are there new threats in the current TM
             # Are there new controls in the current TM
             meaure_metric = measure_output.get_measure_metric()
             if meaure_metric != "0%":
                 # An approval is required
-                return output.getInformation("approval-required", {}, measure_output)
+                output.setInformation("approval-required", {}, measure_output.getMeasureDetails())
             else:
                 # An approval is not required
-                return output.getInformation("no-approval-required", {})
-
+                output.setInformation("no-approval-required", {})
 
     except ManageError as error:
-        return output.getError(error.text_key, error.template_values)
+        output.setError(error.text_key, error.template_values)
 
+    return output
     
 
     

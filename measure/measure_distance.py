@@ -228,12 +228,15 @@ def distances(config:dict, output:MeasureOutput, this_model:dict, other_model:di
     # Need to get sets of sections, columns and measure labels.  Complicated because multiple different lables can be used in a section.
     parameters = _get_measurement_parameters(config, this_model)
 
+    this_model_name = find.key_with_tag(this_model, "document-title")[1]
+    other_model_name = find.key_with_tag(other_model, "document-title")[1]
+
     for data_tag, key_tag_list, base_tag_tuple in parameters:
 
         # Setup the measurement capture
         data_tag_key, data_tag_value = find.key_with_tag(this_model, data_tag)
         section_key = keymaster.get_section_for_key(data_tag_key)
-        measurement = Measurement(config, find.key_with_tag(this_model, "document-title")[1], find.key_with_tag(other_model, "document-title")[1], section_key, base_tag_tuple, key_tag_list)
+        measurement = Measurement(config, this_model_name, other_model_name, section_key, base_tag_tuple, key_tag_list)
 
         tag_prefix, tag_measure_direction, tag_compare_name, tag_filter = base_tag_tuple
         # Calculate the distance
@@ -255,6 +258,7 @@ def distances(config:dict, output:MeasureOutput, this_model:dict, other_model:di
 
         output.addMeasure(measurement)
 
-    return    
+    output.setSuccess("success", {"this_model_name":this_model_name, "other_model_name":other_model_name})
+    return output    
     
 

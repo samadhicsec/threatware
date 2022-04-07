@@ -20,18 +20,20 @@ def config(translator):
 
     return measure_config.config(translator)
 
-def output(config:dict):
+def _output(config:dict):
 
     return MeasureOutput(config.get("output", {}))
 
-def distance(config:dict, output:MeasureOutput, doc_model:dict, ref_model:dict):
+def distance(config:dict, doc_model:dict, ref_model:dict):
+
+    output = _output(config)
 
     assign_row_identifiers(doc_model)
     assign_parent_keys(doc_model)
     assign_row_identifiers(ref_model)
     assign_parent_keys(ref_model)
 
-    measure_distance.distances(config, output, doc_model, ref_model)
+    return measure_distance.distances(config, output, doc_model, ref_model)
 
 def distance_to_approved(config:dict, output:MeasureOutput, doc_model:dict):
     """ 
@@ -47,15 +49,17 @@ def distance_to_approved(config:dict, output:MeasureOutput, doc_model:dict):
 
     # Measure distance between two
 
-def distance_to_template(config:dict, output:MeasureOutput, doc_model:dict, template:dict):
+def distance_to_template(config:dict, doc_model:dict, template:dict):
     """ 
     Measure the distance of the passed in threat model to a template
 
     """
+
+    output = _output(config)
 
     assign_row_identifiers(doc_model)
     assign_parent_keys(doc_model)
     assign_row_identifiers(template)
     assign_parent_keys(template)
 
-    measure_distance.distances(config, output, doc_model, template)
+    return measure_distance.distances(config, output, doc_model, template)

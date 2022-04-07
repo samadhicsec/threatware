@@ -18,7 +18,7 @@ class ValidatorOutput:
     Holds the output of a validator and is used to format output of validator
     """
 
-    pre_defined_template_values = {}    # Will be read from file
+    templated_translations = {}    # Will be read from file
     templated_output_texts = {}
     validator_config = {}
 
@@ -59,7 +59,7 @@ class ValidatorOutput:
                 templ_desc = validator_output_texts.get("output_text_invalid")
 
             context = {}
-            context["values"] = self.pre_defined_template_values["values"]
+            context["translate"] = self.templated_translations["translate"]
             context["key"] = {}
             context["key"]["name"] = self.validating_key.name
             context["key"]["colname"] = self.validating_key.getProperty("colname")

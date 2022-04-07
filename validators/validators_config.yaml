@@ -16,15 +16,15 @@ validator-config:
   - tag: validate-as-yes-no
     validator: regex
     config:
-      pattern: "(?i){{ values.yes }}|{{ values.no }}"
+      pattern: "(?i){{ translate.yes }}|{{ translate.no }}"
   - tag: validate-as-CIA
     validator: regex
     config:
-      pattern: "(?i){{ values.confidentiality }}|{{ values.integrity }}|{{ values.availability }}"
+      pattern: "(?i){{ translate.confidentiality }}|{{ translate.integrity }}|{{ translate.availability }}"
   - tag: validate-as-status
     validator: regex
     config:
-      pattern: "(?i){{ values.draft }}|{{ values.approved }}|{{ values.obsolete }}"
+      pattern: "(?i){{ translate.draft }}|{{ translate.approved }}|{{ translate.obsolete }}"
   - tag: validate-from-template
     validator: template
     config:

@@ -1,0 +1,5 @@
+---
+output-texts:
+  information: {{ translate.information }}
+  success: {{ translate.success }}
+  error: {{ translate.error }}

@@ -1,5 +1,7 @@
 ---
 output-texts:
+  success-indexdata: "The following index data was retrieved for threat model with ID {{ ID }}."
+  success-create: "The following entry was successfully added to the threat model index.  Please ask an approver to approve the change."
   success-approver: "The following metadata for threat model with ID '{{ ID }}' was submitted, it is not approved until the changes are merged to the official record"
   success-submitter: "The following metadata for threat model with ID '{{ ID }}' was submitted, please let an approver know"
   no-version-history: "Could not find entry in version history table for threat model current version '{{ current_version }}'"

@@ -1,6 +1,9 @@
 ---
 verifiers-config:
+  output:
+    template-text-file: "verifiers/verifiers_texts.yaml"
   common:
+    default-verifier-tag-mapping: "verifiers/default_tag_mapping.yaml"
     errors:
       default-severity: error
       #location-text: "{}"
@@ -11,7 +14,7 @@ verifiers-config:
     component-tags:
       component-data-tag: components-details-data
       component-in-scope-tag: in-scope
-      component-in-scope-value: {{ values.yes }}
+      component-in-scope-value: {{ translate.yes }}
     asset-tags:
       asset-data-tag:
         - functional-asset-data
@@ -37,7 +40,7 @@ verifiers-config:
     # The following pairs of tag define a tag that is mandatory if another tag has a value
       - tag: "tech-stack"
         depends-on: "in-scope"
-        depends-on-value: {{ values.yes }}
+        depends-on-value: {{ translate.yes }}
   field-validation-uniqueness:
     unique-tag-prefix: "unique"
     tags:

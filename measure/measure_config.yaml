@@ -10,10 +10,10 @@ measure-config:
     measure-compare-extra: "extra"
   filters:
     3rd-parties:
-      - {{ third_party }}
-      - {{ threerd_party }}
-      - {{ SaaS }}
+      - {{ translate.third_party }}
+      - {{ translate.threerd_party }}
+      - {{ translate.SaaS }}
     internal-service:
-      - {{ internal_service }}
+      - {{ translate.internal_service }}
   output:
     template-text-file: "measure/measure_texts.yaml"

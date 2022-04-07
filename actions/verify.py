@@ -4,8 +4,9 @@ Verify a threat model
 """
 
 import logging
-import jsonpickle
-import pprint
+from utils.error import VerifyError
+from language.translate import Translate
+from utils.output import FormatOutput
 from verifiers.verifiers_config import VerifiersConfig
 from verifiers.threat_coverage import ThreatCoverage
 from verifiers.verifiers_report import VerifiersReport
@@ -14,24 +15,34 @@ from verifiers.verifiers import Verifiers
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def config(scheme:dict):
+def config(scheme:dict, translator:Translate):
 
     verifiers_config = scheme.get("verifiers", {})
 
-    return VerifiersConfig(verifiers_config)
+    return VerifiersConfig(verifiers_config, translator)
 
 def verify(config:VerifiersConfig, threatmodel:dict, tm_template:dict):
 
-    verifiers = Verifiers(config)
+    output = FormatOutput(config.verifiers_config_dict.get("output"))
 
-    issues = verifiers.verify(threatmodel, tm_template)
-    #for issue in issues:
-    #    print(issue)
+    try: 
+        verifiers = Verifiers(config)
 
-    # Return issues
-    return issues
+        issues = verifiers.verify(threatmodel, tm_template)
 
-def coverage(config:VerifiersConfig, threatmodel:dict):
+        if len(issues) == 0:
+            output.setSuccess("success-no-issues", {}, issues)
+        elif len([issue for issue in issues if issue.isError()]) > 0:
+            output.setInformation("error-issues", {}, issues)
+        else:
+            output.setInformation("warn-info-issues", {}, issues)
+
+    except VerifyError as error:
+        output.setError(error.text_key, error.template_values)
+
+    return output
+
+def _coverage(config:VerifiersConfig, threatmodel:dict):
 
     threat_coverage = ThreatCoverage(config)
 
@@ -39,14 +50,26 @@ def coverage(config:VerifiersConfig, threatmodel:dict):
 
     return coverage
 
-def report(config:VerifiersConfig, issues, coverage):
+def report(config:VerifiersConfig, threatmodel:dict, issues:list):
 
-    verifiers_report = VerifiersReport(config)
+    output = FormatOutput(config.verifiers_config_dict.get("output"))
 
-    verifiers_report.report(issues, coverage)
+    try:
+        
+        coverage = _coverage(config, threatmodel)
 
-    return verifiers_report
+        verifiers_report = VerifiersReport(config)
 
-#def tojson(issues):
+        verifiers_report.report(issues, coverage)
 
-#    return jsonpickle.encode(issues, unpicklable=False)
+        if len(issues) == 0:
+            output.setSuccess("success-no-issues", {}, issues)
+        elif len([issue for issue in issues if issue.isError()]) > 0:
+            output.setInformation("error-issues", {}, issues)
+        else:
+            output.setInformation("warn-info-issues", {}, issues)        
+
+    except VerifyError as error:
+        output.setError(error.text_key, error.template_values)
+
+    return output

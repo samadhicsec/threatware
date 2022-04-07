@@ -1,5 +1,8 @@
 ---
-error-texts:
+output-texts:
+  success-no-issues: "The threat model verified with no issues"
+  error-issues: "The threat model is not valid"
+  warn-info-issues: "The threat model verified, but with some potential issues"
   location-text: "In {{ issue_table }}"
   entry-text: "Where '{{ issue_key.rowID.colname }}' column has value '{{ issue_key.rowID.value }}'"
   no-covering-threat: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
@@ -13,7 +16,7 @@ error-texts:
   value-valid: At least 1 validation criteria for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}' was successful, but some failed.  See errordata for specific details.
   major.minor: "The value for the field '{{ entryname }}' must be of the format 'X.Y' where X is the major version, Y the minor version, and both are positive integers"
   date: "The value for the field '{{ entryname }}'' must be a Date e.g. YYYY-MM-DD, YYYY-DD-MM, DD-MM-YYYY, MM-DD-YYYY etc."
-  yes-no: "The value for the field '{{ entryname }}' must be either '{{ values.yes }}'' or '{{ values.no }}'"
+  yes-no: "The value for the field '{{ entryname }}' must be either '{{ translate.yes }}'' or '{{ translate.no }}'"
   template-value: "The value for the field '{{ entryname }}' should come from the document template"
   reference-not-found: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
   reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
