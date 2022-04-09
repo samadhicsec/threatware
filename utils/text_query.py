@@ -44,7 +44,7 @@ def split(text_value, query_cfg):
             
                 output.append(match.group(group))
 
-    return _trim(output)
+    return [i for i in _trim(output) if len(i) > 0]
 
 # Returns all values that match.  Returned values are unchanged.
 def match(text_value, query_cfg):

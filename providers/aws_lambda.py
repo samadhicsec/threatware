@@ -66,7 +66,11 @@ class CLIContext:
 
         return confluence_conn
 
+    def getGoogleCredentials(self):
 
+        credentials = json.loads(self.secret_dict.get("google"))
+
+        return credentials
 
 def load(config:dict):
 

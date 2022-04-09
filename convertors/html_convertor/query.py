@@ -18,6 +18,7 @@ PROCESS_SPLIT_TYPE = "split-type"
 
 def get_document(document_str):
 
+    # Note, can't do much pre-processing of the XML here as the scheme might be referencing something that we might change
     return lxml.html.document_fromstring(document_str)
 
 def get_document_section(document, query_cfg):
@@ -96,6 +97,15 @@ def get_document_row_table(document, query_cfg):
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' returned more than 1 result, only using first")
 
     table_ele = table_list[0]
+
+    # Parsing a table is much easier if we remove HTML elements that just style the output, and since the output of
+    # this method is no longer XML, we know subsequent queries don't rely on these elements.
+    # Stripping span doesn't affect content (and Google Docs have A LOT of span elements)
+    etree.strip_tags(table_ele, "span")
+    # Stripping attributes of <p> elements doesn't affect content, but we leave them in because they are usually used
+    # like newlines, whcih is what we replace them with further down.
+    for ele in table_ele.findall('.//p'):
+        etree.strip_attributes(ele, "style")
 
     # Extract as string
     table_bstr = lxml.html.tostring(table_ele, encoding='unicode')

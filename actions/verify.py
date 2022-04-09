@@ -63,11 +63,11 @@ def report(config:VerifiersConfig, threatmodel:dict, issues:list):
         verifiers_report.report(issues, coverage)
 
         if len(issues) == 0:
-            output.setSuccess("success-no-issues", {}, issues)
+            output.setSuccess("success-no-issues", {}, verifiers_report)
         elif len([issue for issue in issues if issue.isError()]) > 0:
-            output.setInformation("error-issues", {}, issues)
+            output.setInformation("error-issues", {}, verifiers_report)
         else:
-            output.setInformation("warn-info-issues", {}, issues)        
+            output.setInformation("warn-info-issues", {}, verifiers_report)        
 
     except VerifyError as error:
         output.setError(error.text_key, error.template_values)

@@ -42,18 +42,18 @@ def _getCredentials():
 
     return creds
 
-def _yaml_to_dict(path:str):
+# def _yaml_to_dict(path:str):
 
-    yaml=YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
-    with open(path, 'r') as file:
-        threat_models = yaml.load(file)
-        return threat_models
+#     yaml=YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
+#     with open(path, 'r') as file:
+#         threat_models = yaml.load(file)
+#         return threat_models
 
 def convert(connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
-    creds = _getCredentials()
-    doc_store = reader.connect(creds)
+    #creds = _getCredentials()
+    doc_store = reader.connect(connection)
 
     # TODO Check the document exists
     
