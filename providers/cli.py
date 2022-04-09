@@ -41,13 +41,14 @@ class CLIContext:
     def getGoogleCredentials(self):
 
         credentials = {}
-        #credentials["credentials-file"] = self.config.get("google", {}).get("credentials_file", "convertors/gdoc_convertor/credentials.json")
-        #credentials["token-file"] = self.config.get("google", {}).get("token_file", "convertors/gdoc_convertor/token.json")
+        credentials["credentials-file"] = self.config.get("google", {}).get("credentials_file", "convertors/gdoc_convertor/credentials.json")
+        credentials["token-file"] = self.config.get("google", {}).get("token_file", "convertors/gdoc_convertor/token.json")
 
-        svc_credentials_path = "convertors/gdoc_convertor/svc_credentials.json"
-        svc_credentials_fullpath = Path.joinpath(Path.cwd(), svc_credentials_path)
-        with open(svc_credentials_fullpath, 'r') as creds_file:
-                credentials = json.load(creds_file)
+        # Fopr local testing with service credentials
+        #svc_credentials_path = "convertors/gdoc_convertor/svc_credentials.json"
+        #svc_credentials_fullpath = Path.joinpath(Path.cwd(), svc_credentials_path)
+        #with open(svc_credentials_fullpath, 'r') as creds_file:
+        #        credentials = json.load(creds_file)
 
         return credentials
 
