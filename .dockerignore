@@ -1,7 +1,7 @@
-*/pytest_cache*
-*/venv*
-*/.vscode/*
-*/.whiteboard/*
+pytest_cache*
+.venv*
+.vscode/*
+.whiteboard/*
 .gitignore
 dockerfile
 README.md

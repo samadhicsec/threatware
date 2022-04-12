@@ -95,7 +95,7 @@ def get_references(model, ref_type, ref_key, ref_value, callback, callback_confi
         result_list = find.keys_with_tag(table_value, tag_field_tag_name)
 
         if len(result_list) == 0:
-            logger.warning(f"Reference '{tag}' included a field tag location of '{tag_field_tag_name}' which could not be found")
+            logger.debug(f"Reference '{tag}' included a field tag location of '{tag_field_tag_name}' which could not be found")
             continue
 
         for found_key, found_value in result_list:
@@ -243,7 +243,7 @@ def get_reference_descriptions(model:dict, ref_type:str, ref_key:Key):
         if field_key is not None:
             field_colname = field_key.getProperty("colname")
         if field_colname is None:
-            logger.warning(f"Could not find data field with tag '{tag_field_tag_name}'")
+            logger.debug(f"Could not find data field with tag '{tag_field_tag_name}'")
             field_colname = tag_field_tag_name
 
         if match.is_empty(tag_comparison):
