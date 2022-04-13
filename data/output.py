@@ -113,7 +113,10 @@ def _remove_header_row(proc_def, output_data):
 
     # output_data needs to be a list
     if not isinstance(output_data, list):
-        logger.warning(f"Cannot run post-processor 'remove-header-row-but-record-col-names' on output data of type '{type(output_data)}', needs to be a list")
+        logger.warning(f"Cannot run post-processor 'remove-header-row' on output data of type '{type(output_data)}', needs to be a list")
+        return output_data
+    if len(output_data) == 0:
+        logger.debug(f"Cannot run post-processor 'remove-header-row' on output data of no entries")
         return output_data
 
     # Get the list of col header names
