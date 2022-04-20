@@ -1,5 +1,6 @@
 ---
 output-texts:
-  information: {{ translate.information }}
-  success: {{ translate.success }}
-  error: {{ translate.error }}
+  information: "{{ translate.information }}"
+  success: "{{ translate.success }}"
+  error: "{{ translate.error }}"
+  internal-error: "An internal error occurred, please see logs for more detail"

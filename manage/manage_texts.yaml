@@ -19,4 +19,3 @@ output-texts:
   approved-version-didnt-load: "Unable to load the approved version for comparison.  See logs for more details."
   approval-required: "An approval is required for the updates made to the Threat Model."
   no-approval-required: "No approval is required for the updates made to the Threat Model."
-  internal-error: "An internal error occurred, please see logs for more detail"

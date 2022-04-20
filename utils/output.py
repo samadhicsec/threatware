@@ -34,15 +34,17 @@ class OutputType(Enum):
 class FormatOutput:
 
     request_parameters:dict
+    translator:Translate
 
     def __init__(self, output_config:dict):
 
-        translate = Translate()
-        formatoutput_texts = translate.localiseYamlFile(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
-        self.information = env.from_string(formatoutput_texts.get("information")).render()
-        self.success = env.from_string(formatoutput_texts.get("success")).render()
-        self.error = env.from_string(formatoutput_texts.get("error")).render()
+        #formatoutput_texts = self.translator.localiseYamlFile(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
+        formatoutput_texts = load_yaml.yaml_file_to_dict(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
+        self.information = env.from_string(formatoutput_texts.get("information")).render(self.translator.translations)
+        self.success = env.from_string(formatoutput_texts.get("success")).render(self.translator.translations)
+        self.error = env.from_string(formatoutput_texts.get("error")).render(self.translator.translations)
         self.templated_texts = load_yaml.yaml_file_to_dict(output_config.get("template-text-file")).get("output-texts")
+        self.templated_texts = self.templated_texts | formatoutput_texts
         
         self.type = OutputType.NOT_SET
         self.description = None
@@ -71,7 +73,7 @@ class FormatOutput:
         """ Returns a localised Information output message """
 
         self.type = OutputType.INFO
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters)
+        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
         
         return
@@ -80,7 +82,7 @@ class FormatOutput:
         """ Returns a localised Success output message """
 
         self.type = OutputType.SUCCESS
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters)
+        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 
         return
@@ -89,7 +91,7 @@ class FormatOutput:
         """ Returns a localised Error output message """
 
         self.type = OutputType.ERROR
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters)
+        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 
         return

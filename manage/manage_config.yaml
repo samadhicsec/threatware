@@ -4,6 +4,7 @@ manage-config:
   storage:
     gitrepo:
       remote: "git@github.com-threat-models:samadhicsec/threat-models.git"
+      #remote: "git@github.com:samadhicsec/threat-models.git"
       default-branch: "approved"
       base-storage-dir: "/tmp"
     index:

@@ -28,3 +28,10 @@ class MeasureError(ThreatwareError):
         self.text_key = text_key
         self.template_values = template_values
         super().__init__(*args)
+
+class StorageError(ThreatwareError):
+
+    def __init__(self, text_key:str, template_values:dict, *args: object) -> None:
+        self.text_key = text_key
+        self.template_values = template_values
+        super().__init__(*args)

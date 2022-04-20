@@ -15,14 +15,27 @@ from utils import keymaster
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+def _strip_context(config:dict, value:str):
+
+    start_char = config["start-char"]
+    end_char = config["end-char"]
+
+    if(start_char_index := value.find(start_char)) != -1:
+        if(end_char_index := value.find(end_char, start_char_index)) != -1:
+            return value[:start_char_index] + value[end_char_index + 1:]
+
+    return value
 
 def template_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
+
+    strip_config = {"start-char":"(", "end-char":")"}
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     if tag_comparison == "template-approved":
         preApproved = compare_to_key.getProperty("templatePreApproved")
-        if preApproved is not None and match.equals(compare_value, compare_to_value):
+        # For pre-approved template values, we allow 'context' to be added in the TM e.g. in-memory (component).  But we strip this when matching to the pre-approved value
+        if preApproved is not None and match.equals(compare_value, compare_to_value, lambda val : _strip_context(strip_config, val)):
             # TODO: Does not currently validate that the tag of the preApproved value matches the tag of the reference being checked e.g. pre-approved in functional assets table wouldn't match a ref tagged with just the the technical assets table.  This would restrict ref matches, so may not be a good thing.
             return True
 

@@ -9,8 +9,8 @@ from utils import match
 from utils import load_yaml
 from data import find
 from utils.error import ManageError
-from manage.storage.gitrepo import IndexStorage
-from manage.storage.gitrepo import ThreatModelStorage
+from manage.manage_storage import IndexStorage
+from manage.manage_storage import ThreatModelStorage
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -247,12 +247,15 @@ class IndexMetaData:
 
     def _load_index(self):
 
-        threatmodels = load_yaml.yaml_file_to_dict(Path(self.storage.repodir).joinpath(self.index_filename))
-
         self.indexdata = {}
-        for TMindex_list_entry in threatmodels["threatmodels"]:
-            mdie = MetadataIndexEntry(TMindex_list_entry)
-            self.indexdata[mdie.ID] = mdie
+
+        #threatmodels = load_yaml.yaml_file_to_dict(Path(self.storage.repodir).joinpath(self.index_filename))
+        if (threatmodels := self.storage.load_yaml([], Path(self.storage.repodir).joinpath(self.index_filename))) is not None:
+            for TMindex_list_entry in threatmodels.get("threatmodels", []):
+                mdie = MetadataIndexEntry(TMindex_list_entry)
+                self.indexdata[mdie.ID] = mdie
+        else:
+            logger.warning(f"No {self.index_filename} was loaded.  This should only happen when the metadata repo is first created and is empty.")
 
     def getIndexEntry(self, ID:str) -> MetadataIndexEntry:
         return self.indexdata.get(ID, None)

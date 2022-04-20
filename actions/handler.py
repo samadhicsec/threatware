@@ -7,6 +7,7 @@ import logging
 import sys
 import argparse
 import json
+from storage.gitrepo import GitStorage
 from utils.output import FormatOutput
 import utils.logging
 from providers import provider
@@ -54,8 +55,8 @@ def lambda_handler(event, context):
         error_str = "action is a mandatory parameter"
         logger.error(error_str)
         body = json.dumps({"message":"{}".format(error_str)})
-    elif action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
-        error_str = f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}"
+    elif action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
+        error_str = f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}"
         logger.error(error_str)
         body = json.dumps({"message":"{}".format(error_str)})
     elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and schemeID is None:
@@ -85,14 +86,17 @@ def lambda_handler(event, context):
             # Get creds locally
             execution_env = provider.get_provider("cli")
         else:
+            GitStorage.containerised = True
             # We are being called as a lambda, so get credentials from cloud
             execution_env = provider.get_provider("aws.lambda")
-
-        # We can treat the parameters as static
-        FormatOutput.request_parameters = filtered_qsp
+            #execution_env = provider.get_provider("cli")
 
         # We need this to support localisation of keywords
         translator = Translate()
+
+        # We can treat the parameters as static
+        FormatOutput.request_parameters = filtered_qsp
+        FormatOutput.translator = translator
 
         if schemeID is not None:
             schemeDict = load_scheme(schemeID)
@@ -150,7 +154,7 @@ def lambda_handler(event, context):
 
             #output = manage.output(measure_config)
 
-            output = manage.indexdata(manage_config, id)
+            output = manage.indexdata(manage_config, execution_env, id)
 
             body = output.tojson()
 
@@ -160,7 +164,7 @@ def lambda_handler(event, context):
 
             #output = manage.output(measure_config)
 
-            output = manage.create(manage_config, IDprefix, schemeID, docloc)
+            output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
 
             body = output.tojson()
 
@@ -183,7 +187,7 @@ def lambda_handler(event, context):
                 # 'check' relies on measure
                 measure_config = measure.config(translator)
 
-                output = manage.check(manage_config, docloc, schemeID, doc_model, measure_config, measure.distance)
+                output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
 
                 body = output.tojson()
         
@@ -203,7 +207,7 @@ def lambda_handler(event, context):
 
                 #output = manage.output(measure_config)
 
-                output = manage.submit(manage_config, docloc, schemeID, doc_model)
+                output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
 
                 body = output.tojson()
 
@@ -229,7 +233,7 @@ def lambda_handler(event, context):
 
                     measure_config = measure.config(translator)
                     
-                    output = measure.distance_to_template(measure_config, doc_model, template_model)
+                    output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
 
                     body = output.tojson()
 

@@ -49,7 +49,7 @@ def distance_to_approved(config:dict, output:MeasureOutput, doc_model:dict):
 
     # Measure distance between two
 
-def distance_to_template(config:dict, doc_model:dict, template:dict):
+def distance_to_template(config:dict, execution_env, doc_model:dict, template:dict):
     """ 
     Measure the distance of the passed in threat model to a template
 

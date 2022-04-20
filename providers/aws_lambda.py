@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-class CLIContext:
+class AWSLambdaContext:
 
     def __init__(self, config:dict):
 
@@ -72,6 +72,12 @@ class CLIContext:
 
         return credentials
 
+    def getGitCredentials(self):
+
+        credentials = json.loads(self.secret_dict.get("git"))
+
+        return credentials
+
 def load(config:dict):
 
-    return CLIContext(config)
+    return AWSLambdaContext(config)

@@ -9,11 +9,13 @@ from utils.model import recurse
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def c14n(value:str) -> str:
+def c14n(value:str, transform_fn = None) -> str:
+    if transform_fn is not None:
+        value = transform_fn(value)
     return value.casefold().strip()
 
 # Returns the 'possible' value if 'str_to_match' equals 'possible' string/one of list of strings
-def get_equals(str_to_match:str, possible) -> str:
+def get_equals(str_to_match:str, possible, transform_fn = None) -> str:
 
     if str_to_match is None:
         str_to_match = ""
@@ -21,7 +23,7 @@ def get_equals(str_to_match:str, possible) -> str:
         possible = ""
 
     if isinstance(str_to_match, str):
-        str_to_match = c14n(str_to_match)
+        str_to_match_c14n = c14n(str_to_match, transform_fn)
     else:
         logger.warning(f"Expecting a string to match but '{str_to_match}' is a '{type(str_to_match)}'")
 
@@ -32,15 +34,15 @@ def get_equals(str_to_match:str, possible) -> str:
         if possible_match is None:
             possible_match = ""
         if isinstance(possible_match, str):
-            possible_match = c14n(possible_match)
-        if str_to_match == possible_match:
+            possible_match_c14n = c14n(possible_match, transform_fn)
+        if str_to_match_c14n == possible_match_c14n:
             return possible_match
 
     return None
 
 # Returns True if 'str_to_match' equals 'possible' string/one of list of strings
-def equals(str_to_match:str, possible) -> bool:
-    return get_equals(str_to_match, possible) is not None
+def equals(str_to_match:str, possible, transform_fn = None) -> bool:
+    return get_equals(str_to_match, possible, transform_fn) is not None
 
 # Returns True if 'str_to_match' is empty
 def is_empty(str_to_match:str) -> bool:

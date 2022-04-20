@@ -14,8 +14,8 @@ from utils import match
 from manage import manage_config
 from manage.metadata import IndexMetaData, ThreatModelMetaData
 from manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
-from manage.storage.gitrepo import IndexStorage
-from manage.storage.gitrepo import ThreatModelStorage
+from manage.manage_storage import IndexStorage
+from manage.manage_storage import ThreatModelStorage
 from actions import measure
 
 import utils.logging
@@ -31,7 +31,7 @@ def _output(config:dict):
     return FormatOutput(config.get("output", {}))
 
 
-def indexdata(config:dict, ID:str) -> MetadataIndexEntry:
+def indexdata(config:dict, execution_env, ID:str) -> MetadataIndexEntry:
     """ Given a document ID retrieve the metadata associated with the threat model """
 
     output = _output(config)
@@ -41,7 +41,7 @@ def indexdata(config:dict, ID:str) -> MetadataIndexEntry:
             logger.error(f"An ID must be provided")
             raise ManageError("internal-error", {})
 
-        with IndexStorage(config.get("storage", {}), False) as storage:
+        with IndexStorage(config.get("storage", {}), execution_env, False) as storage:
         
             index = IndexMetaData(config.get("metadata", {}), storage)
             
@@ -58,7 +58,7 @@ def indexdata(config:dict, ID:str) -> MetadataIndexEntry:
     return output
 
 
-def create(config:dict, IDprefix:str, scheme:str, location:str):
+def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
     """ Given a document location and id format, generate the unique document ID, and store and return the result """
 
     output = _output(config)
@@ -68,7 +68,7 @@ def create(config:dict, IDprefix:str, scheme:str, location:str):
             logger.error(f"An ID prefix, scheme and location, must all be provided")
             raise ManageError("internal-error", {})
 
-        with IndexStorage(config.get("storage", {})) as storage:
+        with IndexStorage(config.get("storage", {}), execution_env) as storage:
 
             index = IndexMetaData(config.get("metadata", {}), storage)
 
@@ -125,7 +125,7 @@ def create(config:dict, IDprefix:str, scheme:str, location:str):
 #         return output.getSuccess("success-submitter", {"ID":docID, "tm_version":tmvmd})
 
 
-def submit(config:dict, location:str, schemeID:str, model:dict):
+def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
     """ 
     Submit the threat model for approval 
     
@@ -149,7 +149,7 @@ def submit(config:dict, location:str, schemeID:str, model:dict):
         tmvmd = ThreatModelVersionMetaData()
         tmvmd.fromModel(schemeID, location, model)
 
-        with ThreatModelStorage(config.get("storage", {}), imdCurrent.ID) as storage:
+        with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID) as storage:
 
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imdCurrent.ID)
 
@@ -171,7 +171,7 @@ def submit(config:dict, location:str, schemeID:str, model:dict):
 
     return output
 
-def check(config:dict, location:str, schemeID:str, model:dict, measure_config:dict, distance):
+def check(config:dict, execution_env, location:str, schemeID:str, model:dict, measure_config:dict, distance):
     """ Given a document, check if the threat model has changed enough from the approved version as to require re-approval """
 
     output = _output(config)
@@ -188,7 +188,7 @@ def check(config:dict, location:str, schemeID:str, model:dict, measure_config:di
             raise ManageError("no-document-id", {"location":location})
         _, docID = docIDtuple
 
-        with ThreatModelStorage(config.get("storage", {}), docID, persist_changes=False) as storage:
+        with ThreatModelStorage(config.get("storage", {}), execution_env, docID, persist_changes=False) as storage:
 
             # Get the index data and metadata for the ID
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, docID)
