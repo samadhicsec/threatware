@@ -44,7 +44,13 @@ def run(directory, command, *args, **kwargs):
             logger.debug(f"Running '{command.__name__}' with args '{args}' in directory {directory}")
             command(*args, **kwargs)
         except ErrorReturnCode as erc:
-            logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and output '{erc.stdout}'")
+            try:
+                stdout_data = erc.stdout.decode()
+                stderr_data = erc.stderr.decode()
+            except (UnicodeDecodeError, AttributeError):
+                pass
+
+            logger.error(f"'{erc.full_cmd}' failed with exit code '{erc.exit_code}' and stdout '{stdout_data}' and stderr '{stderr_data}'")
             return False
 
     return True        

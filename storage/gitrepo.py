@@ -90,24 +90,37 @@ class GitStorage:
 
         buf = StringIO()
 
-        if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote], _out=buf, _err_to_out=True):
-            logger.error(f"Could not clone repo '{self.remote}'")
-            raise StorageError("internal-error", {})
-
-        outdata = buf.getvalue()
-        logger.debug(f"{outdata}")
-
-        # Get the directory where the code was cloned into
-        for line in outdata.splitlines():
-            if line.startswith("Cloning into '") and line .endswith("'..."):
-                self.repodirname = line.split("'")[1]
-                break
-
+        self.repodirname = "tm_mgmt"
         self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
 
-        # Git must know who the user is before it can commit. Configure git user.name and user.email
-        shell.run(self.repodir, git.config, ["user.name", self.gitrepo_config.get("git-user-name", self.git_email)])
-        shell.run(self.repodir, git.config, ["user.email", self.gitrepo_config.get("git-user-email", self.git_email)])
+        if Path(self.repodir).is_dir():
+            logger.warning(f"Directory '{self.repodir}' already exists")
+
+        if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote, self.repodirname], _out=buf, _err_to_out=True):
+            # It's possible that git did not exit correctly, but the checkout still happened
+            if not Path(self.repodir).is_dir():                
+                logger.error(f"Could not clone repo '{self.remote}'")
+                raise StorageError("internal-error", {})
+
+        # if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote], _out=buf, _err_to_out=True):
+        #     logger.error(f"Could not clone repo '{self.remote}'")
+        #     raise StorageError("internal-error", {})
+
+        outdata = buf.getvalue()
+        # logger.debug(f"{outdata}")
+
+        # # Get the directory where the code was cloned into
+        # for line in outdata.splitlines():
+        #     if line.startswith("Cloning into '") and line .endswith("'..."):
+        #         self.repodirname = line.split("'")[1]
+        #         break
+
+        # self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
+
+        if GitStorage.containerised:
+            # Git must know who the user is before it can commit. Configure git user.name and user.email
+            shell.run(self.repodir, git.config, ["user.name", self.gitrepo_config.get("git-user-name", self.git_email)])
+            shell.run(self.repodir, git.config, ["user.email", self.gitrepo_config.get("git-user-email", self.git_email)])
 
         #if not shell.run(self.repodir, git, ["sparse-checkout", "init", "--cone"]):
         if not shell.run(self.repodir, git, ["sparse-checkout", "init"]):
