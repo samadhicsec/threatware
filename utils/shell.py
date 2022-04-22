@@ -35,6 +35,10 @@ def run(directory, command, *args, **kwargs):
     if "_out" not in kwargs:
         kwargs["_out"] = logger.debug
 
+    if "_close_fds" not in kwargs:
+        # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
+        kwargs["_close_fds"] = False
+
     with pushd(directory):  
         try:
             logger.debug(f"Running '{command.__name__}' with args '{args}' in directory {directory}")
