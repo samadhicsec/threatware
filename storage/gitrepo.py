@@ -96,6 +96,9 @@ class GitStorage:
         if Path(self.repodir).is_dir():
             logger.warning(f"Directory '{self.repodir}' already exists")
 
+        if not shell.run(self.base_storage_dir, sh.ls, ["-alR"], _out=buf, _err_to_out=True):
+            raise StorageError("internal-error", {})
+
         if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote, self.repodirname], _out=buf, _err_to_out=True):
             # It's possible that git did not exit correctly, but the checkout still happened
             if not Path(self.repodir).is_dir():                
@@ -107,7 +110,7 @@ class GitStorage:
         #     raise StorageError("internal-error", {})
 
         outdata = buf.getvalue()
-        # logger.debug(f"{outdata}")
+        logger.debug(f"{outdata}")
 
         # # Get the directory where the code was cloned into
         # for line in outdata.splitlines():
