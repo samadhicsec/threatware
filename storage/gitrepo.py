@@ -30,9 +30,20 @@ class GitStorage:
         self.default_branch = self.gitrepo_config.get("default-branch", "approved")
         self.is_entered = False
 
+        self.repodirname = "tm_mgmt"
+        self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
+
         # Need to setup git depending on the environment we are in
 
         if GitStorage.containerised:
+            # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
+            shell.global_kwargs["_close_fds"] = False
+            # To work in lambda which only allows us to write to /tmp, we need to configure ssh to use the config file there, and we need to set this env var so git uses ssh with this file
+            git_env = os.environ.copy()
+            #git_env["GIT_SSH_COMMAND"] = "ssh -F /tmp/.ssh/config"
+            git_env["GIT_SSH_COMMAND"] = "ssh -F " + str(self.repodir)
+            shell.global_kwargs["_env"] = git_env
+
             # The dockerfile created a symlink to /tmp/.ssh, but in AWS lambda that doesn't exist, so we need to create it.
             os.makedirs("/tmp/.ssh", exist_ok=True)
 
@@ -44,6 +55,11 @@ class GitStorage:
             if len(git_public_key_list) != 3:
                 raise StorageError(None, None)
             git_alg, git_key, self.git_email = git_public_key_list[0], git_public_key_list[1], git_public_key_list[2]
+
+            # TODO: ssh is REALLY fussy about the private key file contents, so we need to do a sanity check on the contents we read in and ensure it will parse correctly
+            # Need \n at the end of each line, ESPECIALLY the last line needs a \n (without the file will not parse)
+            # Lines need to be a certain length I believe
+            # Header and footer lines need to be be perfect i.e. "-----BEGIN OPENSSH PRIVATE KEY-----\n", "-----END OPENSSH PRIVATE KEY-----\n"
 
             #old_umask = os.umask(0)
             with open(os.open("/tmp/.ssh/key", os.O_CREAT | os.O_WRONLY, 0o600), "w") as key_file:
@@ -89,10 +105,7 @@ class GitStorage:
     def __enter__(self):
 
         buf = StringIO()
-
-        self.repodirname = "tm_mgmt"
-        self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
-
+        
         if Path(self.repodir).is_dir():
             logger.warning(f"Directory '{self.repodir}' already exists")
 
@@ -100,17 +113,16 @@ class GitStorage:
             raise StorageError("internal-error", {})
 
         if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote, self.repodirname], _out=buf, _err_to_out=True):
-            # It's possible that git did not exit correctly, but the checkout still happened
-            if not Path(self.repodir).is_dir():                
-                logger.error(f"Could not clone repo '{self.remote}'")
-                raise StorageError("internal-error", {})
+            outdata = buf.getvalue()
+            logger.debug(f"{outdata}")
+            logger.error(f"Could not clone repo '{self.remote}'")
+            raise StorageError("internal-error", {})
 
         # if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote], _out=buf, _err_to_out=True):
         #     logger.error(f"Could not clone repo '{self.remote}'")
         #     raise StorageError("internal-error", {})
 
-        outdata = buf.getvalue()
-        logger.debug(f"{outdata}")
+        
 
         # # Get the directory where the code was cloned into
         # for line in outdata.splitlines():
@@ -132,9 +144,24 @@ class GitStorage:
 
         # Above command will set sparse-checkout pattern, but to retrieve root dir contents, we need to do a checkout (git > 2.25)
         if not shell.run(self.repodir, git, ["checkout"]):
-            logger.error(f"Could not checkout root directory contents")
-            raise StorageError("internal-error", {})
-
+            # This could have failed because there is no remote branch to checkout i.e. repo is brand new
+            if not self.remote_branch_exists(self.default_branch):
+                # Create local branch
+                if not shell.run(self.repodir, git.checkout, ["-b", self.default_branch]):
+                    logger.error(f"Unable to create local branch '{self.default_branch}'")
+                    raise StorageError("internal-error", {})    
+                # Do an initial local commit
+                if not shell.run(self.repodir, git.commit, ["--allow-empty", "-m", "Creating default branch"]):
+                    logger.error(f"Unable to commit empty branch '{self.default_branch}'")
+                    raise StorageError("internal-error", {})
+                # Create default remote branch
+                if not shell.run(self.repodir, git.push, ["-u", "origin", self.default_branch + ":" + self.default_branch]):
+                    logger.error(f"Unable to push initial commit for branch '{self.default_branch}'")
+                    raise StorageError("internal-error", {})
+            else:
+                logger.error(f"Could not checkout root directory contents")
+                raise StorageError("internal-error", {})
+        
 
         self.is_entered = True
 
