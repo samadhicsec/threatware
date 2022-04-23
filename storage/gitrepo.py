@@ -36,11 +36,12 @@ class GitStorage:
         # Need to setup git depending on the environment we are in
 
         if GitStorage.containerised:
-            ssh_path = Path.joinpath(self.base_storage_dir, ".ssh")
-            ssh_config_path = Path.joinpath(ssh_path, "config")
-            ssh_private_key_path = Path.joinpath(ssh_path, "key")
-            ssh_public_key_path = Path.joinpath(ssh_path, "key.pub")
-            ssh_known_hosts_path = Path.joinpath(ssh_path, "known_hosts")
+            ssh_path = Path.joinpath(Path(self.base_storage_dir), ".ssh")
+            ssh_config_path = str(Path.joinpath(ssh_path, "config"))
+            ssh_private_key_path = str(Path.joinpath(ssh_path, "key"))
+            ssh_public_key_path = str(Path.joinpath(ssh_path, "key.pub"))
+            ssh_known_hosts_path = str(Path.joinpath(ssh_path, "known_hosts"))
+            ssh_path = str(ssh_path)
 
             # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
             shell.global_kwargs["_close_fds"] = False
