@@ -41,7 +41,7 @@ def run(directory, command, *args, **kwargs):
 
     with pushd(directory):  
         try:
-            logger.debug(f"Running '{command.__name__}' with args '{args}' in directory {directory}")
+            logger.debug(f"Running '{command.__name__}' with args '{args}' and kwargs '{command_kwargs}' in directory {directory}")
             command(*args, **command_kwargs)
         except ErrorReturnCode as erc:
             try:
