@@ -36,16 +36,22 @@ class GitStorage:
         # Need to setup git depending on the environment we are in
 
         if GitStorage.containerised:
+            ssh_path = Path.joinpath(self.base_storage_dir, ".ssh")
+            ssh_config_path = Path.joinpath(ssh_path, "config")
+            ssh_private_key_path = Path.joinpath(ssh_path, "key")
+            ssh_public_key_path = Path.joinpath(ssh_path, "key.pub")
+            ssh_known_hosts_path = Path.joinpath(ssh_path, "known_hosts")
+
             # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
             shell.global_kwargs["_close_fds"] = False
             # To work in lambda which only allows us to write to /tmp, we need to configure ssh to use the config file there, and we need to set this env var so git uses ssh with this file
             git_env = os.environ.copy()
             #git_env["GIT_SSH_COMMAND"] = "ssh -F /tmp/.ssh/config"
-            git_env["GIT_SSH_COMMAND"] = "ssh -F " + str(self.repodir)
+            git_env["GIT_SSH_COMMAND"] = "ssh -F " + ssh_config_path
             shell.global_kwargs["_env"] = git_env
 
             # The dockerfile created a symlink to /tmp/.ssh, but in AWS lambda that doesn't exist, so we need to create it.
-            os.makedirs("/tmp/.ssh", exist_ok=True)
+            os.makedirs(ssh_path, exist_ok=True)
 
             # Write private and public keys to /tmp/.ssh/key and /tmp/.ssh/key.pub
             git_keys = execution_env.getGitCredentials()
@@ -62,15 +68,15 @@ class GitStorage:
             # Header and footer lines need to be be perfect i.e. "-----BEGIN OPENSSH PRIVATE KEY-----\n", "-----END OPENSSH PRIVATE KEY-----\n"
 
             #old_umask = os.umask(0)
-            with open(os.open("/tmp/.ssh/key", os.O_CREAT | os.O_WRONLY, 0o600), "w") as key_file:
+            with open(os.open(ssh_private_key_path, os.O_CREAT | os.O_WRONLY, 0o600), "w") as key_file:
                 key_file.writelines(git_private_key)
                 # Private key must have restricted access or git complains.
-            with open("/tmp/.ssh/key.pub", "w") as key_file:
+            with open(ssh_public_key_path, "w") as key_file:
                 key_file.writelines(git_public_key)
 
             # Write .ssh/config for the key file
-            with open("/tmp/.ssh/config", "w") as ssh_config:
-                ssh_config.writelines(f"IdentityFile=/tmp/.ssh/key")
+            with open(ssh_config_path, "w") as ssh_config:
+                ssh_config.writelines(["IdentityFile=" + ssh_private_key_path + "\n", "UserKnownHostsFile=" + ssh_known_hosts_path + "\n"])
 
             # Get the host from the 'remote' value of the form 'protocol@host:path'
             if not self.remote.startswith("git@"):
@@ -78,7 +84,7 @@ class GitStorage:
             git_host = (self.remote.split("@")[1]).split(":")[0]
 
             # Need to populate .ssh/known_hosts with remote pub key i.e. ssh-keyscan -t ed25519 github.com >> /tmp/.ssh/known_hosts
-            shell.run(self.base_storage_dir, sh.ssh_keyscan, ["-t", git_alg, git_host], _out="/tmp/.ssh/known_hosts")
+            shell.run(self.base_storage_dir, sh.ssh_keyscan, ["-t", git_alg, git_host], _out=ssh_known_hosts_path)
 
     def _not_entered(self):
         if not self.is_entered:
@@ -117,17 +123,7 @@ class GitStorage:
 
         # if not shell.run(self.base_storage_dir, git.clone, ["--no-checkout", self.remote], _out=buf, _err_to_out=True):
         #     logger.error(f"Could not clone repo '{self.remote}'")
-        #     raise StorageError("internal-error", {})
-
-        
-
-        # # Get the directory where the code was cloned into
-        # for line in outdata.splitlines():
-        #     if line.startswith("Cloning into '") and line .endswith("'..."):
-        #         self.repodirname = line.split("'")[1]
-        #         break
-
-        # self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
+        #     raise StorageError("internal-error", {})        
 
         if GitStorage.containerised:
             # Git must know who the user is before it can commit. Configure git user.name and user.email

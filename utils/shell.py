@@ -41,7 +41,10 @@ def run(directory, command, *args, **kwargs):
 
     with pushd(directory):  
         try:
-            logger.debug(f"Running '{command.__name__}' with args '{args}' and kwargs '{command_kwargs}' in directory {directory}")
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                # Don't print out env vars
+                debug_kwargs = {key: value for key, value in command_kwargs.items() if key != "_env"}
+                logger.debug(f"Running '{command.__name__}' with args '{args}' and kwargs '{debug_kwargs}' in directory {directory}")
             command(*args, **command_kwargs)
         except ErrorReturnCode as erc:
             try:
