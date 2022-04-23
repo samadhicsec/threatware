@@ -278,7 +278,10 @@ class IndexMetaData:
             logger.error(f"Could not convert last part of an ID to an int")
             raise ManageError("internal-error", {})
 
-        last_ID_num = sorted(entry_ID_numbers)[-1]
+        if len(entry_ID_numbers) > 0:
+            last_ID_num = sorted(entry_ID_numbers)[-1]
+        else:
+            last_ID_num = 0
 
         if not IDprefix.endswith("."):
             IDprefix = IDprefix + "."
