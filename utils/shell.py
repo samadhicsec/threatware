@@ -10,6 +10,8 @@ from sh import ErrorReturnCode
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+global_kwargs = {}
+
 def run(directory, command, *args, **kwargs):
     """
     Run a shell command using the sh package
@@ -35,14 +37,12 @@ def run(directory, command, *args, **kwargs):
     if "_out" not in kwargs:
         kwargs["_out"] = logger.debug
 
-    if "_close_fds" not in kwargs:
-        # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
-        kwargs["_close_fds"] = False
+    command_kwargs = global_kwargs | kwargs
 
     with pushd(directory):  
         try:
             logger.debug(f"Running '{command.__name__}' with args '{args}' in directory {directory}")
-            command(*args, **kwargs)
+            command(*args, **command_kwargs)
         except ErrorReturnCode as erc:
             try:
                 stdout_data = erc.stdout.decode()
