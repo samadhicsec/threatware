@@ -61,15 +61,14 @@ class GitStorage:
             git_public_key = git_keys["public-key"]
             git_public_key_list = git_public_key.split(" ")
             if len(git_public_key_list) != 3:
-                raise StorageError(None, None)
+                logger.error(f"Expected public key to consist of 3 space separated parts, instead found {len(git_public_key_list)} parts")
+                raise StorageError("internal-error", None)
             git_alg, git_key, self.git_email = git_public_key_list[0], git_public_key_list[1], git_public_key_list[2]
 
-            # TODO: ssh is REALLY fussy about the private key file contents, so we need to do a sanity check on the contents we read in and ensure it will parse correctly
-            # Need \n at the end of each line, ESPECIALLY the last line needs a \n (without the file will not parse)
-            # Lines need to be a certain length I believe
+            # ssh is REALLY fussy about the private key file contents, so we need to do a sanity check on the contents we read in and ensure it will parse correctly
             # Header and footer lines need to be be perfect i.e. "-----BEGIN OPENSSH PRIVATE KEY-----\n", "-----END OPENSSH PRIVATE KEY-----\n"
+            git_private_key = self._format_openssh_private_key(git_private_key)
 
-            #old_umask = os.umask(0)
             with open(os.open(ssh_private_key_path, os.O_CREAT | os.O_WRONLY, 0o600), "w") as key_file:
                 key_file.writelines(git_private_key)
                 # Private key must have restricted access or git complains.
@@ -82,11 +81,45 @@ class GitStorage:
 
             # Get the host from the 'remote' value of the form 'protocol@host:path'
             if not self.remote.startswith("git@"):
-                raise StorageError(None, None)
+                logger.error("Currently only remotes using 'git@' are supported")
+                raise StorageError("internal-error", None)
             git_host = (self.remote.split("@")[1]).split(":")[0]
 
             # Need to populate .ssh/known_hosts with remote pub key i.e. ssh-keyscan -t ed25519 github.com >> /tmp/.ssh/known_hosts
             shell.run(self.base_storage_dir, sh.ssh_keyscan, ["-t", git_alg, git_host], _out=ssh_known_hosts_path)
+
+    def _format_openssh_private_key(self, key:str) -> str:
+        """
+        Reformat OpenSSH private key in-case user has just cut and paste
+
+        Ensures OpenSSH header and footer text ends in newline - without this ssh considers the private key file invalid
+        """
+        openssh_header = "-----BEGIN OPENSSH PRIVATE KEY-----"
+        openssh_footer = "-----END OPENSSH PRIVATE KEY-----"
+
+        # Check if key contains correct newline terminated header
+        if key.find(openssh_header + "\n") == -1:
+            # Check if key contains header, just not newline terminated
+            if key.find(openssh_header) != -1:
+                # Replace non newline terminated header with newline terminated header
+                key = key.replace(openssh_header, openssh_header + "\n")
+            else:
+                # Not an OpenSSH private key
+                return key
+
+        # Check if key contains correct newline terminated footer
+        if key.find(openssh_footer + "\n") == -1:
+            # Check if key contains footer, just not newline terminated
+            if key.find(openssh_footer) != -1:
+                # Replace non newline terminated footer with newline terminated footer
+                key = key.replace(openssh_footer, openssh_footer + "\n")
+            else:
+                logger.error("Private does not have an OpenSSH footer")
+                # Not an OpenSSH private key
+                return key
+
+        return key
+
 
     def _not_entered(self):
         if not self.is_entered:

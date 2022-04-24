@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from dateutil.parser import parse
 from utils.output import FormatOutput
-from utils.error import ManageError
+from utils.error import ManageError, StorageError
 from utils.model import assign_row_identifiers, assign_parent_keys
 from data import find
 from utils import match
@@ -52,6 +52,8 @@ def indexdata(config:dict, execution_env, ID:str) -> MetadataIndexEntry:
 
             output.setSuccess("success-indexdata", {"ID":ID}, entry)
     
+    except StorageError as error:
+        output.setError(error.text_key, error.template_values)
     except ManageError as error:
         output.setError(error.text_key, error.template_values)
 
@@ -90,6 +92,8 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
 
         output.setSuccess("success-create", {}, new_entry)
 
+    except StorageError as error:
+        output.setError(error.text_key, error.template_values)
     except ManageError as error:
         output.setError(error.text_key, error.template_values)
 
@@ -166,6 +170,8 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
         else:
             output.setSuccess("success-submitter", {"ID":imdCurrent.ID}, tmvmd)
 
+    except StorageError as error:
+        output.setError(error.text_key, error.template_values)
     except ManageError as error:
         output.setError(error.text_key, error.template_values)
 
@@ -230,6 +236,8 @@ def check(config:dict, execution_env, location:str, schemeID:str, model:dict, me
                 # An approval is not required
                 output.setInformation("no-approval-required", {})
 
+    except StorageError as error:
+        output.setError(error.text_key, error.template_values)
     except ManageError as error:
         output.setError(error.text_key, error.template_values)
 
