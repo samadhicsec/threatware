@@ -31,7 +31,7 @@ class GitStorage:
         self.is_entered = False
 
         self.repodirname = "tm_mgmt"
-        self.repodir = Path(self.base_storage_dir).joinpath(self.repodirname)
+        self.repodir = str(Path(self.base_storage_dir).joinpath(self.repodirname))
 
         # Need to setup git depending on the environment we are in
 
@@ -45,9 +45,10 @@ class GitStorage:
 
             # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
             shell.global_kwargs["_close_fds"] = False
+            # To work in lambda, which seems to have no or few TTYs (because you get errors about it running out of them), set this to False
+            shell.global_kwargs["_tty_out"] = False
             # To work in lambda which only allows us to write to /tmp, we need to configure ssh to use the config file there, and we need to set this env var so git uses ssh with this file
             git_env = os.environ.copy()
-            #git_env["GIT_SSH_COMMAND"] = "ssh -F /tmp/.ssh/config"
             git_env["GIT_SSH_COMMAND"] = "ssh -F " + ssh_config_path
             shell.global_kwargs["_env"] = git_env
 
