@@ -35,6 +35,9 @@ class MetadataIndexEntry:
         _, id_value = find.key_with_tag(ddd_value, "document-id")
         _, version_tag_value = find.key_with_tag(ddd_value, version_tag)
 
+        if match.is_empty(id_value):
+            raise ManageError("empty-id", {})
+
         self.ID = id_value
         self.scheme = scheme
         self.location = location

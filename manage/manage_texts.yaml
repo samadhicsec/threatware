@@ -4,6 +4,7 @@ output-texts:
   success-create: "The following entry was successfully added to the threat model index.  Please ask an approver to approve the change."
   success-approver: "The following metadata for threat model with ID '{{ ID }}' was submitted, it is not approved until the changes are merged to the official record"
   success-submitter: "The following metadata for threat model with ID '{{ ID }}' was submitted, please let an approver know"
+  empty-id: "The threat model at this location has a empty ID.  Please populate the ID field and re-submit"
   no-version-history: "Could not find entry in version history table for threat model current version '{{ current_version }}'"
   no-index-ID: "Could not find metadata index entry for ID '{{ ID }}'.  Valid IDs must exist in the metadata index file.  New IDs can be created using manage.craete"
   index-entry-exists: "Cannot create ID for threat model with scheme '{{ scheme }}' and location '{{ location }}' as that scheme/location is used by threat model with ID '{{ ID }}'"
