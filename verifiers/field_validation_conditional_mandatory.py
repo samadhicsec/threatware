@@ -29,13 +29,18 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             rowIDkey = keymaster.get_row_identifier_for_key(tagged_data_entry_key)
             row_data = rowIDkey.getProperty("row")
             depends_on_key, depends_on_key_value = find.key_with_tag(row_data, tag_entry["depends-on"])
-            if match.equals(depends_on_key_value, tag_entry["depends-on-value"]) and match.is_empty(tagged_data_entry_value):
+            if (("depends-on-value" in tag_entry and match.equals(depends_on_key_value, tag_entry["depends-on-value"])) or "depends-on-value" not in tag_entry) and match.is_empty(tagged_data_entry_value):
                 issue_dict = {}
                 issue_dict["issue_key"] = tagged_data_entry_key
                 issue_dict["issue_value"] = tagged_data_entry_value
                 issue_dict["depends_on_key"] = depends_on_key
                 issue_dict["depends_on_value"] = depends_on_key_value
-                verify_return_list.append(VerifierIssue("missing-conditional-mandatory",
+                if "depends-on-value" in tag_entry:
+                    verify_return_list.append(VerifierIssue("missing-conditional-mandatory",
+                                                        None, 
+                                                        issue_dict))
+                else:
+                    verify_return_list.append(VerifierIssue("missing-conditional-mandatory-any-value",
                                                         None, 
                                                         issue_dict))
 

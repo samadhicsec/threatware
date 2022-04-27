@@ -8,6 +8,11 @@ verifiers-config:
       default-severity: error
       #location-text: "{}"
       #entry-text: "For entry with '{}' equal to '{}'"
+    strip-context:
+      start-char: "("
+      end-char: ")"
+    exclude:
+      tag-prefix: "exclude"
     references:
       doc-tag-prefix: "ref"
       templ-tag-prefix: "tref"
@@ -26,11 +31,7 @@ verifiers-config:
       threat-component-tag: threat-component
       threat-description-tag: threat-description
       threat-control-tag: threat-control
-    #grouped-text:
-    #  start-assets-grouped-by-storage: 
-    #    - "All assets stored"
-    #  all-assets:
-    #    - "All assets"
+    # 'grouped-text' gets copied from verifiers_texts.yaml
   coverage-validation:
   field-validation-mandatory:
     default: True
@@ -41,6 +42,11 @@ verifiers-config:
       - tag: "tech-stack"
         depends-on: "in-scope"
         depends-on-value: {{ translate.yes }}
+      - tag: "version-approver"
+        depends-on: "version-status"
+        depends-on-value: {{ translate.approved }}
+      - tag: "version-approved-date"
+        depends-on: "version-approver"
   field-validation-uniqueness:
     unique-tag-prefix: "unique"
     tags:

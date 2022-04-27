@@ -8,44 +8,45 @@ import re
 import data.find as find
 from data.key import key as Key
 import utils.match as match
+import utils.tags as tags
 import utils.keymaster as keymaster
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
-def get_ref_tag_parts(reftag:str):
+# def get_ref_tag_parts(reftag:str):
 
-    # Split tag into parts
-    tag_parts = reftag.split("/")
+#     # Split tag into parts
+#     tag_parts = reftag.split("/")
 
-    if len(tag_parts) < 3 or len(tag_parts) > 4:
-        return None, None, None, None
+#     if len(tag_parts) < 3 or len(tag_parts) > 4:
+#         return None, None, None, None
 
-    tag_prefix = tag_parts[0]
-    tag_data_tag_name = tag_parts[1]
-    tag_field_tag_name = tag_parts[2]
-    tag_comparison = "equals"
-    if len(tag_parts) == 4:
-        tag_comparison = tag_parts[3]
+#     tag_prefix = tag_parts[0]
+#     tag_data_tag_name = tag_parts[1]
+#     tag_field_tag_name = tag_parts[2]
+#     tag_comparison = "equals"
+#     if len(tag_parts) == 4:
+#         tag_comparison = tag_parts[3]
 
-    return tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison
+#     return tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison
 
-def _check_tag_comparison(tag_tuple, compare_value, compare_to_key, compare_to_value, callback, callback_config, only_callback = False):
+# def check_tag_comparison(tag_tuple, compare_value, compare_to_key, compare_to_value, callback, callback_config, only_callback = False):
 
-    tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
+#     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
-    if not only_callback and tag_comparison == "" or tag_comparison == "equals":
-        if match.equals(compare_value, compare_to_value):
-            return True
-    if not only_callback and tag_comparison == "endswith":
-        if match.endswith(compare_value, compare_to_value):
-            return True
-    else:
-        if callback is not None:
-            return callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value)    
+#     if not only_callback and tag_comparison == "" or tag_comparison == "equals":
+#         if match.equals(compare_value, compare_to_value):
+#             return True
+#     if not only_callback and tag_comparison == "endswith":
+#         if match.endswith(compare_value, compare_to_value):
+#             return True
+#     else:
+#         if callback is not None:
+#             return callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value)    
 
-    return False
+#     return False
 
 def get_references(model, ref_type, ref_key, ref_value, callback, callback_config):
     """
@@ -78,7 +79,7 @@ def get_references(model, ref_type, ref_key, ref_value, callback, callback_confi
     referenced = []
     for tag in ref_key.getTags():
 
-        tag_tuple = get_ref_tag_parts(tag)
+        tag_tuple = tags.get_quad_tag_parts(tag)
         tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
         if ref_type != tag_prefix:
@@ -99,7 +100,7 @@ def get_references(model, ref_type, ref_key, ref_value, callback, callback_confi
             continue
 
         for found_key, found_value in result_list:
-            if _check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config):
+            if tags.check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config):
                 found_referenced = (tag, found_key, found_value)
                 if found_referenced not in referenced:
                     referenced.append(found_referenced)
@@ -145,7 +146,7 @@ def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_co
 
     for tag in ref_key.getTags():
 
-        tag_tuple = get_ref_tag_parts(tag)
+        tag_tuple = tags.get_quad_tag_parts(tag)
         tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
         if ref_type != tag_prefix:
@@ -162,56 +163,56 @@ def check_reference_row(row, ref_type, ref_key, ref_value, callback, callback_co
                 continue
 
             for found_key, found_value in result_list:
-                if _check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config, only_callback):
+                if tags.check_tag_comparison(tag_tuple, ref_value, found_key, found_value, callback, callback_config, only_callback):
                     return tag
     
     return None
 
-def get_prefixed_tag(prefix:str, target_key) -> list:
+# def get_prefixed_tag(prefix:str, target_key) -> list:
 
-    output = []
+#     output = []
 
-    for tag in target_key.getTags():
-        if tag.startswith(prefix):
-            output.append(tag)
+#     for tag in target_key.getTags():
+#         if tag.startswith(prefix):
+#             output.append(tag)
 
-    return output
+#     return output
 
-def get_values_for_tags(model, ref_tag_list:list, output:dict):
+# def get_values_for_tags(model, ref_tag_list:list, output:dict):
 
-    for tag in ref_tag_list:
+#     for tag in ref_tag_list:
 
-        tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = get_ref_tag_parts(tag)
+#         tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tags.get_quad_tag_parts(tag)
 
-        for key_entry, value_entry in find.keys_with_tag(model, tag):
-            if isinstance(value_entry, str):
-                if match.is_empty(value_entry):
-                    continue
-                tag_dict_key = tag_data_tag_name + "/" + tag_field_tag_name
-                if output.get(tag_dict_key) is None:
-                    output[tag_dict_key] = []
-                if value_entry not in output[tag_dict_key]:
-                    output[tag_dict_key].append(value_entry)
-            else:
-                logger.warning(f"Reference value '{tag}' did not point to a string")
+#         for key_entry, value_entry in find.keys_with_tag(model, tag):
+#             if isinstance(value_entry, str):
+#                 if match.is_empty(value_entry):
+#                     continue
+#                 tag_dict_key = tag_data_tag_name + "/" + tag_field_tag_name
+#                 if output.get(tag_dict_key) is None:
+#                     output[tag_dict_key] = []
+#                 if value_entry not in output[tag_dict_key]:
+#                     output[tag_dict_key].append(value_entry)
+#             else:
+#                 logger.warning(f"Reference value '{tag}' did not point to a string")
 
-    return                
+#     return                
 
-def get_matching_tags(ref_key, prefix, data_name, field_name, comparison):
+# def get_matching_tags(ref_key, prefix, data_name, field_name, comparison):
 
-    output = []
+#     output = []
 
-    for tag in ref_key.getTags():
+#     for tag in ref_key.getTags():
         
-        tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = get_ref_tag_parts(tag)
+#         tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tags.get_quad_tag_parts(tag)
 
-        if tag_prefix == prefix or prefix == "":
-            if tag_data_tag_name == data_name or data_name == "":
-                if tag_field_tag_name == field_name or field_name == "":
-                    if tag_comparison == comparison or comparison == "":
-                        output.append(tag)
+#         if tag_prefix == prefix or prefix == "":
+#             if tag_data_tag_name == data_name or data_name == "":
+#                 if tag_field_tag_name == field_name or field_name == "":
+#                     if tag_comparison == comparison or comparison == "":
+#                         output.append(tag)
 
-    return output
+#     return output
 
 def get_reference_descriptions(model:dict, ref_type:str, ref_key:Key):
 
@@ -220,7 +221,7 @@ def get_reference_descriptions(model:dict, ref_type:str, ref_key:Key):
     # For each tag with the prefix (so if any match, it verifies)
     for tag in ref_key.getTags():
 
-        tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = get_ref_tag_parts(tag)
+        tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tags.get_quad_tag_parts(tag)
 
         if ref_type != tag_prefix:
             # A key might have several other tags unrelated to references

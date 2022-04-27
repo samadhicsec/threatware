@@ -8,6 +8,7 @@ import importlib
 from pathlib import Path
 from utils.load_yaml import yaml_file_to_dict, yaml_templated_file_to_dict
 from utils import keymaster
+from utils import tags
 from verifiers.verifiers_config import VerifiersConfig
 import data.find as find
 import verifiers.reference as reference
@@ -277,7 +278,7 @@ class Verifiers:
 
                 # Get the tags on this key that match the template reference
                 data_section_tag = keymaster.get_data_tag_for_key(key_entry)
-                matching_tags = reference.get_matching_tags(key_entry, self.config.verifiers_config_dict["common"]["references"]["templ-tag-prefix"], data_section_tag, "", "")
+                matching_tags = tags.get_matching_tags(key_entry, self.config.verifiers_config_dict["common"]["references"]["templ-tag-prefix"], data_section_tag, "", "")
 
                 # Set a property on the template key, marking it as a pre-approved value
                 key_entry.addProperty("templatePreApproved", matching_tags)

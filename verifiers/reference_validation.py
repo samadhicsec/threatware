@@ -9,33 +9,35 @@ from data.key import key as Key
 from verifiers.verifier_error import ErrorType
 from verifiers.verifier_error import VerifierIssue
 import verifiers.reference as reference
-from utils import match
+from utils import match, transform
 from utils import keymaster
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def _strip_context(config:dict, value:str):
+# def _strip_context(config:dict, value:str):
 
-    start_char = config["start-char"]
-    end_char = config["end-char"]
+#     start_char = config["start-char"]
+#     end_char = config["end-char"]
 
-    if(start_char_index := value.find(start_char)) != -1:
-        if(end_char_index := value.find(end_char, start_char_index)) != -1:
-            return value[:start_char_index] + value[end_char_index + 1:]
+#     if(start_char_index := value.find(start_char)) != -1:
+#         if(end_char_index := value.find(end_char, start_char_index)) != -1:
+#             return value[:start_char_index] + value[end_char_index + 1:]
 
-    return value
+#     return value
 
 def template_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
-    strip_config = {"start-char":"(", "end-char":")"}
+    #strip_config = {"start-char":"(", "end-char":")"}
+    strip_config = callback_config["strip-context"]
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     if tag_comparison == "template-approved":
         preApproved = compare_to_key.getProperty("templatePreApproved")
         # For pre-approved template values, we allow 'context' to be added in the TM e.g. in-memory (component).  But we strip this when matching to the pre-approved value
-        if preApproved is not None and match.equals(compare_value, compare_to_value, lambda val : _strip_context(strip_config, val)):
+        #if preApproved is not None and match.equals(compare_value, compare_to_value, lambda val : _strip_context(strip_config, val)):
+        if preApproved is not None and match.equals(compare_value, compare_to_value, transform.strip(strip_config["start-char"], strip_config["end-char"])):
             # TODO: Does not currently validate that the tag of the preApproved value matches the tag of the reference being checked e.g. pre-approved in functional assets table wouldn't match a ref tagged with just the the technical assets table.  This would restrict ref matches, so may not be a good thing.
             return True
 
@@ -44,6 +46,12 @@ def template_reference_callback(callback_config, tag_tuple, compare_value, compa
 def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
+
+    strip_config = callback_config["strip-context"]
+
+    # We want to strip any context for teh purpose of copmarison of references
+    if match.equals(compare_value, compare_to_value, transform.strip(strip_config["start-char"], strip_config["end-char"])):
+        return True
 
     if tag_comparison == "storage-expression":
         # TODO this just checks the value endswith the value from where it has a tag referencing, but really we should check for a complete
@@ -67,6 +75,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     reference_callback_config = {}
     reference_callback_config["grouped-text"] = common_config["grouped-text"]
+    reference_callback_config["strip-context"] = common_config["strip-context"]
 
     # Find every key with a tag that starts with the configured prefix.
     all_reference_tagged_keys = find.keys_with_tag_matching_regex(model, "^(" + doc_reference_tag_prefix + "|" + template_reference_tag_prefix + ").*$")

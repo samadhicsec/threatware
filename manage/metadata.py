@@ -48,22 +48,19 @@ class MetadataIndexEntry:
 
         _, vhd_value = find.key_with_tag(model, "version-history-data")
         versions = find.keys_with_tag(vhd_value, "row-identifier")
-        #match_found = False
-        for version_key, version_value in versions:
-            if match.equals(version_tag_value, version_value):
-                version_row = version_key.getProperty("row")
-                version_approver = find.key_with_tag(version_row, "version-approver")[1]
-                version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
-                #match_found = True
-                break
+        
+        # If the version value is empty then there will be no match in the version history table
+        if not match.is_empty(version_tag_value):
+            for version_key, version_value in versions:
+                if match.equals(version_tag_value, version_value):
+                    version_row = version_key.getProperty("row")
+                    version_approver = find.key_with_tag(version_row, "version-approver")[1]
+                    version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
+                    break
 
-        if version_approver is not None and version_approved_date is not None:
-            self.approved_version = version_tag_value
-            self.approved_date = version_approved_date
-
-        #if not match_found:
-        #    logger.error(f"Could not find entry in version history table for threat model approved version '{current_version_value}'")
-        #    raise ManageError("no-version-history", {"current_version":current_version_value})
+            if version_approver is not None and version_approved_date is not None:
+                self.approved_version = version_tag_value
+                self.approved_date = version_approved_date
 
         return version_tag_value
 
@@ -397,7 +394,7 @@ class ThreatModelMetaData:
 
         currentMetadataIndexEntry = self.index.getIndexEntry(ID)
 
-        # Several scenarios to consier
+        # Several scenarios to consider
         # Common legitimate update scenario by author
         # model cur ver = 1.1 (not approved in model)
         # model app ver = 1.0 (approved in model)

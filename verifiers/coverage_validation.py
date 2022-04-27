@@ -7,8 +7,8 @@ import logging
 import verifiers.reference as reference
 from verifiers.verifier_error import ErrorType
 from verifiers.verifier_error import VerifierIssue
-from utils import match
-from utils import keymaster
+from utils import match, transform
+from utils import tags
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -88,6 +88,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     callback_config = {"grouped-text":common_config["grouped-text"]}
 
+    exclude_callback = lambda callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value: match.contains(compare_value, compare_to_value)
+
     # Loop through the asset data tables
     for asset_data_tag, asset_data_key, asset_data_value in all_assets:
 
@@ -104,6 +106,19 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
                 if storage_location_value in out_of_scope_components:
                     logger.debug(f"Ignoring threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}' as '{storage_location_value}' is out of scope")
+                    continue
+
+                # Ignore any excluded values
+                exclude = False
+                for exclude_tag in tags.get_prefixed_tag(common_config["exclude"]["tag-prefix"] + "/", storage_location_key):
+                    exclude_tag_tuple = tags.get_quad_tag_parts(exclude_tag)
+                    tag_prefix, tag_type, tag_value, tag_comparison = exclude_tag_tuple
+                    
+                    if exclude := tags.check_tag_comparison(exclude_tag_tuple, storage_location_value, storage_location_key, tag_value, exclude_callback, None, True):
+                        storage_location_key.addProperty("excluded", True)
+                        logger.debug(f"Ignoring threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}' as tag '{exclude_tag}' excludes it")
+                        break
+                if exclude:
                     continue
 
                 logger.debug(f"Checking threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}'")

@@ -110,6 +110,10 @@ class ThreatCoverage:
                         logger.debug(f"Ignoring coverage report on asset '{row_id_key.name}' in storage location '{storage_location_value}' as '{storage_location_value}' is out of scope")
                         continue
 
+                    if storage_location_key.getProperty("excluded"):    # Returns None (evals to False) if not present, otherwise returns True/False
+                        logger.debug(f"Ignoring coverage report on asset '{row_id_key.name}' in storage location '{storage_location_value}' it has a tag that excludes it")
+                        continue
+
                     covering_threats = storage_location_key.getProperty("covering-threats")
 
                     covering_threats_list = []
