@@ -102,6 +102,10 @@ def get_document_row_table(document, query_cfg):
     # this method is no longer XML, we know subsequent queries don't rely on these elements.
     # Stripping span doesn't affect content (and Google Docs have A LOT of span elements)
     etree.strip_tags(table_ele, "span")
+    # Reluctantly removing 'superscript' elements.  It seems Google Docs will add single letter superscript to elements
+    # when you download the doc as HTML, where that text is hihglight as part of a comment.  Lesser of two evils is to 
+    # not support 'superscript' elements (as we have to allow a document with comments to be verified)
+    etree.strip_elements(table_ele, "sup")
     # Stripping attributes of <p> elements doesn't affect content, but we leave them in because they are usually used
     # like newlines, whcih is what we replace them with further down.
     for ele in table_ele.findall('.//p'):
