@@ -228,7 +228,7 @@ scheme:
           get-data:
             query:
               type: html-ul
-              xpath: "//html/body/h2[text()='References']/following::ul/li"
+              xpath: "//html/body/h2[text()='References']/following::ul[following::h1[1][text()='Components']]/li"
           map-data:
             - key: "description"
               value:
