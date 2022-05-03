@@ -77,6 +77,8 @@ class VerifierIssue:
                 context[keyentry] = {}
                 context[keyentry]["name"] = valueentry.name
                 context[keyentry]["colname"] = valueentry.getProperty("colname")
+                if context[keyentry]["colname"] is None:
+                    context[keyentry]["colname"] = context[keyentry]["name"]
                 context[keyentry]["value"] = issue_dict.get(keyentry.replace("_key", "_value"), None)
                 if sectionKey := keymaster.get_section_for_key(valueentry):
                     context[keyentry]["table"] = sectionKey.getProperty("section")
@@ -96,6 +98,8 @@ class VerifierIssue:
                     rowIDentry = {}
                     rowIDentry["name"] = rowIDkey.name
                     rowIDentry["colname"] = rowIDkey.getProperty("colname")
+                    if rowIDentry["colname"] is None:
+                        rowIDentry["colname"] = rowIDentry["name"]
                     rowIDentry["value"] = rowIDkey.getProperty("value")
                     if sectionKey := keymaster.get_section_for_key(rowIDkey):
                         rowIDentry["table"] = sectionKey.getProperty("section")

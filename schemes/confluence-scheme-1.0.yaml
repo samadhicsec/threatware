@@ -568,7 +568,10 @@ scheme:
             - key: "operational-activity"
               value:
                 map-data:
-                  - key: "question"
+                  - key: 
+                      name: "question"
+                      tags:
+                        - row-identifier
                     value: 
                       get-data:
                         query:
