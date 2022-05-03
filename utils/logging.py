@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import logging
 
 LOGGERNAME = 'threatware'
@@ -12,8 +13,17 @@ def configureLogging():
 
     # create logger
     logger = logging.getLogger(LOGGERNAME)
-    #logger.setLevel(logging.DEBUG)
-    logger.setLevel(logging.WARNING)
+    
+    #log_level = logging.DEBUG
+    log_level = logging.WARNING
+
+    if (env_log_level_str := os.getenv("THREATWARE_LOG_LEVEL")) is not None:
+        env_log_level = logging.getLevelName(env_log_level_str)
+        if isinstance(env_log_level, int):
+            log_level = env_log_level
+    
+    logger.setLevel(log_level)
+
     logger.propagate = False
 
     # create console handler and set level to debug
