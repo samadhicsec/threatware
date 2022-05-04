@@ -394,6 +394,10 @@ class ThreatModelMetaData:
 
         currentMetadataIndexEntry = self.index.getIndexEntry(ID)
 
+        if currentMetadataIndexEntry is None:
+            # The TM has either not been 'create'd, or the output of the 'create' action has not been merged to the default branch
+            raise ManageError("cant-submit-not-in-metadata-index", {"ID":ID})
+
         # Several scenarios to consider
         # Common legitimate update scenario by author
         # model cur ver = 1.1 (not approved in model)
