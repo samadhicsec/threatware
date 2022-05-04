@@ -47,7 +47,7 @@ def _parse_row_table_row(mapping, row, output, previous_row = {}):
 
     # Expecting row to be a list (cols).
     if not isinstance(row, list):
-        logger.warning("Expected content to be 'list', got '{}' instead".format(type(content)))
+        logger.warning("Expected content to be 'list', got '{}' instead".format(type(row)))
         return
 
     table_row = {}
@@ -372,23 +372,23 @@ def doc_to_model(document, mapping):
 
     return tm
 
-def convert(connection:dict, mapping:dict, doc_identifers:dict):
+# def convert(connection:dict, mapping:dict, doc_identifers:dict):
 
-    # Establish connection to document location
+#     # Establish connection to document location
     
-    # Check the document exists
+#     # Check the document exists
     
-    # Read the document into a string
-    #document = reader.read(doc_store, doc_identifers.get('id', ''))
+#     # Read the document into a string
+#     #document = reader.read(doc_store, doc_identifers.get('id', ''))
 
-    # Read the document as html xml element
-    # This will return an lxml element at the root node which is the 'html' tag
-    #query_document = query.get_document(document)
+#     # Read the document as html xml element
+#     # This will return an lxml element at the root node which is the 'html' tag
+#     #query_document = query.get_document(document)
 
-    # Convert the document
-    return _doc_to_model(query_document)
+#     # Convert the document
+#     return _doc_to_model(query_document)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    tm = convert({}, {"id":"65538"})
-    print(tm)
+#     tm = convert({}, {"id":"65538"})
+#     print(tm)
