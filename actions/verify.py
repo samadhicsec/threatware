@@ -15,11 +15,11 @@ from verifiers.verifiers import Verifiers
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def config(scheme:dict, translator:Translate):
+def config(scheme:dict):
 
     verifiers_config = scheme.get("verifiers", {})
 
-    return VerifiersConfig(verifiers_config, translator)
+    return VerifiersConfig(verifiers_config)
 
 def verify(config:VerifiersConfig, threatmodel:dict, tm_template:dict):
 

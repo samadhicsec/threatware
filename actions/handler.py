@@ -34,21 +34,23 @@ def lambda_handler(event, context):
 
     # Get space and page from query string parameters
     qsp = event.get("queryStringParameters", {})
-    filtered_qsp = {}
+    filtered_qsp = {"request":{}}
     if (action := qsp.get("action", None)) is not None:
-        filtered_qsp["action"] = action
+        filtered_qsp["request"]["action"] = action
     if (schemeID := qsp.get("scheme", None)) is not None:
-        filtered_qsp["scheme"] = schemeID
+        filtered_qsp["request"]["scheme"] = schemeID
     if (docloc := qsp.get("docloc", None)) is not None:
-        filtered_qsp["docloc"] = docloc
+        filtered_qsp["request"]["docloc"] = docloc
     if (doctemplate := qsp.get("doctemplate", None)) is not None:
-        filtered_qsp["doctemplate"] = doctemplate
+        filtered_qsp["request"]["doctemplate"] = doctemplate
     if (id := qsp.get("ID", None)) is not None:
-        filtered_qsp["ID"] = id
+        filtered_qsp["request"]["ID"] = id
     if (IDprefix := qsp.get("IDprefix", None)) is not None:
-        filtered_qsp["IDprefix"] = IDprefix
+        filtered_qsp["request"]["IDprefix"] = IDprefix
+    if (lang := qsp.get("lang", None)) is not None:
+        filtered_qsp["request"]["lang"] = lang
 
-    logger.info(f"Threatware called with parameters = '{filtered_qsp}'")
+    logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
     # Validate input
     if action is None:
@@ -92,18 +94,17 @@ def lambda_handler(event, context):
             #execution_env = provider.get_provider("cli")
 
         # We need this to support localisation of keywords
-        translator = Translate()
+        Translate.init(lang, filtered_qsp)
 
         # We can treat the parameters as static
         FormatOutput.request_parameters = filtered_qsp
-        FormatOutput.translator = translator
 
         if schemeID is not None:
             schemeDict = load_scheme(schemeID)
 
         if action == ACTION_CONVERT:
             
-            convert_config = convert.config(translator)
+            convert_config = convert.config()
 
             # Convert the TM document
             output = convert.convert(convert_config, execution_env, schemeDict, docloc)
@@ -112,7 +113,7 @@ def lambda_handler(event, context):
 
         elif action == ACTION_VERIFY:
 
-            convert_config = convert.config(translator)
+            convert_config = convert.config()
             
             # Convert the TM template
             convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
@@ -130,7 +131,7 @@ def lambda_handler(event, context):
 
                     doc_model = convert_output.getDetails()
 
-                    verify_config = verify.config(schemeDict, translator)
+                    verify_config = verify.config(schemeDict)
 
                     # Verify the TM document
                     verify_output = verify.verify(verify_config, doc_model, template_model)
@@ -140,9 +141,6 @@ def lambda_handler(event, context):
                         
                         issues = verify_output.getDetails()
 
-                        # Analyse coverage of threats
-                        #coverage = verify.coverage(verify_config, doc_model)
-
                         # Generate a report on verification issues and analysis
                         verify_output = verify.report(verify_config, doc_model, issues)
 
@@ -150,9 +148,7 @@ def lambda_handler(event, context):
 
         elif action == ACTION_MANAGE_INDEXDATA:
             
-            manage_config = manage.config(translator)
-
-            #output = manage.output(measure_config)
+            manage_config = manage.config()
 
             output = manage.indexdata(manage_config, execution_env, id)
 
@@ -160,9 +156,7 @@ def lambda_handler(event, context):
 
         elif action == ACTION_MANAGE_CREATE:
             
-            manage_config = manage.config(translator)
-
-            #output = manage.output(measure_config)
+            manage_config = manage.config()
 
             output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
 
@@ -170,7 +164,7 @@ def lambda_handler(event, context):
 
         elif action == ACTION_MANAGE_CHECK:
             
-            convert_config = convert.config(translator)
+            convert_config = convert.config()
 
             # Convert the TM document
             convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
@@ -180,12 +174,10 @@ def lambda_handler(event, context):
 
                 doc_model = convert_output.getDetails()
             
-                manage_config = manage.config(translator)
-
-                #output = manage.output(measure_config)
+                manage_config = manage.config()
 
                 # 'check' relies on measure
-                measure_config = measure.config(translator)
+                measure_config = measure.config()
 
                 output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
 
@@ -193,7 +185,7 @@ def lambda_handler(event, context):
         
         elif action == ACTION_MANAGE_SUBMIT:
             
-            convert_config = convert.config(translator)
+            convert_config = convert.config()
 
             # Convert the TM document
             convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
@@ -203,9 +195,7 @@ def lambda_handler(event, context):
 
                 doc_model = convert_output.getDetails()
 
-                manage_config = manage.config(translator)
-
-                #output = manage.output(measure_config)
+                manage_config = manage.config()
 
                 output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
 
@@ -213,7 +203,7 @@ def lambda_handler(event, context):
 
         elif action == ACTION_MEASURE:
 
-            convert_config = convert.config(translator)
+            convert_config = convert.config()
 
             # Convert the TM template
             convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
@@ -231,7 +221,7 @@ def lambda_handler(event, context):
 
                     doc_model = convert_output.getDetails()
 
-                    measure_config = measure.config(translator)
+                    measure_config = measure.config()
                     
                     output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
 
@@ -250,6 +240,8 @@ if __name__ == "__main__":
     template_help = 'Identifier for the document template (overrides template in scheme)'
 
     parser = argparse.ArgumentParser(description='Threat Model Verifier')
+
+    parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
 
     subparsers = parser.add_subparsers(dest="command")
 

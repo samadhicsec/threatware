@@ -5,16 +5,17 @@ Class ManageOutput
 
 import logging
 import utils.load_yaml
+from language.translate import Translate
 import jsonpickle
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath="./"),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath="./"),
+#     autoescape=select_autoescape()
+# )
 
 class ManageOutput:
 
@@ -36,19 +37,19 @@ class ManageOutput:
 
     def setInformation(self, text_key:str, template_values:dict, details = None) -> dict:
 
-        info_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
+        info_text = Translate.localise(self.templated_texts, text_key, template_values)
 
         return self._getOutput("Information", info_text, details)
 
     def setSuccess(self, text_key:str, template_values:dict) -> dict:
 
-        success_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
+        success_text = Translate.localise(self.templated_texts, text_key, template_values)
 
         return self._getOutput("Success", success_text, template_values["tm_version"])
 
     def setError(self, text_key:str, template_values:dict) -> dict:
 
-        error_text = env.from_string(self.templated_texts.get(text_key)).render(template_values)
+        error_text = Translate.localise(self.templated_texts, text_key, template_values)
 
         return self._getOutput("Error", error_text)
 

@@ -14,9 +14,9 @@ import convertors.gdoc_convertor.convertor
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def config(translator):
+def config():
 
-    return convertors_config.config(translator)
+    return convertors_config.config()
 
 
 def _output(config:dict):

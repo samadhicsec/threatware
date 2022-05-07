@@ -1,4 +1,5 @@
 ---
 output-texts:
-  success: "Successfully converted document '{{ docloc }}' using scheme '{{ scheme }}'"
-  unknown-doc-storage: "Unknown document storage type '{{ doc_storage }}' in scheme '{{ scheme }}'"
+  default:
+    success: "Successfully converted document '{{ docloc }}' using scheme '{{ scheme }}'"
+    unknown-doc-storage: "Unknown document storage type '{{ doc_storage }}' in scheme '{{ scheme }}'"

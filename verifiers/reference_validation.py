@@ -6,11 +6,10 @@ from pickle import FALSE
 from data import find
 import logging
 from data.key import key as Key
-from verifiers.verifier_error import ErrorType
 from verifiers.verifier_error import VerifierIssue
 import verifiers.reference as reference
+from language.translate import Translate
 from utils import match, transform
-from utils import keymaster
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -58,9 +57,9 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
         # text match e.g. "All assets stored in environment variables"
         grouped_text = callback_config.get("grouped-text")
 
-        if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
             return True
-        if match.equals(compare_value, grouped_text.get("all-assets")):
+        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
             return True
 
     return False

@@ -11,11 +11,11 @@ from ruamel.yaml import YAML
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath=["/", "./"]),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath=["/", "./"]),
+#     autoescape=select_autoescape()
+# )
 
 def yaml_file_to_dict(path:str, output_classes:list = []):
 
@@ -54,21 +54,21 @@ def yaml_str_to_dict(yamlstr:str):
     yamldict = yaml.load(yamlstr)
     return yamldict
 
-def yaml_templated_str_to_dict(yaml_template_str:str, context:dict):
+# def yaml_templated_str_to_dict(yaml_template_str:str, context:dict):
 
-    templated_yaml = env.from_string(yaml_template_str)
+#     templated_yaml = env.from_string(yaml_template_str)
 
-    render_yaml = templated_yaml.render(context)
+#     render_yaml = templated_yaml.render(context)
 
-    return yaml_str_to_dict(render_yaml)
+#     return yaml_str_to_dict(render_yaml)
 
-def yaml_templated_file_to_dict(yaml_template_file_path:str, context:dict):
+# def yaml_templated_file_to_dict(yaml_template_file_path:str, context:dict):
 
-    templated_yaml = env.get_template(yaml_template_file_path)
+#     templated_yaml = env.get_template(yaml_template_file_path)
 
-    render_yaml = templated_yaml.render(context)
+#     render_yaml = templated_yaml.render(context)
 
-    return yaml_str_to_dict(render_yaml)
+#     return yaml_str_to_dict(render_yaml)
 
 def class_to_yaml_file(output_classes, output_instance, file_location):
 

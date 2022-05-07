@@ -2,23 +2,24 @@
 """
 Class ValidatorOutput
 """
-import logging
 
+from language.translate import Translate
+
+import logging
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath="./"),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath="./"),
+#     autoescape=select_autoescape()
+# )
 
 class ValidatorOutput:
     """
     Holds the output of a validator and is used to format output of validator
     """
 
-    templated_translations = {}    # Will be read from file
     templated_output_texts = {}
     validator_config = {}
 
@@ -52,21 +53,21 @@ class ValidatorOutput:
         output['validator'] = self.validator_tag
         if not self.error:
             output['validates'] = self.result
-            validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
-            if self.result:
-                templ_desc = validator_output_texts.get("output_text_valid")
-            else:
-                templ_desc = validator_output_texts.get("output_text_invalid")
-
+            
             context = {}
-            context["translate"] = self.templated_translations["translate"]
+            #context["translate"] = self.templated_translations["translate"]
             context["key"] = {}
             context["key"]["name"] = self.validating_key.name
             context["key"]["colname"] = self.validating_key.getProperty("colname")
             context["key"]["value"] = self.validating_value
             context["config"] = ValidatorOutput.validator_config.get(self.validator_tag, {}).get("config")
             
-            output['description'] = env.from_string(templ_desc).render(context)
+            validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
+            if self.result:
+                output['description'] = Translate.localise(validator_output_texts, "output_text_valid", context)
+            else:
+                output['description'] = Translate.localise(validator_output_texts, "output_text_invalid", context)
+
         else:
             output["error"] = self.error
         

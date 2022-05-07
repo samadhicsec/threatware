@@ -5,6 +5,7 @@ Verifies that all assets are covered by a threat
 from data import find
 import logging
 import verifiers.reference as reference
+from language.translate import Translate
 from verifiers.verifier_error import ErrorType
 from verifiers.verifier_error import VerifierIssue
 from utils import match, transform
@@ -25,9 +26,9 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
 
             grouped_text = callback_config.get("grouped-text")
 
-            if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
+            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
                 return True
-            if match.equals(compare_value, grouped_text.get("all-assets")):
+            if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
                 return True
             #if match.endswith(compare_value, compare_to_value):
             #    return True
@@ -41,9 +42,9 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
     if tag_comparison == "storage-expression":
         grouped_text = callback_config.get("grouped-text")
 
-        if match.starts_ends(compare_value, grouped_text.get("start-assets-grouped-by-storage"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
             return True
-        if match.equals(compare_value, grouped_text.get("all-assets")):
+        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
             return True
 
     return False
@@ -178,7 +179,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                     issue_dict["issue_value"] = row_id_data
                     issue_dict["issue_table"] = threats_and_controls_key.getProperty("section")
                     issue_dict["issue_table_row"] = None    # Disable showing this in the error message
-                    issue_dict["fixdata"] = common_config["grouped-text"]["start-assets-grouped-by-storage"]
+                    issue_dict["fixdata"] = Translate.localise(common_config["grouped-text"], "start-assets-grouped-by-storage")
                     # Need to get some helpful texts relating to the threats and control data
                     # Although we found the issue by looping over asset keys, the problem is in the threats and controls data
                     issue_dict["storage_location"] = storage_location_value

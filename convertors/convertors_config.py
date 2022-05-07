@@ -12,8 +12,8 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 MEASURE_CONFIG_YAML = "convertors_config.yaml"
 MEASURE_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(MEASURE_CONFIG_YAML))
 
-def config(translator:Translate) -> dict:
+def config() -> dict:
 
-    yaml_config_dict = translator.localiseYamlFile(MEASURE_CONFIG_YAML_PATH)
+    yaml_config_dict = Translate.localiseYamlFile(MEASURE_CONFIG_YAML_PATH)
 
     return yaml_config_dict["convertors-config"]

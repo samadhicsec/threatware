@@ -4,20 +4,19 @@ Class VerifierIssue
 """
 
 import logging
-from data.key import key
 from enum import Enum
-import pprint
+from language.translate import Translate
 from utils import keymaster
 from data.key import key as Key
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath="./"),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath="./"),
+#     autoescape=select_autoescape()
+# )
 
 class ErrorType(Enum):
     ERROR = 1
@@ -43,7 +42,6 @@ class VerifierIssue:
 
     # This will be set as a class variable so all Verifier instances use the same config
     issue_config = {"default-severity":"ERROR"}
-    templated_translations = {}    # Will be read from file
     templated_error_texts = {}  # Will be read from file
 
     known_error_keys = [
@@ -111,15 +109,15 @@ class VerifierIssue:
             else:
                 context[keyentry] = valueentry
 
-        context["translate"] = self.templated_translations["translate"]
+        #context["translate"] = self.templated_translations["translate"]
 
         #for known_key in self.known_error_keys:
         #    setattr(self, known_key, issue_dict.get(known_key, None))
         
         # Does the error_text_key exist? It is mandatory
-        if (error_text := self.templated_error_texts.get(error_text_key, None)) is None:
-            self.error_desc = f"Could not find error text for '{error_text_key}'"
-            return
+        # if (error_text := self.templated_error_texts.get(error_text_key, None)) is None:
+        #     self.error_desc = f"Could not find error text for '{error_text_key}'"
+        #     return
 
         # We support the caller setting the issue table to any value they want, but if not set we populate it
         if context["issue_key"] is not None and context.get("issue_table") is None:
@@ -131,21 +129,23 @@ class VerifierIssue:
         # TODO gracefully handle templating exceptions from jinja, notably when it can't find the value when rendering
 
         # Set the issue table text
-        self.issue_table_text = env.from_string(self.templated_error_texts.get("location-text")).render(context)
+        self.issue_table_text = Translate.localise(self.templated_error_texts, "location-text", context)
         
         # We support the caller disabling the display of the issue table row information
         if "issue_table_row" in issue_dict and issue_dict.get("issue_table_row") is None:
             self.issue_table_row_text = None
         else:
-            self.issue_table_row_text = env.from_string(self.templated_error_texts.get("entry-text")).render(context)
+            self.issue_table_row_text = Translate.localise(self.templated_error_texts, "entry-text", context)
         
         # Set the error description
-        self.error_desc = env.from_string(error_text).render(context)
+        #self.error_desc = env.from_string(error_text).render(context)
+        self.error_desc = Translate.localise(self.templated_error_texts, error_text_key, context)
         self.errordata = issue_dict.get("errordata")
         
         # Set any fix text specified
-        if fix_text_key is not None and self.templated_error_texts.get(fix_text_key, None) is not None:
-            self.fix_desc = env.from_string(self.templated_error_texts.get(fix_text_key)).render(context)
+        #if fix_text_key is not None and self.templated_error_texts.get(fix_text_key, None) is not None:
+        if fix_text_key is not None:
+            self.fix_desc = Translate.localise(self.templated_error_texts, fix_text_key, context)
         self.fixdata = issue_dict.get("fixdata")
 
     def isError(self):

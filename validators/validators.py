@@ -9,7 +9,7 @@ import logging
 import importlib
 from pathlib import Path
 from language.translate import Translate
-from utils.load_yaml import yaml_file_to_dict, yaml_templated_file_to_dict
+from utils.load_yaml import yaml_file_to_dict
 from data.key import key as Key
 from validators.validator_output import ValidatorOutput
 
@@ -40,15 +40,11 @@ class Validator:
         validators_text_yaml_path = validators_config.get("validator-text-yaml-path", self.VALIDATORS_TEXT_YAML_PATH)
         #validators_values_yaml_path = validators_config.get("validator-values-yaml-path", self.VALIDATORS_VALUES_YAML_PATH)
         
-        # TODO pass the language code, or otherwise have it set at class level
-        self.translator = Translate()
-
         #self.values_dict = yaml_file_to_dict(validators_values_yaml_path)
         self.text_dict = self._load_validator_texts(validators_text_yaml_path)
         self.validator_config_dict = self._load_validator_config(validators_config_yaml_path)
         self.dispatch, self.modules = self._load_validator_dispatch(validators_dispatch_yaml_path)
         
-        ValidatorOutput.templated_translations = self.translator.translations
         ValidatorOutput.templated_output_texts = self.text_dict
         ValidatorOutput.validator_config = self.validator_config_dict
     
@@ -73,7 +69,7 @@ class Validator:
     def _load_validator_config(self, validator_config_yaml_path) -> dict:
 
         #yaml_config_dict = yaml_templated_file_to_dict(validator_config_yaml_path, self.values_dict) 
-        yaml_config_dict = self.translator.localiseYamlFile(validator_config_yaml_path) 
+        yaml_config_dict = Translate.localiseYamlFile(validator_config_yaml_path) 
 
         if yaml_config_dict.get("validator-config") == None:
             raise ValidatorsError(f"Validator config file '{validator_config_yaml_path}' did not have a root key of 'validator-config'")

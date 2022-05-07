@@ -12,11 +12,11 @@ import utils.logging
 from utils.keymaster import get_column_name_for_key
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath="./"),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath="./"),
+#     autoescape=select_autoescape()
+# )
 
 class Measurement:
 

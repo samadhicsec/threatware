@@ -22,9 +22,9 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
-def config(translator):
+def config():
 
-    return manage_config.config(translator)
+    return manage_config.config()
 
 def _output(config:dict):
 
@@ -70,7 +70,9 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
             logger.error(f"An ID prefix, scheme and location, must all be provided")
             raise ManageError("internal-error", {})
 
-        with IndexStorage(config.get("storage", {}), execution_env) as storage:
+        message_formatter = _output(config)
+
+        with IndexStorage(config.get("storage", {}), execution_env, persist_changes=True, commit_message_formatter=message_formatter) as storage:
 
             index = IndexMetaData(config.get("metadata", {}), storage)
 
@@ -153,7 +155,9 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
         tmvmd = ThreatModelVersionMetaData()
         tmvmd.fromModel(schemeID, location, model)
 
-        with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID) as storage:
+        message_formatter = _output(config)
+
+        with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID, persist_changes=True, commit_message_formatter=message_formatter) as storage:
 
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imdCurrent.ID)
 
@@ -202,7 +206,7 @@ def check(config:dict, execution_env, location:str, schemeID:str, model:dict, me
             indexentry = tm_metadata.index.getIndexEntryByLocation(schemeID, location)
 
             # Check if there is an approved version
-            if (approved_version := indexentry.approved_version) is None or indexentry.approved_date is None:
+            if indexentry is None or (approved_version := indexentry.approved_version) is None or indexentry.approved_date is None:
                 # Need an approval
                 raise ManageError("no-approved-version", {})
 

@@ -16,9 +16,9 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 
-def config(translator):
+def config():
 
-    return measure_config.config(translator)
+    return measure_config.config()
 
 def _output(config:dict):
 

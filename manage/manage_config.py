@@ -12,8 +12,8 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 MANAGE_CONFIG_YAML = "manage_config.yaml"
 MANAGE_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(MANAGE_CONFIG_YAML))
 
-def config(translator:Translate) -> dict:
+def config() -> dict:
 
-    yaml_config_dict = translator.localiseYamlFile(MANAGE_CONFIG_YAML_PATH)
+    yaml_config_dict = Translate.localiseYamlFile(MANAGE_CONFIG_YAML_PATH)
 
     return yaml_config_dict["manage-config"]

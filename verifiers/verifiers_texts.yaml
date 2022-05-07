@@ -1,30 +1,32 @@
 ---
 output-texts:
-  success-no-issues: "The threat model verified with no issues"
-  error-issues: "The threat model is not valid"
-  warn-info-issues: "The threat model verified, but with some potential issues"
-  location-text: "In {{ issue_table }}"
-  entry-text: "Where '{{ issue_key.rowID.colname }}' column has value '{{ issue_key.rowID.value }}'"
-  no-covering-threat: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
-  no-covering-threat-fix: "The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; the asset name i.e. '{{ issue_key.value }}', the asset type i.e. '{{ issue_key.row.type.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
-  missing-mandatory: "A value for the column '{{ issue_key.colname }}' is mandatory"
-  missing-conditional-mandatory: "The value for the field '{{ depends_on_key.colname }}' is '{{ depends_on_key.value }}', so a value for the field '{{ issue_key.colname }}' is mandatory"
-  missing-conditional-mandatory-any-value: "A value for the field '{{ depends_on_key.colname }}' exists, so a value for the field '{{ issue_key.colname }}' is mandatory"
-  document-unique: "The value '{{ entryvalue }}' in field '{{ entryname }}' must be unique in the document amongst the following section/field name pairs - {}.  Duplicate value(s) were found in the following section/field name pairs - {}"
-  not-unique: "The '{{ issue_key.colname }}' column with value '{{ issue_key.value }}' must be unique.  See error-data for locations with the same values"
-  not-unique-fix: "The value must be unique so it can be used throughout the document without confusion about what is being referred to.  You can change the value at either location to make it unique.  See fixdata for the locations it must be unique with respect to" 
-  value-invalid: Field validation failed for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}'.  See error-data for specific details.
-  value-valid: At least 1 validation criteria for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}' was successful, but some failed.  See errordata for specific details.
-  major.minor: "The value for the field '{{ entryname }}' must be of the format 'X.Y' where X is the major version, Y the minor version, and both are positive integers"
-  date: "The value for the field '{{ entryname }}'' must be a Date e.g. YYYY-MM-DD, YYYY-DD-MM, DD-MM-YYYY, MM-DD-YYYY etc."
-  yes-no: "The value for the field '{{ entryname }}' must be either '{{ translate.yes }}'' or '{{ translate.no }}'"
-  template-value: "The value for the field '{{ entryname }}' should come from the document template"
-  reference-not-found: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
-  reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
+  default:
+    success-no-issues: "The threat model verified with no issues"
+    error-issues: "The threat model is not valid"
+    warn-info-issues: "The threat model verified, but with some potential issues"
+    location-text: "In {{ issue_table }}"
+    entry-text: "Where '{{ issue_key.rowID.colname }}' column has value '{{ issue_key.rowID.value }}'"
+    no-covering-threat: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
+    no-covering-threat-fix: "The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; the asset name i.e. '{{ issue_key.value }}', the asset type i.e. '{{ issue_key.row.type.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
+    missing-mandatory: "A value for the column '{{ issue_key.colname }}' is mandatory"
+    missing-conditional-mandatory: "The value for the field '{{ depends_on_key.colname }}' is '{{ depends_on_key.value }}', so a value for the field '{{ issue_key.colname }}' is mandatory"
+    missing-conditional-mandatory-any-value: "A value for the field '{{ depends_on_key.colname }}' exists, so a value for the field '{{ issue_key.colname }}' is mandatory"
+    document-unique: "The value '{{ entryvalue }}' in field '{{ entryname }}' must be unique in the document amongst the following section/field name pairs - {}.  Duplicate value(s) were found in the following section/field name pairs - {}"
+    not-unique: "The '{{ issue_key.colname }}' column with value '{{ issue_key.value }}' must be unique.  See error-data for locations with the same values"
+    not-unique-fix: "The value must be unique so it can be used throughout the document without confusion about what is being referred to.  You can change the value at either location to make it unique.  See fixdata for the locations it must be unique with respect to" 
+    value-invalid: Field validation failed for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}'.  See error-data for specific details.
+    value-valid: At least 1 validation criteria for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}' was successful, but some failed.  See errordata for specific details.
+    major.minor: "The value for the field '{{ entryname }}' must be of the format 'X.Y' where X is the major version, Y the minor version, and both are positive integers"
+    date: "The value for the field '{{ entryname }}'' must be a Date e.g. YYYY-MM-DD, YYYY-DD-MM, DD-MM-YYYY, MM-DD-YYYY etc."
+    yes-no: "The value for the field '{{ entryname }}' must be either '{{ translate.yes }}'' or '{{ translate.no }}'"
+    template-value: "The value for the field '{{ entryname }}' should come from the document template"
+    reference-not-found: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
+    reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
 grouped-text:
-  start-assets-grouped-by-storage: 
-    - "All assets stored in "
-    - "All assets stored in component - "
-    - "All assets stored in location - "
-  all-assets:
-    - "All assets"
+  default:
+    start-assets-grouped-by-storage: 
+      - "All assets stored in "
+      - "All assets stored in component - "
+      - "All assets stored in location - "
+    all-assets:
+      - "All assets"

@@ -9,6 +9,11 @@ manage-config:
       base-storage-dir: "/tmp"
     index:
       index-create-branch: "create"
+      # This is the key from manage_texts.yaml to use as a commit message when calling manage.create
+      index-commit-message-text-key: "manage.create-commit-message"
+    threatmodel:
+      # This is the key from manage_texts.yaml to use as a commit message when calling manage.submit
+      tm-commit-message-text-key: "manage.submit-commit-message"
   metadata:
     index-filename: "threatmodels.yaml"
     metadata-filename: "metadata.yaml"

@@ -13,11 +13,11 @@ import jsonpickle
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-env = Environment(
-    loader = FileSystemLoader(searchpath="./"),
-    autoescape=select_autoescape()
-)
+# from jinja2 import Environment, FileSystemLoader, select_autoescape
+# env = Environment(
+#     loader = FileSystemLoader(searchpath="./"),
+#     autoescape=select_autoescape()
+# )
 
 OUTPUT_TEXTS_YAML = "output_texts.yaml"
 OUTPUT_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(OUTPUT_TEXTS_YAML))
@@ -34,17 +34,21 @@ class OutputType(Enum):
 class FormatOutput:
 
     request_parameters:dict
-    translator:Translate
+    #translator:Translate
 
     def __init__(self, output_config:dict):
 
         #formatoutput_texts = self.translator.localiseYamlFile(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
         formatoutput_texts = load_yaml.yaml_file_to_dict(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
-        self.information = env.from_string(formatoutput_texts.get("information")).render(self.translator.translations)
-        self.success = env.from_string(formatoutput_texts.get("success")).render(self.translator.translations)
-        self.error = env.from_string(formatoutput_texts.get("error")).render(self.translator.translations)
-        self.templated_texts = load_yaml.yaml_file_to_dict(output_config.get("template-text-file")).get("output-texts")
-        self.templated_texts = self.templated_texts | formatoutput_texts
+        # self.information = env.from_string(formatoutput_texts.get("information")).render(self.translator.translations)
+        # self.success = env.from_string(formatoutput_texts.get("success")).render(self.translator.translations)
+        # self.error = env.from_string(formatoutput_texts.get("error")).render(self.translator.translations)
+        self.information = Translate.localise(formatoutput_texts, "information")
+        self.success = Translate.localise(formatoutput_texts, "success")
+        self.error = Translate.localise(formatoutput_texts, "error")
+        
+        self.templated_texts:dict = load_yaml.yaml_file_to_dict(output_config.get("template-text-file")).get("output-texts")
+        self.templated_texts:dict = formatoutput_texts | self.templated_texts
         
         self.type = OutputType.NOT_SET
         self.description = None
@@ -65,7 +69,7 @@ class FormatOutput:
         if self.details is not None:
             output["details"] = self.details
         if FormatOutput.request_parameters is not None:
-            output["request"] = FormatOutput.request_parameters
+            output["request"] = FormatOutput.request_parameters["request"]
 
         return output
 
@@ -73,7 +77,8 @@ class FormatOutput:
         """ Returns a localised Information output message """
 
         self.type = OutputType.INFO
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
         
         return
@@ -82,7 +87,8 @@ class FormatOutput:
         """ Returns a localised Success output message """
 
         self.type = OutputType.SUCCESS
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 
         return
@@ -91,7 +97,8 @@ class FormatOutput:
         """ Returns a localised Error output message """
 
         self.type = OutputType.ERROR
-        self.description = env.from_string(self.templated_texts.get(text_key)).render(template_values | self.request_parameters | self.translator.translations)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 
         return
@@ -99,6 +106,10 @@ class FormatOutput:
     def getResult(self) -> OutputType:
         """ Returns an OutputType enum """
         return self.type
+
+    def getDescription(self):
+        """ Returns the description """
+        return self.description
 
     def getDetails(self):
         """ Returns the details added to an Info/Success/Error message """

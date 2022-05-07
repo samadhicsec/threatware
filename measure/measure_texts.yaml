@@ -1,9 +1,10 @@
 ---
 output-texts:
-  success: "Successfully measured the distance between document '{{ this_model_name }}' and '{{ other_model_name }}'"
-  missing-this-to-other: "The distances are the measured values that are missing in '{{ this_model_name }}' but were in '{{ other_model_name }}'"
-  extra-this-to-other: "The distances are the measured values that are extra in '{{ this_model_name }}' compared to '{{ other_model_name }}'"
-  missing-other-to-this: "The distances are the measured values that are missing in '{{ other_model_name }}' but were in '{{ this_model_name }}'"
-  extra-other-to-this: "The distances are the measured values that are extra in '{{ other_model_name }}' compared to '{{ this_model_name }}'"
-  missing: "missing measured values in the '{{ section }}' section, when compared"
-  extra: "extra measured values in the '{{ section }}' section, when compared"
+  default:
+    success: "Successfully measured the distance between document '{{ this_model_name }}' and '{{ other_model_name }}'"
+    missing-this-to-other: "The distances are the measured values that are missing in '{{ this_model_name }}' but were in '{{ other_model_name }}'"
+    extra-this-to-other: "The distances are the measured values that are extra in '{{ this_model_name }}' compared to '{{ other_model_name }}'"
+    missing-other-to-this: "The distances are the measured values that are missing in '{{ other_model_name }}' but were in '{{ this_model_name }}'"
+    extra-other-to-this: "The distances are the measured values that are extra in '{{ other_model_name }}' compared to '{{ this_model_name }}'"
+    missing: "missing measured values in the '{{ section }}' section, when compared"
+    extra: "extra measured values in the '{{ section }}' section, when compared"
