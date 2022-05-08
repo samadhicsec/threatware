@@ -8,7 +8,7 @@ import utils.shell as shell
 from sh.contrib import git
 import utils.match as match
 from utils.error import ManageError
-from utils.output import FormatOutput
+from language.translate import Translate
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -16,12 +16,12 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 class IndexStorage(GitStorage):
 
-    def __init__(self, config:dict, execution_env, persist_changes:bool = True, commit_message_formatter:FormatOutput = None):
+    def __init__(self, config:dict, execution_env, persist_changes:bool = True, output_texts:dict = {}):
         super().__init__(config, execution_env)
 
         indexstorage_config = config.get("index", {})
         self.index_create_branch_name = indexstorage_config.get("index-create-branch", "create")
-        self.commit_message_formatter = commit_message_formatter
+        self.output_texts = output_texts
         self.commit_message_key = indexstorage_config.get("index-commit-message-text-key")
         self.persist_changes = persist_changes
 
@@ -51,8 +51,7 @@ class IndexStorage(GitStorage):
     def __exit__(self, exc_type, exc_value, traceback):
 
         if exc_type is None and self.persist_changes:
-            self.commit_message_formatter.setInformation(self.commit_message_key, {})
-            if match.is_empty((commit_message := self.commit_message_formatter.getDescription())):
+            if match.is_empty((commit_message := Translate.localise(self.output_texts, self.commit_message_key))):
                 # Always have a default
                 commit_message = f"Updated index file"
             super().commit(commit_message)
@@ -64,13 +63,13 @@ class IndexStorage(GitStorage):
 
 class ThreatModelStorage(GitStorage):
 
-    def __init__(self, config:dict, execution_env, ID:str, persist_changes:bool = True, commit_message_formatter:FormatOutput = None):
+    def __init__(self, config:dict, execution_env, ID:str, persist_changes:bool = True, output_texts:dict = {}):
         super().__init__(config, execution_env)
 
         tm_storage_config = config.get("threatmodel", {})
         self.ID = ID
         self.entered = False
-        self.commit_message_formatter = commit_message_formatter
+        self.output_texts = output_texts
         self.commit_message_key = tm_storage_config.get("tm-commit-message-text-key")
         self.persist_changes = persist_changes
 
@@ -97,8 +96,7 @@ class ThreatModelStorage(GitStorage):
     def __exit__(self, exc_type, exc_value, traceback):
 
         if exc_type is None and self.persist_changes:
-            self.commit_message_formatter.setInformation(self.commit_message_key, {"ID":self.ID})
-            if match.is_empty((commit_message := self.commit_message_formatter.getDescription())):
+            if match.is_empty((commit_message := Translate.localise(self.output_texts, self.commit_message_key, {"ID":self.ID}))):
                 # Always have a default
                 commit_message = f"Update to {self.ID}"
             super().commit(commit_message)

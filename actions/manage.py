@@ -70,9 +70,7 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
             logger.error(f"An ID prefix, scheme and location, must all be provided")
             raise ManageError("internal-error", {})
 
-        message_formatter = _output(config)
-
-        with IndexStorage(config.get("storage", {}), execution_env, persist_changes=True, commit_message_formatter=message_formatter) as storage:
+        with IndexStorage(config.get("storage", {}), execution_env, persist_changes=True, output_texts=output.templated_texts) as storage:
 
             index = IndexMetaData(config.get("metadata", {}), storage)
 
@@ -155,9 +153,7 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
         tmvmd = ThreatModelVersionMetaData()
         tmvmd.fromModel(schemeID, location, model)
 
-        message_formatter = _output(config)
-
-        with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID, persist_changes=True, commit_message_formatter=message_formatter) as storage:
+        with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID, persist_changes=True, output_texts=output.templated_texts) as storage:
 
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imdCurrent.ID)
 
