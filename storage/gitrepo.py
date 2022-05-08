@@ -193,6 +193,15 @@ class GitStorage:
 
         self.is_entered = True
 
+
+    def checkout_directory(self, dir_name:str):
+
+        # Fetch the directory containing the metadata for the TM ID.  If it doesn't exist, nothing is downloaded
+        if not shell.run(self.repodir, git, ["sparse-checkout", "add", dir_name]):
+            logger.error(f"Could not sparse-checkout directory '{dir_name}'")
+            raise StorageError("internal-error", {})
+
+
     def remote_branch_exists(self, branch:str):
 
         remote_branch_exists_var = False

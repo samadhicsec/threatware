@@ -4,10 +4,7 @@ Classes to use git as a storage repository for threat model metadata
 """
 import logging
 from storage.gitrepo import GitStorage
-import utils.shell as shell
-from sh.contrib import git
 import utils.match as match
-from utils.error import ManageError
 from language.translate import Translate
 
 import utils.logging
@@ -85,10 +82,9 @@ class ThreatModelStorage(GitStorage):
         self.can_commit = False
 
         # Fetch the directory containing the metadata for the TM ID.  If it doesn't exist, nothing is downloaded
-        if not shell.run(self.repodir, git, ["sparse-checkout", "add", self.ID]):
-            logger.error(f"Could not sparse-checkout directory '{self.ID}'")
-            raise ManageError("internal-error", {})
+        super().checkout_directory(self.ID)
 
+        # Overwrite any existing branch for making changes
         super().branch_replace(self.ID)
 
         return self
