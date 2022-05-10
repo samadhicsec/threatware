@@ -4,7 +4,7 @@ Classes to manipulate for threat model metadata
 """
 import logging
 from pathlib import Path
-from data.key import key as Key
+from data.key import KeySerialiseType, key as Key
 from utils import match
 from utils import load_yaml
 from data import find
@@ -336,6 +336,7 @@ class ThreatModelMetaData:
         self.metadata_filename = config.get("metadata-filename", "metadata.yaml")
         self.storage = storage
         self.approvedStatus = config.get("approved-status", "Approved")
+        self.write_plain_model = config.get("write-plain-model", True)
         self.ID = ID
         self._set_empty()
 
@@ -376,11 +377,17 @@ class ThreatModelMetaData:
         self.storage.write_yaml([ThreatModelMetaData, ThreatModelVersionMetaData], Path(self.ID).joinpath(self.metadata_filename), self)
 
     def _write_model(self):
-
+        """ Optionally, writes 2 versions of the model file, one that can be deserialised, and one that is human readable (plain) """
+        Key.serialise_type = KeySerialiseType.TAGS_PROPERTIES
         self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
+
+        if self.write_plain_model:
+            Key.serialise_type = KeySerialiseType.NO_TAGS_PROPERTIES
+            self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".plain.yaml"), self.model)
 
     def load_model(self, version:str):
 
+        Key.serialise_type = KeySerialiseType.TAGS_PROPERTIES
         self.model = self.storage.load_yaml([Key], Path(self.ID).joinpath(version + ".yaml"))
         if self.model is None:
             logger.error(f"Unable to load model for version '{version}'")

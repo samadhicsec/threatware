@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 
 import logging
+from enum import Enum
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+class KeySerialiseType(Enum):
+    NO_TAGS_PROPERTIES = 0
+    TAGS = 1
+    TAGS_PROPERTIES = 2
+
+
 class key:
     yaml_tag = u'!Key'
+    serialise_type:KeySerialiseType = KeySerialiseType.TAGS_PROPERTIES
 
     def __init__(self, name:str, tags:list = None):
-        # Fun python fact, don't have default value be somethign you want to change e.g. list, 
+        # Fun python fact, don't have default value be something you want to change e.g. list, 
         # because default values are initialised once so all class instances will share them
         self.name = name
         if tags is None:
@@ -77,16 +85,37 @@ class key:
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_mapping(cls.yaml_tag, {"name":node.name, "tags":node.tags, "properties":node.properties})
+        if cls.serialise_type == KeySerialiseType.NO_TAGS_PROPERTIES:
+            return representer.represent_str(node.name)
+        elif cls.serialise_type == KeySerialiseType.TAGS:
+            return representer.represent_mapping(cls.yaml_tag, {"name":node.name, "tags":node.tags})
+        elif cls.serialise_type == KeySerialiseType.TAGS_PROPERTIES:
+            return representer.represent_mapping(cls.yaml_tag, {"name":node.name, "tags":node.tags, "properties":node.properties})
 
     @classmethod
     def from_yaml(cls, constructor, node):
+        if cls.serialise_type == KeySerialiseType.NO_TAGS_PROPERTIES:
+            
+            logger.error(f"Deserialisation from a serialised Key that did not not include tags or properties should not be called.")
+            return cls(str(constructor.construct_yaml_str(node)))
 
-        key_dict = constructor.construct_mapping(node)
+        elif cls.serialise_type == KeySerialiseType.TAGS:
+            
+            logger.error(f"Deserialisation from a serialised Key that did not not include properties should not be called.")
 
-        key_obj = cls(key_dict["name"], key_dict["tags"])
+            key_dict = constructor.construct_mapping(node)
 
-        for prop_name, prop_value in key_dict["properties"].items():
-            key_obj.addProperty(prop_name, prop_value)
+            key_obj = cls(key_dict["name"], key_dict["tags"])
 
-        return key_obj
+            return key_obj
+
+        elif cls.serialise_type == KeySerialiseType.TAGS_PROPERTIES:
+            
+            key_dict = constructor.construct_mapping(node)
+
+            key_obj = cls(key_dict["name"], key_dict["tags"])
+
+            for prop_name, prop_value in key_dict["properties"].items():
+                key_obj.addProperty(prop_name, prop_value)
+
+            return key_obj
