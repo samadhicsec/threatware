@@ -91,6 +91,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     exclude_callback = lambda callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value: match.contains(compare_value, compare_to_value)
 
+    component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
+
     # Loop through the asset data tables
     for asset_data_tag, asset_data_key, asset_data_value in all_assets:
 
@@ -149,7 +151,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
                     # Does the storage location for the asset match one of the components?
                     matching_component = match.get_equals(storage_location_value, [component_name for (_, component_name) in threat_component_entries])
-                    if match.equals(matching_component, in_scope_components):
+                    if match.equals(matching_component, in_scope_components, component_transform):
                         matching_in_scope_component = matching_component
                     else:
                         matching_in_scope_component = None
@@ -161,7 +163,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                             # Then the asset can match on name or type, but the storage location must match the component
                             
                             # This checks if any 'ref' tag in 'threat_asset_entry_key' can be found in row 'asset' for value 'threat_asset_entry_value'
-                            if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, component_storage_expression_callback, callback_config, only_callback=False) is not None and match.equals(matching_in_scope_component, storage_location_value):
+                            if reference.check_reference_row(asset, "ref", threat_asset_entry_key, threat_asset_entry_value, component_storage_expression_callback, callback_config, only_callback=False) is not None and match.equals(matching_in_scope_component, storage_location_value, component_transform):
                                 if entry not in covering_threats:
                                     covering_threats.append(entry)
                         else:
