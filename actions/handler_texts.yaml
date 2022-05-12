@@ -1,0 +1,10 @@
+---
+output-texts:
+  default:
+    action-is-mandatory: "action is a mandatory parameter"
+    action-value: "the action parameter must be one of `{{ actions|join('`, `') }}`"
+    scheme-is-mandatory: "scheme is a mandatory parameter"
+    docloc-is-mandatory: "docloc is a mandatory parameter"
+    doctemplate-is-mandatory: "doctemplate is a mandatory parameter when action = {{ action }}"
+    id-is-mandatory: "ID is a mandatory parameter when action = {{ action }}"
+    idprefix-is-mandatory: "IDprefix is a mandatory parameter when action = {{ action }}"

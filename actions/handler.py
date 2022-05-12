@@ -7,6 +7,7 @@ import logging
 import sys
 import argparse
 import json
+from pathlib import Path
 from storage.gitrepo import GitStorage
 from utils.output import FormatOutput
 import utils.logging
@@ -17,19 +18,22 @@ import actions.convert as convert
 import actions.verify as verify
 import actions.manage as manage
 import actions.measure as measure
-from utils.output import OutputType
+from utils.output import FormatOutput, OutputType
 from data.key import key as Key
 
 utils.logging.configureLogging()
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-ACTION_CONVERT = "convert"
-ACTION_VERIFY = "verify"
-ACTION_MANAGE_INDEXDATA = "manage.indexdata"
-ACTION_MANAGE_CREATE = "manage.create"
-ACTION_MANAGE_SUBMIT = "manage.submit"
-ACTION_MANAGE_CHECK = "manage.check"
-ACTION_MEASURE = "measure"
+HANDLER_TEXTS_YAML = "handler_texts.yaml"
+HANDLER_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(HANDLER_TEXTS_YAML))
+
+ACTION_CONVERT = 'convert1'
+ACTION_VERIFY = 'verify'
+ACTION_MANAGE_INDEXDATA = 'manage.indexdata'
+ACTION_MANAGE_CREATE = 'manage.create'
+ACTION_MANAGE_SUBMIT = 'manage.submit'
+ACTION_MANAGE_CHECK = 'manage.check'
+ACTION_MEASURE = 'measure'
 
 def lambda_handler(event, context):
 
@@ -57,198 +61,196 @@ def lambda_handler(event, context):
 
     logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
-    # Validate input
-    if action is None:
-        error_str = "action is a mandatory parameter"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
-        error_str = f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and schemeID is None:
-        error_str = "scheme is a mandatory parameter"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and docloc is None:
-        error_str = "docloc is a mandatory parameter"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_VERIFY, ACTION_MEASURE] and  doctemplate is None:
-        error_str = f"doctemplate is a mandatory parameter when action = {action}"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_MANAGE_INDEXDATA] and id is None:
-        error_str = f"ID is a mandatory parameter when action = {action}"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
-    elif action in [ACTION_MANAGE_CREATE] and IDprefix is None:
-        error_str = f"IDprefix is a mandatory parameter when action = {action}"
-        logger.error(error_str)
-        body = json.dumps({"message":"{}".format(error_str)})
+    # We need this to support localisation of keywords
+    Translate.init(lang, filtered_qsp)
 
-    else:
-        # If we are being called locally then we'll pull credentials locally
-        if getattr(context, "threatware.cli", False):
-            # Get creds locally
-            execution_env = provider.get_provider("cli")
+    # Determine output Content-Type
+    if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
+        FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
+    content_type = "application/json"
+
+    # We can treat the parameters as static
+    FormatOutput.request_parameters = filtered_qsp
+
+    # Load the texts file with localised error messages
+    handler_output = FormatOutput({"template-text-file":HANDLER_TEXTS_YAML_PATH})
+
+    try:
+
+        # Validate input
+        if action is None:
+            logger.error("action is a mandatory parameter")
+            handler_output.setError("action-is-mandatory", {})
+            content_type, body = handler_output.getContent()
+        elif action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
+            logger.error(f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}")
+            handler_output.setError("action-value", {"actions":[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]})
+            content_type, body = handler_output.getContent()
+        elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and schemeID is None:
+            logger.error("scheme is a mandatory parameter")
+            handler_output.setError("scheme-is-mandatory", {})
+            content_type, body = handler_output.getContent()
+        elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and docloc is None:
+            logger.error("docloc is a mandatory parameter")
+            handler_output.setError("docloc-is-mandatory", {})
+            content_type, body = handler_output.getContent()
+        elif action in [ACTION_VERIFY, ACTION_MEASURE] and  doctemplate is None:
+            logger.error(f"doctemplate is a mandatory parameter when action = {action}")
+            handler_output.setError("doctemplate-is-mandatory", {"action":action})
+            content_type, body = handler_output.getContent()
+        elif action in [ACTION_MANAGE_INDEXDATA] and id is None:
+            logger.error(f"ID is a mandatory parameter when action = {action}")
+            handler_output.setError("id-is-mandatory", {"action":action})
+            content_type, body = handler_output.getContent()
+        elif action in [ACTION_MANAGE_CREATE] and IDprefix is None:
+            logger.error(f"IDprefix is a mandatory parameter when action = {action}")
+            handler_output.setError("idprefix-is-mandatory", {"action":action})
+            content_type, body = handler_output.getContent()
+
         else:
-            GitStorage.containerised = True
-            # We are being called as a lambda, so get credentials from cloud
-            execution_env = provider.get_provider("aws.lambda")
-            #execution_env = provider.get_provider("cli")
+            # If we are being called locally then we'll pull credentials locally
+            if getattr(context, "threatware.cli", False):
+                # Get creds locally
+                execution_env = provider.get_provider("cli")
+            else:
+                GitStorage.containerised = True
+                # We are being called as a lambda, so get credentials from cloud
+                execution_env = provider.get_provider("aws.lambda")
+                #execution_env = provider.get_provider("cli")
 
-        # We need this to support localisation of keywords
-        Translate.init(lang, filtered_qsp)
+            if schemeID is not None:
+                schemeDict = load_scheme(schemeID)
 
-        # Determine output Content-Type
-        if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
-            FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
-        content_type = "application/json"
-
-        # We can treat the parameters as static
-        FormatOutput.request_parameters = filtered_qsp
-
-        if schemeID is not None:
-            schemeDict = load_scheme(schemeID)
-
-        if action == ACTION_CONVERT:
-            
-            convert_config = convert.config()
-
-            # Convert the TM document
-            output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-
-            content_type, body = output.getContent(lambda : Key.config_serialisation(convert_meta))
-
-        elif action == ACTION_VERIFY:
-
-            convert_config = convert.config()
-            
-            # Convert the TM template
-            convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-            #body = convert_output.tojson()
-            content_type, body = convert_output.getContent()
-
-            if convert_output.getResult() != OutputType.ERROR:
-
-                template_model = convert_output.getDetails()
+            if action == ACTION_CONVERT:
+                
+                convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                #body = convert_output.tojson()
+                output = convert.convert(convert_config, execution_env, schemeDict, docloc)
+
+                content_type, body = output.getContent(lambda : Key.config_serialisation(convert_meta))
+
+            elif action == ACTION_VERIFY:
+
+                convert_config = convert.config()
+                
+                # Convert the TM template
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
                 content_type, body = convert_output.getContent()
 
                 if convert_output.getResult() != OutputType.ERROR:
 
-                    doc_model = convert_output.getDetails()
+                    template_model = convert_output.getDetails()
 
-                    verify_config = verify.config(schemeDict)
+                    # Convert the TM document
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
+                    content_type, body = convert_output.getContent()
 
-                    # Verify the TM document
-                    verify_output = verify.verify(verify_config, doc_model, template_model)
-                    #body = verify_output.tojson()
-                    content_type, body = verify_output.getContent()
+                    if convert_output.getResult() != OutputType.ERROR:
 
-                    if verify_output.getResult() != OutputType.ERROR:
-                        
-                        issues = verify_output.getDetails()
+                        doc_model = convert_output.getDetails()
 
-                        # Generate a report on verification issues and analysis
-                        verify_output = verify.report(verify_config, doc_model, issues)
+                        verify_config = verify.config(schemeDict)
 
-                        #body = verify_output.tojson()
+                        # Verify the TM document
+                        verify_output = verify.verify(verify_config, doc_model, template_model)
                         content_type, body = verify_output.getContent()
 
-        elif action == ACTION_MANAGE_INDEXDATA:
-            
-            manage_config = manage.config()
+                        if verify_output.getResult() != OutputType.ERROR:
+                            
+                            issues = verify_output.getDetails()
 
-            output = manage.indexdata(manage_config, execution_env, id)
+                            # Generate a report on verification issues and analysis
+                            verify_output = verify.report(verify_config, doc_model, issues)
 
-            #body = output.tojson()
-            content_type, body = output.getContent()
+                            #body = verify_output.tojson()
+                            content_type, body = verify_output.getContent()
 
-        elif action == ACTION_MANAGE_CREATE:
-            
-            manage_config = manage.config()
-
-            output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
-
-            #body = output.tojson()
-            content_type, body = output.getContent()
-
-        elif action == ACTION_MANAGE_CHECK:
-            
-            convert_config = convert.config()
-
-            # Convert the TM document
-            convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-            #body = convert_output.tojson()
-            content_type, body = convert_output.getContent()
-
-            if convert_output.getResult() != OutputType.ERROR:
-
-                doc_model = convert_output.getDetails()
-            
+            elif action == ACTION_MANAGE_INDEXDATA:
+                
                 manage_config = manage.config()
 
-                # 'check' relies on measure
-                measure_config = measure.config()
+                output = manage.indexdata(manage_config, execution_env, id)
 
-                output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
-
-                #body = output.tojson()
                 content_type, body = output.getContent()
-        
-        elif action == ACTION_MANAGE_SUBMIT:
-            
-            convert_config = convert.config()
 
-            # Convert the TM document
-            convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-            #body = convert_output.tojson()
-            content_type, body = convert_output.getContent()
-
-            if convert_output.getResult() != OutputType.ERROR:
-
-                doc_model = convert_output.getDetails()
-
+            elif action == ACTION_MANAGE_CREATE:
+                
                 manage_config = manage.config()
 
-                output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
+                output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
 
-                #body = output.tojson()
                 content_type, body = output.getContent()
 
-        elif action == ACTION_MEASURE:
-
-            convert_config = convert.config()
-
-            # Convert the TM template
-            convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-            #body = convert_output.tojson()
-            content_type, body = convert_output.getContent()
-
-            if convert_output.getResult() != OutputType.ERROR:
-
-                template_model = convert_output.getDetails()
+            elif action == ACTION_MANAGE_CHECK:
+                
+                convert_config = convert.config()
 
                 # Convert the TM document
                 convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                #body = convert_output.tojson()
+                content_type, body = convert_output.getContent()
+
+                if convert_output.getResult() != OutputType.ERROR:
+
+                    doc_model = convert_output.getDetails()
+                
+                    manage_config = manage.config()
+
+                    # 'check' relies on measure
+                    measure_config = measure.config()
+
+                    output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
+
+                    content_type, body = output.getContent()
+            
+            elif action == ACTION_MANAGE_SUBMIT:
+                
+                convert_config = convert.config()
+
+                # Convert the TM document
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
                 content_type, body = convert_output.getContent()
 
                 if convert_output.getResult() != OutputType.ERROR:
 
                     doc_model = convert_output.getDetails()
 
-                    measure_config = measure.config()
-                    
-                    output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
+                    manage_config = manage.config()
 
-                    #body = output.tojson()
+                    output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
+
                     content_type, body = output.getContent()
+
+            elif action == ACTION_MEASURE:
+
+                convert_config = convert.config()
+
+                # Convert the TM template
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
+                content_type, body = convert_output.getContent()
+
+                if convert_output.getResult() != OutputType.ERROR:
+
+                    template_model = convert_output.getDetails()
+
+                    # Convert the TM document
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
+                    content_type, body = convert_output.getContent()
+
+                    if convert_output.getResult() != OutputType.ERROR:
+
+                        doc_model = convert_output.getDetails()
+
+                        measure_config = measure.config()
+                        
+                        output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
+
+                        content_type, body = output.getContent()
+    
+    except Exception as e:
+        logger.error(e)
+        handler_output.setError("internal-error", {})
+        content_type, body = handler_output.getContent()
 
     # Respond
     return {
