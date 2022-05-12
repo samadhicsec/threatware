@@ -5,6 +5,7 @@ Reports on verifier output
 
 import logging
 import jsonpickle
+from utils.load_yaml import yaml_register_class
 from verifiers.verifiers_config import VerifiersConfig
 
 import utils.logging
@@ -16,6 +17,8 @@ class VerifiersReport:
     """
 
     def __init__(self, config:VerifiersConfig, display_asset_coverage:bool = True, display_control_coverage:bool = True):
+        yaml_register_class(VerifiersReport)
+
         self.config = config
         self.display_asset_coverage = display_asset_coverage
         self.display_control_coverage = display_control_coverage
@@ -68,3 +71,7 @@ class VerifiersReport:
 
     def tojson(self):
         return jsonpickle.encode(self, unpicklable=False)
+
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())

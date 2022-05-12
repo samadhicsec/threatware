@@ -4,4 +4,5 @@ output-texts:
     information: "{{ translate.information }}"
     success: "{{ translate.success }}"
     error: "{{ translate.error }}"
+    format-error: "The format parameter can only be 'json' or 'yaml'"
     internal-error: "An internal error occurred, please see logs for more detail"

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+from utils.load_yaml import yaml_register_class
 from enum import Enum
 
 import utils.logging
@@ -14,6 +15,7 @@ class KeySerialiseType(Enum):
 
 class key:
     yaml_tag = u'!Key'
+    
     serialise_type:KeySerialiseType = KeySerialiseType.TAGS_PROPERTIES
 
     def __init__(self, name:str, tags:list = None):
@@ -25,6 +27,8 @@ class key:
         else:   
             self.tags = list(tags)  # This is apparently key otherwise we will edit the passed in list 
         self.properties = {}
+
+        yaml_register_class(key)
 
     def copy(obj):
         if isinstance(obj, key):
@@ -82,6 +86,16 @@ class key:
     # @classmethod
     # def to_yaml(cls, representer, node):
     #     return representer.represent_str(node.name)
+
+    @classmethod
+    def config_serialisation(cls, meta_level:str):
+         
+        if meta_level == "none":
+            cls.serialise_type = KeySerialiseType.NO_TAGS_PROPERTIES
+        elif meta_level == "tags":
+            cls.serialise_type = KeySerialiseType.TAGS
+        elif meta_level == "properties":
+            cls.serialise_type = KeySerialiseType.TAGS_PROPERTIES
 
     @classmethod
     def to_yaml(cls, representer, node):

@@ -5,6 +5,7 @@ Class MeasureOutput
 
 import logging
 import utils.load_yaml
+from utils.load_yaml import yaml_register_class
 from utils.output import FormatOutput
 import jsonpickle
 
@@ -21,7 +22,8 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 class Measurement:
 
     def __init__(self, config, this_model_title, other_model_title, section_key, tag_tuple, key_tag_list:list):
-        
+        yaml_register_class(Measurement)
+
         template_text_file = config.get("output").get("template-text-file")
 
         self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
@@ -104,6 +106,10 @@ class Measurement:
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
+
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())
 
 class MeasureOutput(FormatOutput):
 

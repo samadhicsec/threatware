@@ -322,12 +322,12 @@ class GitStorage:
 
         return None
 
-    def write_yaml(self, class_list:list, relative_file_path:str, contents):
+    def write_yaml(self, relative_file_path:str, contents):
 
         file_path = Path(self.repodir).joinpath(relative_file_path)
         if not file_path.is_file():
             # Try to make the directory, as that at least needs to exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        load_yaml.class_to_yaml_file(class_list, contents, file_path)
+        load_yaml.class_to_yaml_file(contents, file_path)
 

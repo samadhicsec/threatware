@@ -7,6 +7,7 @@ from pathlib import Path
 from data.key import KeySerialiseType, key as Key
 from utils import match
 from utils import load_yaml
+from utils.load_yaml import yaml_register_class
 from data import find
 from utils.error import ManageError
 from manage.manage_storage import IndexStorage
@@ -18,6 +19,7 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 class MetadataIndexEntry:
 
     def __init__(self, entry:dict):
+        yaml_register_class(MetadataIndexEntry)
 
         self.ID = entry.get("ID", "")
         self.scheme = entry.get("scheme", "")
@@ -147,6 +149,7 @@ class MetadataIndexEntry:
 class ThreatModelVersionMetaData:
     """ Holds data about a specific version of a threat model """
     def __init__(self) -> None:
+        yaml_register_class(ThreatModelVersionMetaData)
 
         self.doc_title = None
         self.doc_scheme = None
@@ -239,7 +242,8 @@ class ThreatModelVersionMetaData:
 class IndexMetaData:
 
     def __init__(self, config:dict, storage) -> None:
-        
+        yaml_register_class(IndexMetaData)
+
         self.index_filename = config.get("index-filename", "threatmodels.yaml")
         self.storage = storage
 
@@ -301,7 +305,8 @@ class IndexMetaData:
         return self
 
     def _write_index(self):
-        load_yaml.class_to_yaml_file([IndexMetaData, MetadataIndexEntry], self, Path(self.storage.repodir).joinpath(self.index_filename))
+        #load_yaml.class_to_yaml_file2([IndexMetaData, MetadataIndexEntry], self, Path(self.storage.repodir).joinpath(self.index_filename))
+        load_yaml.class_to_yaml_file(self, Path(self.storage.repodir).joinpath(self.index_filename))
 
     def persist(self):
         """ Writes any changes to the underlying storage layer """
@@ -330,7 +335,8 @@ class IndexMetaData:
 class ThreatModelMetaData:
 
     def __init__(self, config:dict, storage:ThreatModelStorage, ID:str) -> None:
-        
+        yaml_register_class(ThreatModelMetaData)
+
         self.index = IndexMetaData(config, storage)
 
         self.metadata_filename = config.get("metadata-filename", "metadata.yaml")
@@ -374,16 +380,19 @@ class ThreatModelMetaData:
 
     def _write_metadata(self):
 
-        self.storage.write_yaml([ThreatModelMetaData, ThreatModelVersionMetaData], Path(self.ID).joinpath(self.metadata_filename), self)
+        #self.storage.write_yaml([ThreatModelMetaData, ThreatModelVersionMetaData], Path(self.ID).joinpath(self.metadata_filename), self)
+        self.storage.write_yaml(Path(self.ID).joinpath(self.metadata_filename), self)
 
     def _write_model(self):
         """ Optionally, writes 2 versions of the model file, one that can be deserialised, and one that is human readable (plain) """
         Key.serialise_type = KeySerialiseType.TAGS_PROPERTIES
-        self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
+        #self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
+        self.storage.write_yaml(Path(self.ID).joinpath(self.model_version + ".yaml"), self.model)
 
         if self.write_plain_model:
             Key.serialise_type = KeySerialiseType.NO_TAGS_PROPERTIES
-            self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".plain.yaml"), self.model)
+            #self.storage.write_yaml([Key], Path(self.ID).joinpath(self.model_version + ".plain.yaml"), self.model)
+            self.storage.write_yaml(Path(self.ID).joinpath(self.model_version + ".plain.yaml"), self.model)
 
     def load_model(self, version:str):
 

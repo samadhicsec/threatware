@@ -34,6 +34,7 @@ class OutputType(Enum):
 class FormatOutput:
 
     request_parameters:dict
+    output_format:str = "json"
     #translator:Translate
 
     def __init__(self, output_config:dict):
@@ -121,3 +122,16 @@ class FormatOutput:
 
     def tojson(self):
         return jsonpickle.encode(self, unpicklable=False)
+
+    def toyaml(self):
+        return load_yaml.class_to_yaml_str(self._get_state())
+
+    def getContent(self, config_fn = None):
+
+        if config_fn is not None:
+            config_fn()
+
+        if FormatOutput.output_format == "yaml":
+            return ("text/yaml", self.toyaml())
+
+        return ("application/json", self.tojson())

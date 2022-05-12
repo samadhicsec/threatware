@@ -4,18 +4,16 @@ Loads YAML
 """
 
 import logging
+from io import StringIO
 from utils.error import ThreatwareError
-#from pathlib import Path
 from ruamel.yaml import YAML
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# from jinja2 import Environment, FileSystemLoader, select_autoescape
-# env = Environment(
-#     loader = FileSystemLoader(searchpath=["/", "./"]),
-#     autoescape=select_autoescape()
-# )
+##
+## Methods to help with reading yaml
+##
 
 def yaml_file_to_dict(path:str, output_classes:list = []):
 
@@ -54,26 +52,44 @@ def yaml_str_to_dict(yamlstr:str):
     yamldict = yaml.load(yamlstr)
     return yamldict
 
-# def yaml_templated_str_to_dict(yaml_template_str:str, context:dict):
 
-#     templated_yaml = env.from_string(yaml_template_str)
+##
+## Methods to help with outputting yaml files
+##
 
-#     render_yaml = templated_yaml.render(context)
+_registered_classes:list = []
 
-#     return yaml_str_to_dict(render_yaml)
+def yaml_register_class(class_type):
+    """ To output to yaml we need to register classes that do their own YAML serialisation. """
+    global _registered_classes
+    
+    if class_type not in _registered_classes:
+        _registered_classes.append(class_type)
 
-# def yaml_templated_file_to_dict(yaml_template_file_path:str, context:dict):
-
-#     templated_yaml = env.get_template(yaml_template_file_path)
-
-#     render_yaml = templated_yaml.render(context)
-
-#     return yaml_str_to_dict(render_yaml)
-
-def class_to_yaml_file(output_classes, output_instance, file_location):
+def _get_yaml_object():
 
     yaml=YAML(typ='safe')
     yaml.default_flow_style = False
-    for output_class in output_classes:
-        yaml.register_class(output_class)
+    yaml.indent = 4
+    yaml.sort_base_mapping_type_on_output = False
+    for registered_class in _registered_classes:
+        yaml.register_class(registered_class)
+
+    return yaml
+
+def class_to_yaml_file(output_instance, file_location):
+
+    yaml = _get_yaml_object()
+
     yaml.dump(output_instance, file_location)
+
+
+def class_to_yaml_str(output_instance) -> str:
+    """ Output an object in YAML.  Any classes in the object need to be registered using yaml_register_class (and provide the appropriate serialisation methods). """
+    
+    yaml = _get_yaml_object()
+
+    with StringIO() as buf:
+        yaml.dump(output_instance, buf)
+
+        return buf.getvalue()

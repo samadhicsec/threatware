@@ -18,6 +18,7 @@ import actions.verify as verify
 import actions.manage as manage
 import actions.measure as measure
 from utils.output import OutputType
+from data.key import key as Key
 
 utils.logging.configureLogging()
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -49,6 +50,10 @@ def lambda_handler(event, context):
         filtered_qsp["request"]["IDprefix"] = IDprefix
     if (lang := qsp.get("lang", None)) is not None:
         filtered_qsp["request"]["lang"] = lang
+    if (output_format := qsp.get("format", None)) is not None:
+        filtered_qsp["request"]["format"] = output_format
+    if (convert_meta := qsp.get("meta", None)) is not None:
+        filtered_qsp["request"]["meta"] = convert_meta
 
     logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
@@ -96,6 +101,11 @@ def lambda_handler(event, context):
         # We need this to support localisation of keywords
         Translate.init(lang, filtered_qsp)
 
+        # Determine output Content-Type
+        if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
+            FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
+        content_type = "application/json"
+
         # We can treat the parameters as static
         FormatOutput.request_parameters = filtered_qsp
 
@@ -109,7 +119,7 @@ def lambda_handler(event, context):
             # Convert the TM document
             output = convert.convert(convert_config, execution_env, schemeDict, docloc)
 
-            body = output.tojson()
+            content_type, body = output.getContent(lambda : Key.config_serialisation(convert_meta))
 
         elif action == ACTION_VERIFY:
 
@@ -117,7 +127,8 @@ def lambda_handler(event, context):
             
             # Convert the TM template
             convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-            body = convert_output.tojson()
+            #body = convert_output.tojson()
+            content_type, body = convert_output.getContent()
 
             if convert_output.getResult() != OutputType.ERROR:
 
@@ -125,7 +136,8 @@ def lambda_handler(event, context):
 
                 # Convert the TM document
                 convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                body = convert_output.tojson()
+                #body = convert_output.tojson()
+                content_type, body = convert_output.getContent()
 
                 if convert_output.getResult() != OutputType.ERROR:
 
@@ -135,7 +147,8 @@ def lambda_handler(event, context):
 
                     # Verify the TM document
                     verify_output = verify.verify(verify_config, doc_model, template_model)
-                    body = verify_output.tojson()
+                    #body = verify_output.tojson()
+                    content_type, body = verify_output.getContent()
 
                     if verify_output.getResult() != OutputType.ERROR:
                         
@@ -144,7 +157,8 @@ def lambda_handler(event, context):
                         # Generate a report on verification issues and analysis
                         verify_output = verify.report(verify_config, doc_model, issues)
 
-                        body = verify_output.tojson()
+                        #body = verify_output.tojson()
+                        content_type, body = verify_output.getContent()
 
         elif action == ACTION_MANAGE_INDEXDATA:
             
@@ -152,7 +166,8 @@ def lambda_handler(event, context):
 
             output = manage.indexdata(manage_config, execution_env, id)
 
-            body = output.tojson()
+            #body = output.tojson()
+            content_type, body = output.getContent()
 
         elif action == ACTION_MANAGE_CREATE:
             
@@ -160,7 +175,8 @@ def lambda_handler(event, context):
 
             output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
 
-            body = output.tojson()
+            #body = output.tojson()
+            content_type, body = output.getContent()
 
         elif action == ACTION_MANAGE_CHECK:
             
@@ -168,7 +184,8 @@ def lambda_handler(event, context):
 
             # Convert the TM document
             convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-            body = convert_output.tojson()
+            #body = convert_output.tojson()
+            content_type, body = convert_output.getContent()
 
             if convert_output.getResult() != OutputType.ERROR:
 
@@ -181,7 +198,8 @@ def lambda_handler(event, context):
 
                 output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
 
-                body = output.tojson()
+                #body = output.tojson()
+                content_type, body = output.getContent()
         
         elif action == ACTION_MANAGE_SUBMIT:
             
@@ -189,7 +207,8 @@ def lambda_handler(event, context):
 
             # Convert the TM document
             convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-            body = convert_output.tojson()
+            #body = convert_output.tojson()
+            content_type, body = convert_output.getContent()
 
             if convert_output.getResult() != OutputType.ERROR:
 
@@ -199,7 +218,8 @@ def lambda_handler(event, context):
 
                 output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
 
-                body = output.tojson()
+                #body = output.tojson()
+                content_type, body = output.getContent()
 
         elif action == ACTION_MEASURE:
 
@@ -207,7 +227,8 @@ def lambda_handler(event, context):
 
             # Convert the TM template
             convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-            body = convert_output.tojson()
+            #body = convert_output.tojson()
+            content_type, body = convert_output.getContent()
 
             if convert_output.getResult() != OutputType.ERROR:
 
@@ -215,7 +236,8 @@ def lambda_handler(event, context):
 
                 # Convert the TM document
                 convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                body = convert_output.tojson()
+                #body = convert_output.tojson()
+                content_type, body = convert_output.getContent()
 
                 if convert_output.getResult() != OutputType.ERROR:
 
@@ -225,13 +247,14 @@ def lambda_handler(event, context):
                     
                     output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
 
-                    body = output.tojson()
+                    #body = output.tojson()
+                    content_type, body = output.getContent()
 
     # Respond
     return {
         'statusCode': 200,
         "headers": {
-            "Content-Type": "application/json"
+            "Content-Type": f"{content_type}"
         },
         'body': body
     }
@@ -245,6 +268,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Threat Model Verifier')
 
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
+    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -252,6 +276,7 @@ if __name__ == "__main__":
     parser_convert = subparsers.add_parser("convert", help='Convert a threat model for analysis')
     parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
     parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_convert.add_argument("-m", "--meta", required=False, help="What level of meta data about fields should be returned.  Note, 'properties' returns 'tags' as well.", default="tags", choices=['none', 'tags', 'properties'])
 
     # verify
     parser_convert = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval')
@@ -305,9 +330,12 @@ if __name__ == "__main__":
         action = action + "." + args.subcommand
 
     event["queryStringParameters"] = {}
+    event["queryStringParameters"]["lang"] = args.lang if "lang" in args else None
+    event["queryStringParameters"]["format"] = args.format if "format" in args else None
     event["queryStringParameters"]["action"] = action
     event["queryStringParameters"]["scheme"] = args.scheme if "scheme" in args else None
     event["queryStringParameters"]["docloc"] = args.docloc if "docloc" in args else None
+    event["queryStringParameters"]["meta"] = args.meta if "meta" in args else None
     event["queryStringParameters"]["doctemplate"] = args.doctemplate if "doctemplate" in args else None
     event["queryStringParameters"]["ID"] = args.id if "id" in args else None
     event["queryStringParameters"]["IDprefix"] = args.idprefix if "idprefix" in args else None

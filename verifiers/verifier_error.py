@@ -5,6 +5,7 @@ Class VerifierIssue
 
 import logging
 from enum import Enum
+from utils.load_yaml import yaml_register_class
 from language.translate import Translate
 from utils import keymaster
 from data.key import key as Key
@@ -53,6 +54,8 @@ class VerifierIssue:
     ]
 
     def __init__(self, error_text_key:str, fix_text_key:str, issue_dict:dict, errortype:ErrorType = ErrorType.NOT_SET):
+
+        yaml_register_class(VerifierIssue)
 
         # given an 'issue_key' we want to construct a context so jinja can use e.g. {{ issuerow['component'].colname }} and {{ issuerow['component'].value }} to get, for instance, the information regarding the 'component' entry for a row.  Might not be that helpful for rows where some entries are multiple values, like for T&C 'components'
 
@@ -184,6 +187,10 @@ class VerifierIssue:
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
+
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())
 
 # class VerifierError:
 

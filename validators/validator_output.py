@@ -6,6 +6,8 @@ Class ValidatorOutput
 from language.translate import Translate
 
 import logging
+from utils.load_yaml import yaml_register_class
+
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
@@ -36,6 +38,8 @@ class ValidatorOutput:
         validating_value : 
             The value of the entry being validated
         """
+
+        yaml_register_class(ValidatorOutput)
 
         self.validator_tag = validator_tag
         self.validating_key = validating_key
@@ -76,3 +80,7 @@ class ValidatorOutput:
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
+
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())

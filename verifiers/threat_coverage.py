@@ -5,6 +5,7 @@ Reports on threats covering assets in location
 
 import logging
 from utils import match
+from utils.load_yaml import yaml_register_class
 from verifiers.verifiers_config import VerifiersConfig
 from data import find
 from data import key as Key
@@ -15,6 +16,8 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 class CoveringThreat:
 
     def __init__(self, threat_description:str, threat_controls:list):
+        yaml_register_class(CoveringThreat)
+
         self.threat_description = threat_description
         self.threat_controls = threat_controls
 
@@ -32,9 +35,15 @@ class CoveringThreat:
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
 
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())
+
 class CoveredAsset:
 
     def __init__(self, asset:Key, asset_value:str, storage_location:Key, storage_location_value:str, covering_threats:list):
+        yaml_register_class(CoveredAsset)
+
         self.asset = asset
         self.asset_value = asset_value
         self.storage_location = storage_location
@@ -52,7 +61,10 @@ class CoveredAsset:
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """
         return self._get_state()
-
+        
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_dict(node._get_state())
 
 
 class ThreatCoverage:
