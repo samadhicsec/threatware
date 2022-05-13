@@ -21,7 +21,7 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 class Measurement:
 
-    def __init__(self, config, this_model_title, other_model_title, section_key, tag_tuple, key_tag_list:list):
+    def __init__(self, config, this_model_title, this_model_version, other_model_title, other_model_version, section_key, tag_tuple, key_tag_list:list):
         yaml_register_class(Measurement)
 
         template_text_file = config.get("output").get("template-text-file")
@@ -29,7 +29,9 @@ class Measurement:
         self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
         self.config = config
         self.this_model_title = this_model_title
+        self.this_model_version = this_model_version
         self.other_model_title = other_model_title
+        self.other_model_version = other_model_version
         self.section_key = section_key
         self.tag_tuple = tag_tuple
         self.key_tag_list = key_tag_list
@@ -63,30 +65,25 @@ class Measurement:
                 column["filter"] = tag_tuple[3]
             measuring["columns"].append(column)
 
+        this_model = {"title":self.this_model_title, "version":self.this_model_version}
+        other_model = {"title":self.other_model_title, "version":self.other_model_version}
+
         if measure_from_this_model in self.tag_tuple[1] and measure_compare_missing in self.tag_tuple[2]:
-            output["from"] = self.this_model_title
-            #output["measuring"] = env.from_string(self.templated_texts.get("missing")).render(context)
+            output["from"] = this_model
             output["measuring"] = measuring
-            output["to"] = self.other_model_title
-            #output["description"] = env.from_string(self.templated_texts.get("missing-this-to-other")).render(context)
+            output["to"] = other_model
         elif measure_from_this_model in self.tag_tuple[1] and measure_compare_extra in self.tag_tuple[2]:
-            output["from"] = self.this_model_title
-            #output["measuring"] = env.from_string(self.templated_texts.get("extra")).render(context)
+            output["from"] = this_model
             output["measuring"] = measuring
-            output["to"] = self.other_model_title
-            #output["description"] = env.from_string(self.templated_texts.get("extra-this-to-other")).render(context)
+            output["to"] = other_model
         elif measure_from_other_model in self.tag_tuple[1] and measure_compare_missing in self.tag_tuple[2]:
-            output["from"] = self.other_model_title
-            #output["measuring"] = env.from_string(self.templated_texts.get("missing")).render(context)
+            output["from"] = other_model
             output["measuring"] = measuring
-            output["to"] = self.this_model_title
-            #output["description"] = env.from_string(self.templated_texts.get("missing-other-to-this")).render(context)
+            output["to"] = this_model
         elif measure_from_other_model in self.tag_tuple[1] and measure_compare_extra in self.tag_tuple[2]:
-            output["from"] = self.other_model_title
-            #output["measuring"] = env.from_string(self.templated_texts.get("extra")).render(context)
+            output["from"] = other_model
             output["measuring"] = measuring
-            output["to"] = self.this_model_title
-            #output["description"] = env.from_string(self.templated_texts.get("extra-other-to-this")).render(context)
+            output["to"] = this_model
 
         output["distance-metric"] = len(self.distances)
         if len(self.distances) > 0:

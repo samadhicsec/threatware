@@ -27,7 +27,7 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 HANDLER_TEXTS_YAML = "handler_texts.yaml"
 HANDLER_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(HANDLER_TEXTS_YAML))
 
-ACTION_CONVERT = 'convert1'
+ACTION_CONVERT = 'convert'
 ACTION_VERIFY = 'verify'
 ACTION_MANAGE_INDEXDATA = 'manage.indexdata'
 ACTION_MANAGE_CREATE = 'manage.create'
