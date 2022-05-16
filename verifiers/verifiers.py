@@ -148,7 +148,11 @@ class Verifiers:
 
             verifier_config = self.config.verifiers_config_dict[verifier]
 
+            logger.info(f"Entering verifier '{verifier}'")
+
             errors_list = self.config.dispatch[verifier](common_config, verifier_config, model, template_model)
+
+            logger.info(f"Exiting verifier '{verifier}'")
 
             # Update errors to provide more useful output information
             for error in errors_list:

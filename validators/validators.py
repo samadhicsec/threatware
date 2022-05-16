@@ -168,7 +168,9 @@ class Validator:
         references['validator-tag'] = validator_tag
 
         # Validate
+        logger.info(f"Entering validator '{validator_entry['validator']}'")
         output.result = validate(validator_entry['config'], key, value, references)
+        logger.info(f"Exiting validator '{validator_entry['validator']}'")
         
         output.validator_name = validator_entry["validator"]
         output.validator_module = self.modules[validator_entry["validator"]]
