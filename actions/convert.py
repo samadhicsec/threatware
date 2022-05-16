@@ -25,6 +25,8 @@ def _output(config:dict):
 
 
 def convert(config:dict, execution_env, scheme:dict, doc_location:str):
+
+    logger.info("Entering convert")
     
     output = _output(config)
 
@@ -41,11 +43,15 @@ def convert(config:dict, execution_env, scheme:dict, doc_location:str):
 
     except ConvertError as error:
         output.setError(error.text_key, error.template_values)
-        
+
+    logger.info("Exiting convert")
+
     return output
 
 
 def convert_template(config:dict, execution_env, scheme:dict, doc_location:str):
+
+    logger.info("Entering convert_template")
 
     output = _output(config)
 
@@ -60,6 +66,8 @@ def convert_template(config:dict, execution_env, scheme:dict, doc_location:str):
     
     except ConvertError as error:
         output.setError(error.text_key, error.template_values)
+
+    logger.info("Exiting convert_template")
 
     return output
 

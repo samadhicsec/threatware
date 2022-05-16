@@ -23,6 +23,8 @@ def config(scheme:dict):
 
 def verify(config:VerifiersConfig, threatmodel:dict, tm_template:dict):
 
+    logger.info("Entering verify")
+
     output = FormatOutput(config.verifiers_config_dict.get("output"))
 
     try: 
@@ -40,6 +42,8 @@ def verify(config:VerifiersConfig, threatmodel:dict, tm_template:dict):
     except VerifyError as error:
         output.setError(error.text_key, error.template_values)
 
+    logger.info("Exiting verify")
+
     return output
 
 def _coverage(config:VerifiersConfig, threatmodel:dict):
@@ -51,6 +55,8 @@ def _coverage(config:VerifiersConfig, threatmodel:dict):
     return coverage
 
 def report(config:VerifiersConfig, threatmodel:dict, issues:list):
+
+    logger.info("Entering report")
 
     output = FormatOutput(config.verifiers_config_dict.get("output"))
 
@@ -71,5 +77,7 @@ def report(config:VerifiersConfig, threatmodel:dict, issues:list):
 
     except VerifyError as error:
         output.setError(error.text_key, error.template_values)
+
+    logger.info("Exiting report")
 
     return output
