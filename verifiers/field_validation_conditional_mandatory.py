@@ -32,7 +32,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             # 1st clause: does the depend_on value match, and is the tagged_key value empty -> then finding
             # 2nd clause: is there no depend_on value specified, and if the tagged_key value is not empty (i.e. it has a value) -> then finding
             if (("depends-on-value" in tag_entry and match.equals(depends_on_key_value, tag_entry["depends-on-value"])) and match.is_empty(tagged_data_entry_value)) or \
-                ("depends-on-value" not in tag_entry and not match.is_empty(depends_on_key_value)) :
+                (("depends-on-value" not in tag_entry and not match.is_empty(depends_on_key_value)) and match.is_empty(tagged_data_entry_value)) :
                 issue_dict = {}
                 issue_dict["issue_key"] = tagged_data_entry_key
                 issue_dict["issue_value"] = tagged_data_entry_value
