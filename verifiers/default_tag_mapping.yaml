@@ -56,6 +56,7 @@ tag-mapping:
     tags:
       - ref/functional-asset-data/name
       - ref/functional-asset-data/type
+      - ref/functional-asset-data/name/asset-expression
   # Any key in the model called 'asset' should have a value that references a asset name
   - key-name: asset
     tags:
@@ -66,6 +67,9 @@ tag-mapping:
       - ref/technical-asset-data/name
       - ref/technical-asset-data/type
       - ref/technical-asset-data/storage-location/storage-expression
+  - key-name: existing-controls
+    tags:
+      - not-mandatory
   - key-name: impact-type
     tags:
       - validate-as-CIA
