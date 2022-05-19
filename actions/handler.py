@@ -9,6 +9,7 @@ import argparse
 import json
 from pathlib import Path
 from storage.gitrepo import GitStorage
+from utils.error import ThreatwareError
 from utils.output import FormatOutput
 import utils.logging
 from providers import provider
@@ -249,7 +250,10 @@ def lambda_handler(event, context):
     
     except Exception as e:
         logger.error(e)
-        handler_output.setError("internal-error", {})
+        if issubclass(type(e), ThreatwareError):
+            handler_output.setError(e.text_key, e.template_values)
+        else:
+            handler_output.setError("internal-error", {})
         content_type, body = handler_output.getContent()
 
     # Respond

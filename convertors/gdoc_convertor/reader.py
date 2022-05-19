@@ -4,10 +4,12 @@ import os, io
 import logging
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as SvcAcctCredentials
+from utils.error import ConvertError
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -67,16 +69,23 @@ def history(confluence, page_id):
 
 def read(service, doc_id, version=''):
     
-    request = service.files().export_media(fileId=doc_id, mimeType='text/html')
+    try: 
+        request = service.files().export_media(fileId=doc_id, mimeType='text/html')
 
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-        logger.debug("Download %d%%." % int(status.progress() * 100))
-    
-    document = fh.getvalue().decode('utf-8')
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            logger.debug("Download %d%%." % int(status.progress() * 100))
+        
+        document = fh.getvalue().decode('utf-8')
+
+    except HttpError as e:
+        logger.error(e)
+        if e.status_code == 404:
+            raise ConvertError("not-found", {"ID":doc_id, "url":e.uri})
+        raise
 
     return document
 

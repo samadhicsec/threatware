@@ -49,7 +49,12 @@ class FormatOutput:
         self.error = Translate.localise(formatoutput_texts, "error")
         
         self.templated_texts:dict = load_yaml.yaml_file_to_dict(output_config.get("template-text-file")).get("output-texts")
-        self.templated_texts:dict = formatoutput_texts | self.templated_texts
+        # Need to merge these dicts at each localisation entry
+        for dict_key in formatoutput_texts.keys():
+            if dict_key in self.templated_texts:
+                self.templated_texts[dict_key] = formatoutput_texts[dict_key] | self.templated_texts[dict_key]
+            else:
+                self.templated_texts[dict_key] = formatoutput_texts[dict_key]
         
         self.type = OutputType.NOT_SET
         self.description = None
