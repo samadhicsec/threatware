@@ -105,6 +105,15 @@ def _value_replace(proc_def, output_data):
 
     return output_data
 
+def _extract_col_name(colname:str) -> str:
+    """
+    Extracts all data before line boudnaries and just returns that as the column header.  This allows help text to be placed in the same table cell as a column header, but ignored.
+    """
+    if not isinstance(colname, str):
+        return ""
+
+    return colname.splitlines()[0]
+
 def _remove_header_row(proc_def, output_data):
     """
     Removes the first row from the output data (must be a list).  Assumes values are column header names and sets the 'colname' property on all descendant 
@@ -124,7 +133,7 @@ def _remove_header_row(proc_def, output_data):
     for colname in output_data[0].values():
         # The value might not be a string, it might be a dictionary, but that dict should just have 1 entry
         if isinstance(colname, str):
-            colnames.append(colname)
+            colnames.append(_extract_col_name(colname))
         else:
             if isinstance(colname, list) and len(colname) > 0:
                 # Look at the first entry in the list, which should be a dict
@@ -137,7 +146,7 @@ def _remove_header_row(proc_def, output_data):
                     # Table rows that aren't read in as straight values but instead are processed further, can have multiple values
                     #if len(colname.values()) > 1:
                     #    logger.warning(f"Expected only 1 column name in dict '{colname}'.  Using first")
-                    colnames.append(list(colname.values())[0])
+                    colnames.append(_extract_col_name(list(colname.values())[0]))
             else:
                 logger.warning(f"Unknown column name type of  '{type(colname)}'.  Setting to empty")
                 colnames.append("")
