@@ -26,21 +26,18 @@ class Validator:
     VALIDATORS_YAML = "validators_dispatch.yaml"
     VALIDATOR_CONFIG_YAML = "validators_config.yaml"
     VALIDATORS_TEXT_YAML = "validators_text.yaml"
-    #VALIDATORS_VALUES_YAML = "validators_values.yaml"
 
     VALIDATORS_DISPATCH_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_YAML))
     VALIDATOR_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATOR_CONFIG_YAML))
     VALIDATORS_TEXT_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_TEXT_YAML))
-    #VALIDATORS_VALUES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VALIDATORS_VALUES_YAML))
-    
 
     def __init__(self, validators_config:dict = {}):
-        validators_dispatch_yaml_path = validators_config.get("validator-dispatch-yaml-path", self.VALIDATORS_DISPATCH_YAML_PATH)
+        #validators_dispatch_yaml_path = validators_config.get("validator-dispatch-yaml-path", self.VALIDATORS_DISPATCH_YAML_PATH)
+        # We don't currently want the dispatch yaml to configurable - could be security implications as people who can update config shouldn't necessarily be people who can run code
+        validators_dispatch_yaml_path = self.VALIDATORS_DISPATCH_YAML_PATH
         validators_config_yaml_path = validators_config.get("validator-config-yaml-path", self.VALIDATOR_CONFIG_YAML_PATH)
         validators_text_yaml_path = validators_config.get("validator-text-yaml-path", self.VALIDATORS_TEXT_YAML_PATH)
-        #validators_values_yaml_path = validators_config.get("validator-values-yaml-path", self.VALIDATORS_VALUES_YAML_PATH)
-        
-        #self.values_dict = yaml_file_to_dict(validators_values_yaml_path)
+                
         self.text_dict = self._load_validator_texts(validators_text_yaml_path)
         self.validator_config_dict = self._load_validator_config(validators_config_yaml_path)
         self.dispatch, self.modules = self._load_validator_dispatch(validators_dispatch_yaml_path)
