@@ -23,10 +23,17 @@ output-texts:
     reference-not-found: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
     reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
 grouped-text:
-  default:
-    start-assets-grouped-by-storage: 
-      - "All assets stored in "
-      - "All assets stored in component - "
-      - "All assets stored in location - "
-    all-assets:
-      - "All assets"
+  storage-expression:
+    default:
+      start-assets-grouped-by-storage: 
+        - "All assets stored in "
+        - "All assets stored in component - "
+        - "All assets stored in location - "
+      all-assets:
+        - "All assets"
+  asset-expression:
+    default:
+      all-functional-assets:
+        - "All"
+        - "All assets"
+        - "All Functional Assets"

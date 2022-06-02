@@ -2,10 +2,11 @@
 """
 Verifies that all keys tagged with references actually reference something
 """
-from pickle import FALSE
-from data import find
 import logging
+from sre_parse import fix_flags
+from utils import tags
 from data.key import key as Key
+from data import find
 from verifiers.verifier_error import VerifierIssue
 import verifiers.reference as reference
 from language.translate import Translate
@@ -48,22 +49,42 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
 
     strip_config = callback_config["strip-context"]
 
-    # We want to strip any context for teh purpose of copmarison of references
+    # We want to strip any context for the purpose of copmarison of references
     if match.equals(compare_value, compare_to_value, transform.strip(strip_config["start-char"], strip_config["end-char"])):
         return True
 
     if tag_comparison == "storage-expression":
         # TODO this just checks the value endswith the value from where it has a tag referencing, but really we should check for a complete
         # text match e.g. "All assets stored in environment variables"
-        grouped_text = callback_config.get("grouped-text")
+        grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
         if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
             return True
         if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
             return True
 
+    # TODO- make this more generic so you can dynamically add more grouped text.
+    if tag_comparison == "asset-expression":
+        asset_text = callback_config.get("grouped-text", {}).get("asset-expression")
+
+        if match.equals(compare_value, Translate.localise(asset_text, "all-functional-assets")):
+            return True
+
     return False
 
+def _get_possible_fixed_texts(common_config:dict, key_entry:Key) -> list:
+
+    # For each tag
+    for tag in key_entry.getTags():
+
+        tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tags.get_quad_tag_parts(tag)
+
+        # TODO- make this more generic so you can dynamically add more grouped text.
+        if tag_comparison == "asset-expression":
+
+            return Translate.localise(common_config["grouped-text"]["asset-expression"], "all-functional-assets")
+
+    return []
 
 def verify(common_config:dict, verifier_config:dict, model:dict, template_model:dict) -> list:
 
@@ -101,6 +122,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
         if not doc_reference_found and not template_reference_found:
             
+            fixed_texts = _get_possible_fixed_texts(common_config, key_entry)
+
             issue_dict = {}
             issue_dict["issue_key"] = key_entry
             issue_dict["issue_value"] = value_entry
@@ -109,6 +132,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict["fixdata"]["document"] = doc_section_field_unref_error
             if len(template_section_field_unref_error) > 0:
                 issue_dict["fixdata"]["template"] = template_section_field_unref_error
+            if len(fixed_texts) > 0:
+                issue_dict["fixdata"]["static-texts"] = fixed_texts
 
             verify_return_list.append(VerifierIssue("reference-not-found", 
                                                     "reference-not-found-fix", 

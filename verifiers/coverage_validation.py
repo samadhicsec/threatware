@@ -24,7 +24,7 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
         storage_location_value = callback_config.get("storage_location_value")
         if match.equals(storage_location_value, compare_to_value):
 
-            grouped_text = callback_config.get("grouped-text")
+            grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
             if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
                 return True
@@ -40,7 +40,7 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     if tag_comparison == "storage-expression":
-        grouped_text = callback_config.get("grouped-text")
+        grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
         if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
             return True
@@ -181,7 +181,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                     issue_dict["issue_value"] = row_id_data
                     issue_dict["issue_table"] = threats_and_controls_key.getProperty("section")
                     issue_dict["issue_table_row"] = None    # Disable showing this in the error message
-                    issue_dict["fixdata"] = Translate.localise(common_config["grouped-text"], "start-assets-grouped-by-storage")
+                    issue_dict["fixdata"] = Translate.localise(common_config["grouped-text"]["storage-expression"], "start-assets-grouped-by-storage")
                     # Need to get some helpful texts relating to the threats and control data
                     # Although we found the issue by looping over asset keys, the problem is in the threats and controls data
                     issue_dict["storage_location"] = storage_location_value
