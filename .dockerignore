@@ -1,9 +1,12 @@
 pytest_cache*
 .venv*
-.vscode/*
-.whiteboard/*
+.vscode*
+.whiteboard*
 .gitignore
+.dockerignore
 dockerfile
 README.md
-*/*/__pycache__/*
-*/*/*/__pycache__/*
+test*
+**/__pycache__
+**/*_config.yaml
+**/*.old
