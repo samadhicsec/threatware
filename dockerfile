@@ -12,14 +12,14 @@ RUN useradd --create-home --shell /bin/bash threatuser
 USER threatuser
 WORKDIR /home/threatuser
 
-# Install the function's dependencies
+# Install the dependencies
 COPY requirements.txt requirements.txt
 RUN python3 -m pip install --no-cache-dir -r requirements.txt --target .
 
-# Install the function's dependencies and the runtime interface client
+# Install the runtime interface client
 RUN python3 -m pip install --no-cache-dir --target . awslambdaric
 
-# Copy function code
+# Copy code
 COPY --chown=threatuser . .
 RUN chmod 755 entry.sh
 
