@@ -1,4 +1,4 @@
 ---
 schemes:
-  "confluence_1.0": "confluence-scheme-1.0.yaml"
-  "googledoc_1.0": "googledoc-scheme-1.0.yaml"
+  "confluence_1.0": "schemes/confluence-scheme-1.0.yaml"
+  "googledoc_1.0": "schemes/googledoc-scheme-1.0.yaml"

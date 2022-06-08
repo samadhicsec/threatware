@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from storage.gitrepo import GitStorage
 from utils.error import ThreatwareError
+from utils.config import ConfigBase
 from utils.output import FormatOutput
 import utils.logging
 from providers import provider
@@ -38,7 +39,7 @@ ACTION_MEASURE = 'measure'
 
 def lambda_handler(event, context):
 
-    # Get space and page from query string parameters
+    # Fitler the set of query string parameters to just ones we know about
     qsp = event.get("queryStringParameters", {})
     filtered_qsp = {"request":{}}
     if (action := qsp.get("action", None)) is not None:
@@ -62,6 +63,22 @@ def lambda_handler(event, context):
 
     logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
+    # Very first thing we need to do is find where all the configuration files are, and if they are not already present, download them.
+    # How we do that depends what env we are in.  Providers usually take a config file, but we don't have them yet, so load without config (which limits what methods we can use)
+    if getattr(context, "threatware.cli", False):
+        execution_env = provider.get_provider("cli", no_config_mode=True)
+    else:
+        GitStorage.containerised = True
+        # We are being called as a lambda, so get credentials from cloud
+        execution_env = provider.get_provider("aws.lambda", no_config_mode=True)
+    
+    # This will set the ConfigBase.base_dir value so we can load config from this directory
+    ConfigBase.init(execution_env)
+
+    ###
+    # Now we can load things that have dynamic configuration
+    ###
+
     # We need this to support localisation of keywords
     Translate.init(lang, filtered_qsp)
 
@@ -74,7 +91,7 @@ def lambda_handler(event, context):
     FormatOutput.request_parameters = filtered_qsp
 
     # Load the texts file with localised error messages
-    handler_output = FormatOutput({"template-text-file":HANDLER_TEXTS_YAML_PATH})
+    handler_output = FormatOutput({"template-text-file":ConfigBase.getConfigPath(HANDLER_TEXTS_YAML_PATH)})
 
     try:
 
@@ -109,7 +126,7 @@ def lambda_handler(event, context):
             content_type, body = handler_output.getContent()
 
         else:
-            # If we are being called locally then we'll pull credentials locally
+            # Load the execution environment again, as this time we have configuration files to enable full functionality
             if getattr(context, "threatware.cli", False):
                 # Get creds locally
                 execution_env = provider.get_provider("cli")
@@ -271,7 +288,7 @@ if __name__ == "__main__":
     doc_help = 'Location identifier of the document'
     template_help = 'Identifier for the document template (overrides template in scheme)'
 
-    parser = argparse.ArgumentParser(description='Threat Model Verifier')
+    parser = argparse.ArgumentParser(description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
 
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
     parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])

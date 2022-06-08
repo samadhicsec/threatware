@@ -27,6 +27,9 @@ class GitStorage:
         self.gitrepo_config = config.get("gitrepo", {}) 
         self.base_storage_dir = self.gitrepo_config.get("base-storage-dir", "/tmp/")
         self.remote = self.gitrepo_config.get("remote")
+        if match.is_empty(self.remote):
+            logger.error("Remote repo is empty")
+            raise StorageError("no-git-repo", None)
         self.default_branch = self.gitrepo_config.get("default-branch", "approved")
         self.is_entered = False
 
@@ -35,7 +38,7 @@ class GitStorage:
 
         # Need to setup git depending on the environment we are in
 
-        if GitStorage.containerised:
+        if GitStorage.containerised and self.remote.startswith("git@"):
             ssh_path = Path.joinpath(Path(self.base_storage_dir), ".ssh")
             ssh_config_path = str(Path.joinpath(ssh_path, "config"))
             ssh_private_key_path = str(Path.joinpath(ssh_path, "key"))
@@ -80,9 +83,9 @@ class GitStorage:
                 ssh_config.writelines(["IdentityFile=" + ssh_private_key_path + "\n", "UserKnownHostsFile=" + ssh_known_hosts_path + "\n"])
 
             # Get the host from the 'remote' value of the form 'protocol@host:path'
-            if not self.remote.startswith("git@"):
-                logger.error("Currently only remotes using 'git@' are supported")
-                raise StorageError("internal-error", None)
+            #if not self.remote.startswith("git@"):
+            #    logger.error("Currently only remotes using 'git@' are supported")
+            #    raise StorageError("internal-error", None)
             git_host = (self.remote.split("@")[1]).split(":")[0]
 
             # Need to populate .ssh/known_hosts with remote pub key i.e. ssh-keyscan -t ed25519 github.com >> /tmp/.ssh/known_hosts

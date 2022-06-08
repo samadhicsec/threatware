@@ -5,17 +5,18 @@ Loads a scheme file
 
 import logging
 from pathlib import Path
+from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_dict
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+SCHEMES_YAML = "schemes.yaml"
+SCHEMES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(SCHEMES_YAML))
+
 def load_scheme(template_scheme):
 
-    SCHEMES_YAML = "schemes.yaml"
-    
-    #yaml_dict = yaml_to_dict(str(Path(os.getcwd()).joinpath(MAPS_DIR).joinpath(SCHEMES_YAML)))
-    yaml_dict = yaml_file_to_dict(str(Path(__file__).absolute().parent.joinpath(SCHEMES_YAML))) 
+    yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(SCHEMES_YAML_PATH)) 
     maps = yaml_dict["schemes"]
     
     logger.debug("Looking up scheme file for '{}'".format(template_scheme))
@@ -24,7 +25,8 @@ def load_scheme(template_scheme):
         logger.error("Could not find scheme file for '{}'".format(template_scheme))
         return {}
 
-    yaml_dict = yaml_file_to_dict(str(Path(__file__).absolute().parent.joinpath(modelmap_file)))
+    #yaml_dict = yaml_file_to_dict(str(Path(__file__).absolute().parent.joinpath(modelmap_file)))
+    yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(modelmap_file))
     return yaml_dict["scheme"]
 
 

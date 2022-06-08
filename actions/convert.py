@@ -5,7 +5,7 @@ Converts a Threat Model document into a model
 
 import logging
 import jsonpickle
-from utils.error import ConvertError
+from utils.error import ConvertError, ProviderError
 from utils.output import FormatOutput
 from convertors import convertors_config
 import convertors.confluence_convertor.convertor
@@ -41,7 +41,7 @@ def convert(config:dict, execution_env, scheme:dict, doc_location:str):
 
         output.setSuccess("success", {}, model)
 
-    except ConvertError as error:
+    except (ConvertError, ProviderError) as error:
         output.setError(error.text_key, error.template_values)
 
     logger.info("Exiting convert")

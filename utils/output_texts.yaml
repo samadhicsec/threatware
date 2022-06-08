@@ -4,5 +4,6 @@ output-texts:
     information: "{{ translate.information }}"
     success: "{{ translate.success }}"
     error: "{{ translate.error }}"
+    no-git-repo: "No git remote repo was configured.  Please configure one."
     format-error: "The format parameter can only be 'json' or 'yaml'"
     internal-error: "An internal error occurred, please see logs for more detail"

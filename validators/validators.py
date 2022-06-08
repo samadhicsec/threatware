@@ -4,10 +4,10 @@ Loads validators dynamically
 """
 
 from utils.error import ValidatorsError
-from typing import Tuple
 import logging
 import importlib
 from pathlib import Path
+from utils.config import ConfigBase
 from language.translate import Translate
 from utils.load_yaml import yaml_file_to_dict
 from data.key import key as Key
@@ -35,8 +35,8 @@ class Validator:
         #validators_dispatch_yaml_path = validators_config.get("validator-dispatch-yaml-path", self.VALIDATORS_DISPATCH_YAML_PATH)
         # We don't currently want the dispatch yaml to configurable - could be security implications as people who can update config shouldn't necessarily be people who can run code
         validators_dispatch_yaml_path = self.VALIDATORS_DISPATCH_YAML_PATH
-        validators_config_yaml_path = validators_config.get("validator-config-yaml-path", self.VALIDATOR_CONFIG_YAML_PATH)
-        validators_text_yaml_path = validators_config.get("validator-text-yaml-path", self.VALIDATORS_TEXT_YAML_PATH)
+        validators_config_yaml_path = ConfigBase.getConfigPath(validators_config.get("validator-config-yaml-path", self.VALIDATOR_CONFIG_YAML_PATH))
+        validators_text_yaml_path = ConfigBase.getConfigPath(validators_config.get("validator-text-yaml-path", self.VALIDATORS_TEXT_YAML_PATH))
                 
         self.text_dict = self._load_validator_texts(validators_text_yaml_path)
         self.validator_config_dict = self._load_validator_config(validators_config_yaml_path)

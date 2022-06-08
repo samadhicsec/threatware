@@ -6,7 +6,9 @@ Class FormatOutput
 import logging
 from enum import Enum
 from pathlib import Path
+from utils.config import ConfigBase
 from utils import load_yaml
+from utils.config import ConfigBase
 from language.translate import Translate
 import jsonpickle
 
@@ -40,7 +42,7 @@ class FormatOutput:
     def __init__(self, output_config:dict):
 
         #formatoutput_texts = self.translator.localiseYamlFile(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
-        formatoutput_texts = load_yaml.yaml_file_to_dict(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
+        formatoutput_texts = load_yaml.yaml_file_to_dict(ConfigBase.getConfigPath(OUTPUT_TEXTS_YAML_PATH)).get("output-texts")
         # self.information = env.from_string(formatoutput_texts.get("information")).render(self.translator.translations)
         # self.success = env.from_string(formatoutput_texts.get("success")).render(self.translator.translations)
         # self.error = env.from_string(formatoutput_texts.get("error")).render(self.translator.translations)
@@ -48,7 +50,7 @@ class FormatOutput:
         self.success = Translate.localise(formatoutput_texts, "success")
         self.error = Translate.localise(formatoutput_texts, "error")
         
-        self.templated_texts:dict = load_yaml.yaml_file_to_dict(output_config.get("template-text-file")).get("output-texts")
+        self.templated_texts:dict = load_yaml.yaml_file_to_dict(ConfigBase.getConfigPath(output_config.get("template-text-file"))).get("output-texts")
         # Need to merge these dicts at each localisation entry
         for dict_key in formatoutput_texts.keys():
             if dict_key in self.templated_texts:
@@ -82,6 +84,9 @@ class FormatOutput:
     def setInformation(self, text_key:str, template_values:dict, details = None):
         """ Returns a localised Information output message """
 
+        if template_values is None:
+            template_values = {}
+            
         self.type = OutputType.INFO
         self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
         #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
@@ -92,6 +97,9 @@ class FormatOutput:
     def setSuccess(self, text_key:str, template_values:dict, details = None):
         """ Returns a localised Success output message """
 
+        if template_values is None:
+            template_values = {}
+
         self.type = OutputType.SUCCESS
         self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
         #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
@@ -101,6 +109,9 @@ class FormatOutput:
 
     def setError(self, text_key:str, template_values:dict, details = None):
         """ Returns a localised Error output message """
+
+        if template_values is None:
+            template_values = {}
 
         self.type = OutputType.ERROR
         self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)

@@ -1,8 +1,12 @@
 ---
 providers:
   cli:
-    confluence_creds_file: "~/.atlassian"
-    confluence_creds_section: "DEFAULT"
+    confluence:
+      creds_config_file: "~/.atlassian"
+      creds_config_section: "DEFAULT"
+    google:
+      credentials_file: "credentials.json"
+      token_file: "token.json"
   aws.lambda:
     secret_name: "threatware"
     region: "eu-west-2"

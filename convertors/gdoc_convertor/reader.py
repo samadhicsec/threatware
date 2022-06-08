@@ -7,9 +7,11 @@ from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as SvcAcctCredentials
 from utils.error import ConvertError
+from utils.config import ConfigBase
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -25,8 +27,8 @@ def _getCredentials(connection):
         creds = None
         #token_path = str(Path(__file__).absolute().parent.joinpath("token.json"))
         #credentials_path = str(Path(__file__).absolute().parent.joinpath("credentials.json"))
-        token_path = connection.get("token-file")
-        credentials_path = connection.get("credentials-file")
+        token_path = ConfigBase.getConfigPath(connection.get("token-file"))
+        credentials_path = ConfigBase.getConfigPath(connection.get("credentials-file"))
 
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -35,9 +37,13 @@ def _getCredentials(connection):
             creds = Credentials.from_authorized_user_file(token_path, SCOPES)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
+            runOAuthAgain = False
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
+                try:
+                    creds.refresh(Request())
+                except(RefreshError):
+                    runOAuthAgain = True
+            if runOAuthAgain:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_path, SCOPES)
                 creds = flow.run_local_server(port=0)

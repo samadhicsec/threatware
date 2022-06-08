@@ -9,7 +9,7 @@ output-texts:
     success-submitter: "The following metadata for threat model with ID '{{ ID }}' was submitted, please let an approver know"
     empty-id: "The threat model at this location has a empty ID.  Please populate the ID field and re-submit"
     no-version-history: "Could not find entry in version history table for threat model current version '{{ current_version }}'"
-    no-index-ID: "Could not find metadata index entry for ID '{{ ID }}'.  Valid IDs must exist in the metadata index file.  New IDs can be created using manage.craete"
+    no-index-ID: "Could not find metadata index entry for ID '{{ ID }}'.  Valid IDs must exist in the metadata index file.  New IDs can be created using manage.create"
     index-entry-exists: "Cannot create ID for threat model with scheme '{{ scheme }}' and location '{{ location }}' as that scheme/location is used by threat model with ID '{{ ID }}'"
     cant-submit-not-in-metadata-index: "The threat model with ID '{{ ID }}' that you are trying to submit does not exist in the metadata.  Please call the 'manage.create' action and ensure the updates are merged."
     current-approved-mismatched-version: "The submitted threat model with ID '{{ ID }}' has a current version of '{{ current_version }}' and an approved version of '{{ approved_version }}', both of which are approved in the version history, but if the current version is approved in the version history then the approved version must match the current version.  Please update the approved version in the threat model"

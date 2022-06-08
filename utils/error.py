@@ -13,6 +13,9 @@ class ThreatwareError(Exception):
 class ConvertError(ThreatwareError):
     pass
 
+class ProviderError(ConvertError):
+    pass
+
 class ValidatorsError(ThreatwareError):
     pass
 

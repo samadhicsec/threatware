@@ -6,6 +6,7 @@ Loads verifiers dynamically
 import logging
 import importlib
 from pathlib import Path
+from utils.config import ConfigBase
 from language.translate import Translate
 from utils.load_yaml import yaml_file_to_dict
 
@@ -20,23 +21,14 @@ class VerifiersConfig:
 
     VERIFIERS_DISPATCH_YAML = "verifiers_dispatch.yaml"
     VERIFIER_CONFIG_YAML = "verifiers_config.yaml"
-    #VERIFIER_VALUES_YAML = "verifiers_values.yaml"
-    #VERIFIER_TEXTS_YAML = "verifiers_texts.yaml"
-    #DEFAULT_TAG_MAPPING_YAML = "default_tag_mapping.yaml"
     
     VERIFIERS_DISPATCH_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIERS_DISPATCH_YAML))
     VERIFIER_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_CONFIG_YAML))
-    #VERIFIER_VALUES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_VALUES_YAML))
-    #VERIFIER_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(VERIFIER_TEXTS_YAML))
-    #DEFAULT_TAG_MAPPING_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(DEFAULT_TAG_MAPPING_YAML))
 
     def __init__(self, verifiers_config:dict):
         #verifiers_dispatch_yaml_path = verifiers_config.get("verifiers_dispatch_yaml_config", self.VERIFIERS_DISPATCH_YAML_PATH)
         verifiers_dispatch_yaml_path = self.VERIFIERS_DISPATCH_YAML_PATH
-        verifiers_config_yaml_path = verifiers_config.get("verifiers_config_yaml_config", self.VERIFIER_CONFIG_YAML_PATH)
-        #verifiers_values_yaml_path = verifiers_config.get("verifiers_values_yaml_config", self.VERIFIER_VALUES_YAML_PATH)
-        #verifiers_texts_yaml_path = verifiers_config.get("verifiers_texts_yaml_config", self.VERIFIER_TEXTS_YAML_PATH)
-        #default_tag_mapping_yaml_path = verifiers_config.get("tag_mapping_yaml_config", self.DEFAULT_TAG_MAPPING_YAML_PATH)
+        verifiers_config_yaml_path = ConfigBase.getConfigPath(verifiers_config.get("verifiers_config_yaml_config", self.VERIFIER_CONFIG_YAML_PATH))
 
         self.disable = verifiers_config.get("disable", [])
         if self.disable is None:
@@ -46,17 +38,13 @@ class VerifiersConfig:
         if self.validators_config is None:
             self.validators_config = {}
 
-        #self.verifiers_values_dict = self._load_verifiers_values(verifiers_values_yaml_path)
         self.dispatch = self._load_verifiers_dispatch(verifiers_dispatch_yaml_path)
         self.verifiers_config_dict = self._load_verifiers_config(verifiers_config_yaml_path)
-        #self.verifiers_texts_dict = self._load_verifiers_texts(verifiers_texts_yaml_path)
         self.verifiers_texts_dict = self._load_verifiers_texts(self.verifiers_config_dict.get("output").get("template-text-file"))
-        #self.tag_mapping = self._load_tag_mapping(default_tag_mapping_yaml_path)
         self.tag_mapping = self._load_tag_mapping(self.verifiers_config_dict.get("common").get("default-verifier-tag-mapping"))
 
     def _load_verifiers_config(self, verifiers_config_yaml_path) -> dict:
         
-        #yaml_config_dict = yaml_templated_file_to_dict(verifiers_config_yaml_path, self.verifiers_values_dict)
         yaml_config_dict = Translate.localiseYamlFile(verifiers_config_yaml_path)
 
         return yaml_config_dict["verifiers-config"]
@@ -87,10 +75,6 @@ class VerifiersConfig:
                 logger.warning(f"Verifier file '{verifier_code}' did not have a 'verify' method")
 
         return verifiers_dict
-
-    # def _load_verifiers_values(self, verifiers_values_yaml_path:str):
-
-    #     return yaml_file_to_dict(verifiers_values_yaml_path) 
 
     def _load_verifiers_texts(self, verifiers_texts_yaml_path:str):
 

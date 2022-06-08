@@ -4,6 +4,7 @@ Makes available configuration for AWS Lambda execution context
 """
 
 import logging
+import os
 import json
 import boto3
 from botocore.exceptions import ClientError
@@ -14,12 +15,23 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 class AWSLambdaContext:
 
     def __init__(self, config:dict):
+        # Needs to be able to handle an empty config because providers may get called before config files are available.
 
         self.config = config
-        self.secret_name = config.get("secret_name")
-        self.region = config.get("region")
+        if "secret_name" in config:
+            self.secret_name = config.get("secret_name")
+        else:
+            # Read from env var if possible
+            self.secret_name = os.getenv("THREATWARE_AWS_SECRET_NAME")
 
-        self.secret_dict = json.loads(self._get_secret())
+        if "region" in config: 
+            self.region = config.get("region")
+        else:
+            # Read from env var if possible
+            self.region = os.getenv("THREATWARE_AWS_SECRET_REGION")
+
+        if self.secret_name is not None and self.region is not None:
+            self.secret_dict = json.loads(self._get_secret())
 
     def _get_secret(self):
 
@@ -77,6 +89,31 @@ class AWSLambdaContext:
         credentials = json.loads(self.secret_dict.get("git"))
 
         return credentials
+
+    def get_config_base_dir(self, suggested_base_dir):
+        """ Return the directory where we expect the configuration file to be based 
+        
+        Returns
+        -------
+        str : The suggested base directory to find configuration file
+        bool : Whether this environment is ephemeral (config will not persist between invocations)
+        """
+
+        # We can only write to /tmp for lambdas, so need to check suggestion does that, and if not move it there
+        real_suggested_base_dir = os.path.realpath(os.path.normpath(suggested_base_dir))
+
+        # Compare dir /tmp to the shared path between /tmp and the suggestion (which will be /tmp if the suggested path starts with /tmp)
+        if os.path.samefile("/tmp", os.path.commonpath(["/tmp", real_suggested_base_dir])):
+            base_dir = real_suggested_base_dir
+        else:
+            if os.path.isabs(real_suggested_base_dir):
+                head, tail = os.path.split(real_suggested_base_dir)
+                base_dir = os.path.join("/tmp", tail)
+            else:
+                base_dir = os.path.join("/tmp", real_suggested_base_dir)
+
+        # The config will NOT persist after execution
+        return base_dir, True
 
 def load(config:dict):
 

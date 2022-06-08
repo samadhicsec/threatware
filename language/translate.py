@@ -5,7 +5,7 @@ Translate class responsible for localisation
 
 import logging
 from pathlib import Path
-from utils import match
+from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_str, yaml_str_to_dict, yaml_file_to_dict
 
 import utils.logging
@@ -47,7 +47,7 @@ class Translate:
 
         cls.global_context = global_context
 
-        yaml_config_dict = yaml_file_to_dict(TRANSLATE_CONFIG_YAML_PATH)
+        yaml_config_dict = yaml_file_to_dict(ConfigBase.getConfigPath(TRANSLATE_CONFIG_YAML_PATH))
 
         if languageCode is None or languageCode == "":
             languageCode = "default"
