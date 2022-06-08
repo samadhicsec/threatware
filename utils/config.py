@@ -55,7 +55,7 @@ class ConfigBase:
             # There is no available configuration.  There are 2 options:
             # - download it, but if that fails
             # - use built-in config, shipped with code
-            cls._download_config(exe_env_root_dir, execution_env, ephemeral_env)
+            cls._download_config(exe_env_root_dir, execution_env, cls.ephemeral_env)
 
             # Check if the directory exists
             if os.path.isdir(exe_env_root_dir):
