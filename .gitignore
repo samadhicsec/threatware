@@ -1,6 +1,7 @@
 # Threatware specific
 .vscode
-convertors/gdoc_convertor/*.json
+**/.atlassian
+**/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
