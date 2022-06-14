@@ -72,28 +72,36 @@ def lambda_handler(event, context):
         # We are being called as a lambda, so get credentials from cloud
         execution_env = provider.get_provider("aws.lambda", no_config_mode=True)
     
-    # This will set the ConfigBase.base_dir value so we can load config from this directory
-    ConfigBase.init(execution_env)
-
-    ###
-    # Now we can load things that have dynamic configuration
-    ###
-
-    # We need this to support localisation of keywords
-    Translate.init(lang, filtered_qsp)
-
-    # Determine output Content-Type
-    if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
-        FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
-    content_type = "application/json"
-
-    # We can treat the parameters as static
-    FormatOutput.request_parameters = filtered_qsp
-
-    # Load the texts file with localised error messages
-    handler_output = FormatOutput({"template-text-file":ConfigBase.getConfigPath(HANDLER_TEXTS_YAML_PATH)})
-
     try:
+        
+        # This will set the ConfigBase.base_dir value so we can load config from this directory
+        try:
+            ConfigBase.init(execution_env)
+        
+        finally:
+            # ConfigBase.init is guaranteed to configure at least the built-in config, which is enough to display at least an error.  Any exception in ConfigBase.init will
+            # be captured by the outer try, but Translate/FormatOutput will be sufficiently configured in this finally: block to allow a properly formatted error message to
+            # be returned to the user.
+
+            ###
+            # Now we can load things that have dynamic configuration
+            ###
+
+            # We need this to support localisation of keywords
+            Translate.init(lang, filtered_qsp)
+
+            # Determine output Content-Type
+            if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
+                FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
+            content_type = "application/json"
+
+            # We can treat the parameters as static
+            FormatOutput.request_parameters = filtered_qsp
+
+            # Load the texts file with localised error messages
+            handler_output = FormatOutput({"template-text-file":ConfigBase.getConfigPath(HANDLER_TEXTS_YAML_PATH)})
+
+    
 
         # Validate input
         if action is None:

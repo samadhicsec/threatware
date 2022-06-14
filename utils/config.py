@@ -55,21 +55,20 @@ class ConfigBase:
             # There is no available configuration.  There are 2 options:
             # - download it, but if that fails
             # - use built-in config, shipped with code
-            cls._download_config(exe_env_root_dir, execution_env, cls.ephemeral_env)
+            try: 
+                cls._download_config(exe_env_root_dir, execution_env, cls.ephemeral_env)
+            finally:
+                # Check if the directory exists
+                if os.path.isdir(exe_env_root_dir):
 
-            # Check if the directory exists
-            if os.path.isdir(exe_env_root_dir):
+                    # It exists, so we expect all the config to be present
+                    cls.base_dir = exe_env_root_dir
+                    logger.info(f"Using configuration in '{exe_env_root_dir}'")
 
-                # It exists, so we expect all the config to be present
-                cls.base_dir = exe_env_root_dir
-                logger.info(f"Using configuration in '{exe_env_root_dir}'")
-                return
-
-            else:
-                # Still no config directory, use built-in config
-                cls.base_dir = os.getcwd()
-                logger.info("Failed to acquire dynamic configuration.  Using configuration depoyed with code.")
-                return
+                else:
+                    # Still no config directory, use built-in config
+                    cls.base_dir = os.getcwd()
+                    logger.info("Failed to acquire dynamic configuration.  Using configuration depoyed with code.")
 
     @classmethod
     def _download_config(cls, exe_env_root_dir, execution_env, ephemeral_env):
@@ -113,7 +112,7 @@ class ConfigBase:
         except(StorageError):
             logger.error(f"Failed to download configuration from '{config_git_repo}' to '{exe_env_root_dir}'")
             # We tried and failed
-            pass
+            raise
 
         return
 

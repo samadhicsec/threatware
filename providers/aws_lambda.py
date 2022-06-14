@@ -30,6 +30,7 @@ class AWSLambdaContext:
             # Read from env var if possible
             self.region = os.getenv("THREATWARE_AWS_SECRET_REGION")
 
+        self.secret_dict = {}
         if self.secret_name is not None and self.region is not None:
             self.secret_dict = json.loads(self._get_secret())
 

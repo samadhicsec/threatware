@@ -29,7 +29,7 @@ class GitStorage:
         self.remote = self.gitrepo_config.get("remote")
         if match.is_empty(self.remote):
             logger.error("Remote repo is empty")
-            raise StorageError("no-git-repo", None)
+            raise StorageError("storage.no-git-repo", None)
         self.default_branch = self.gitrepo_config.get("default-branch", "approved")
         self.is_entered = False
 
@@ -60,6 +60,8 @@ class GitStorage:
 
             # Write private and public keys to /tmp/.ssh/key and /tmp/.ssh/key.pub
             git_keys = execution_env.getGitCredentials()
+            if git_keys is None or len(git_keys) == 0:
+                raise StorageError("storage.no-git-credentials", {})
             git_private_key = git_keys["private-key"]
             git_public_key = git_keys["public-key"]
             git_public_key_list = git_public_key.split(" ")
