@@ -20,16 +20,19 @@ DEFAULT_CONFIG_REPO_BRANCH = "v1.0"
 
 class ConfigBase:
 
+    install_dir:str
     base_dir:str
     ephemeral_env:bool
 
     @classmethod
     def init(cls, execution_env):
 
+        cls._set_install_directory()
+
         dynamic_config = os.environ.get("THREATWARE_CONFIG_DYNAMIC")
         if dynamic_config == "False":
             # Only if this is explicitly set to "False" do we not try to use dynamic configuration
-            cls.base_dir = os.getcwd()
+            cls.base_dir = cls.install_dir
             logger.info("Dynamnic configuration disabled.  Using configuration depoyed with code.")
             return
 
@@ -67,8 +70,17 @@ class ConfigBase:
 
                 else:
                     # Still no config directory, use built-in config
-                    cls.base_dir = os.getcwd()
+                    cls.base_dir = cls.install_dir
                     logger.info("Failed to acquire dynamic configuration.  Using configuration depoyed with code.")
+
+    @classmethod
+    def _set_install_directory(cls):
+        """
+        Sets the install directory.  The install directory is the root directory of the threatware modules.
+        """
+
+        # We are going to cheat and use the fact that we know this file has path utils/config.py
+        cls.install_dir = str(Path(__file__).absolute().parent.parent)
 
     @classmethod
     def _download_config(cls, exe_env_root_dir, execution_env, ephemeral_env):
@@ -122,7 +134,7 @@ class ConfigBase:
 
         If passed a path already relative to base_dir, just return it
         If passed an absolute path, 
-          If relative to the CWD, append the relative path to the CWD to the base_dir.
+          If relative to the install dir, append the relative path to the CWD to the base_dir.
           If relative to user home, and not an ephemeral env, just return it.
         If passed a relative path, it appends it directly to the base_dir
         """
@@ -131,11 +143,15 @@ class ConfigBase:
             return str(config_path_obj.absolute())
 
         if config_path_obj.is_absolute():
-            if config_path_obj.absolute().is_relative_to(Path.cwd()):
-                return str(Path(cls.base_dir).joinpath(config_path_obj.relative_to(Path.cwd())))
+            if config_path_obj.absolute().is_relative_to(cls.install_dir):
+
+                return str(Path(cls.base_dir).joinpath(config_path_obj.relative_to(cls.install_dir)))
+
             elif not cls.ephemeral_env and config_path_obj.absolute().is_relative_to(Path.home()):
+
                 # For persistent environments, configuration files should be able to exist in user's home directory
                 return str(config_path_obj.absolute())
+                
             else:
                 return str(Path(cls.base_dir).joinpath(config_path_obj))
         else:

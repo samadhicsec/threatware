@@ -290,7 +290,7 @@ def lambda_handler(event, context):
         'body': body
     }
 
-if __name__ == "__main__":
+def main():
 
     scheme_help = 'Identifier for the threat model scheme (which contains location information)'
     doc_help = 'Location identifier of the document'
@@ -375,4 +375,10 @@ if __name__ == "__main__":
 
     response = lambda_handler(event, context)
 
-    sys.exit(print(response["body"]))
+    print(response["body"])
+
+    return 
+
+
+if __name__ == "__main__":
+    sys.exit(main())
