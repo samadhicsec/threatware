@@ -25,8 +25,6 @@ def _getCredentials(connection):
         # Use the credentials file to create credentials
     
         creds = None
-        #token_path = str(Path(__file__).absolute().parent.joinpath("token.json"))
-        #credentials_path = str(Path(__file__).absolute().parent.joinpath("credentials.json"))
         token_path = ConfigBase.getConfigPath(connection.get("token-file"))
         credentials_path = ConfigBase.getConfigPath(connection.get("credentials-file"))
 
@@ -43,13 +41,14 @@ def _getCredentials(connection):
                     creds.refresh(Request())
                 except(RefreshError):
                     runOAuthAgain = True
-            if runOAuthAgain:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    credentials_path, SCOPES)
-                creds = flow.run_local_server(port=0)
+            if not creds or runOAuthAgain:
+                if os.path.exists(credentials_path):
+                    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+                    creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open(token_path, 'w') as token:
-                token.write(creds.to_json())
+            if creds:
+                with open(token_path, 'w') as token:
+                    token.write(creds.to_json())
 
     else:
 
@@ -60,7 +59,11 @@ def _getCredentials(connection):
 def connect(connection:dict):
 
     api_key = _getCredentials(connection)
-    
+
+    if api_key is None:
+        logger.error("Could not retrieve Google Doc credentials")
+        raise ConvertError("internal-error", {})
+  
     service = build('drive', 'v3', credentials=api_key)
 
     return service

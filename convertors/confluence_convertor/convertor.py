@@ -10,19 +10,6 @@ from convertors.html_convertor.convertor import doc_to_model
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# def _getCredentials(config_file = '~/.atlassian', section = 'DEFAULT'):
-#     config = configparser.ConfigParser()
-#     config.read(os.path.expanduser(config_file))
-    
-#     if not config.has_option(section, 'url'):
-#         logger.warning("No 'url' field found in the '{}' config file in section '{}'".format(config, section))
-#     if not config.has_option(section, 'username'):
-#         logger.warning("No 'username' field found in the '{}' config file in section '{}'".format(config, section))
-#     if not config.has_option(section, 'api_token'):
-#         logger.warning("No 'api_token' field found in the '{}' config file in section '{}'".format(config, section))
-    
-#     return config.get(section, 'url'), config.get(section, 'username'), config.get(section, 'api_token')
-
 def convert(connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
