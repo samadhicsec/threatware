@@ -168,13 +168,13 @@ scheme:
             - query:
                 type: "html-table-transpose"
           map-data:
-            - key: team
+            - key: org
               value: 
                 get-data:
                   query:
                     type: html-table-row
                     column-num: 0
-            - key: tribe
+            - key: team
               value: 
                 get-data:
                   query:
@@ -269,7 +269,7 @@ scheme:
                           type: html-table-row
                           column-num: 0
                   - key: 
-                      name: "location"
+                      name: "hosting-stack"
                       tags:
                         - measure/from-this/tuple-extra-3rdparty/3rd-parties
                         - measure/from-this/tuple-extra-internalsvc/internal-service
@@ -363,7 +363,7 @@ scheme:
                     type: html-table
                     xpath: "//span[text()='Assets']/following::span[text()='Functional Assets']/following::table[1]"
                 map-data:
-                  - key: "type"
+                  - key: "category"
                     value: 
                       get-data:
                         query:
@@ -457,7 +457,7 @@ scheme:
                     #  ignore-cols: 
                     #    - 0
                 map-data:
-                  - key: "type"
+                  - key: "category"
                     value: 
                       get-data:
                         query:
