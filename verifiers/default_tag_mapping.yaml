@@ -14,7 +14,7 @@ tag-mapping:
       - unique/technical-asset-data/type
       - validate-as-single-entry
   # Any key in the model called 'type' should have a document unique value when compared to all other keys tagged 'document-unique'
-  - key-name: type
+  - key-name: category
     tags:
       - type
       - unique/functional-asset-data/type/value_not_table

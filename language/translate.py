@@ -26,21 +26,7 @@ class Translate:
     global_context:dict = {}
     defLanguageCode:str = "default"
     languageCode:str = ""
-
-    # def __init__(self, languageCode:str = ""):
-
-    #     yaml_config_dict = yaml_file_to_dict(TRANSLATE_CONFIG_YAML_PATH)
-
-    #     if not match.is_empty(languageCode):
-    #         if languageCode not in yaml_config_dict:
-    #             logger.warning(f"Could not find language code '{languageCode}' in translation file '{TRANSLATE_CONFIG_YAML_PATH}'.  Using default.")
-    #         yaml_config_dict = yaml_config_dict.get(languageCode, yaml_config_dict)
-
-    #     #self.values = yaml_config_dict.get("values", {})
-    #     self.translations = yaml_config_dict
-
-    # def localiseYamlFile(self, filepath:Path) -> dict:
-    #    return yaml_templated_file_to_dict(filepath, self.translations)
+    _cache:dict = {}
 
     @classmethod
     def init(cls, languageCode:str = "", global_context:dict = {}):
@@ -62,7 +48,15 @@ class Translate:
         cls.translations = yaml_config_dict.get(cls.languageCode, {})
 
     @classmethod
-    def localise(cls, texts:dict, texts_key:str, context:dict = {}):
+    def localise(cls, texts:dict, texts_key:str, context:dict = {}, cache_key = None):
+
+        # localise is expensive to call a lot, so cache context free values.  This is fine as language does not change per execution
+        if context is None or len(context) == 0:
+            if cache_key is None:
+                # TODO making texts hashable via str(texts) is one way, there might be faster other ways e.g. frozenset
+                cache_key = str(texts)
+            if (cached_value := cls._cache.get((cache_key, texts_key), None)) is not None:
+                return cached_value
 
         languageCode = cls.languageCode
         if languageCode not in texts:
@@ -82,6 +76,9 @@ class Translate:
         else:
             logger.warning(f"Unsupported type '{type(textsLanguageText)}' passed to method.  Returning un-localised value.")
             output = textsLanguageText
+
+        if context is None or len(context) == 0:
+            cls._cache[(cache_key, texts_key)] = output
 
         return output
         #return env.from_string(texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"}).get(texts_key, f"Could not find text for key '{texts_key}'")).render(context | cls.translations | cls.global_context)

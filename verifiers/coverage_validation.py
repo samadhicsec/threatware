@@ -26,9 +26,9 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
 
             grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
+            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
                 return True
-            if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
+            if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
                 return True
             #if match.endswith(compare_value, compare_to_value):
             #    return True
@@ -42,9 +42,9 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
     if tag_comparison == "storage-expression":
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
             return True
-        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
+        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
             return True
 
     return False

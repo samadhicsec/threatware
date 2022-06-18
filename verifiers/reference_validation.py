@@ -58,16 +58,16 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
         # text match e.g. "All assets stored in environment variables"
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
             return True
-        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets")):
+        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key = "grouped_text")):
             return True
 
     # TODO- make this more generic so you can dynamically add more grouped text.
     if tag_comparison == "asset-expression":
         asset_text = callback_config.get("grouped-text", {}).get("asset-expression")
 
-        if match.equals(compare_value, Translate.localise(asset_text, "all-functional-assets")):
+        if match.equals(compare_value, Translate.localise(asset_text, "all-functional-assets", cache_key="asset_text")):
             return True
 
     return False

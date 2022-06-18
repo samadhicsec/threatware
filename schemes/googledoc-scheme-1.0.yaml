@@ -438,10 +438,10 @@ scheme:
                 output-data:
                   post-processor:
                     inherit-row-above-if-empty:
-                      key: type
+                      key: category
                     remove-empty-rows:
                       ignore-keys: 
-                        - type 
+                        - category
                     remove-header-row:
             - key: 
                 name: technical
@@ -544,10 +544,10 @@ scheme:
                 output-data:
                   post-processor:
                     inherit-row-above-if-empty:
-                      key: type
+                      key: category
                     remove-empty-rows:
                       ignore-keys: 
-                        - type                    
+                        - category                    
                     remove-header-row:
       #- key: diagrams
       #  value:
