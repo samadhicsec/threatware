@@ -46,7 +46,7 @@ class ConfigBase:
         exe_env_root_dir, cls.ephemeral_env = execution_env.get_config_base_dir(suggested_base_dir)
 
         # Check if the directory exists
-        if os.path.isdir(exe_env_root_dir):
+        if not cls.ephemeral_env and os.path.isdir(exe_env_root_dir):
 
             # It exists, so we expect all the config to be present
             cls.base_dir = exe_env_root_dir
@@ -103,13 +103,20 @@ class ConfigBase:
                 # Just return, so the config shipped with code is used
                 return
 
-        # Get the parent and name of the directory to store the config in
+        # Get the parent and name of the directory to store the config in    
         exe_env_root_path = Path(exe_env_root_dir)
         exe_env_root_path_parent = str(exe_env_root_path.parent)
+
         if not os.path.isdir(exe_env_root_path_parent):
             os.makedirs(exe_env_root_path_parent)
+
         exe_env_root_path_dir = exe_env_root_path.stem
 
+        # Check if the directory exists and delete it (otherwise we can't clone into it)
+        if os.path.isdir(exe_env_root_dir):
+            logger.debug(f"Deleting existing configuration directory '{exe_env_root_dir}' to make way for cloning configuration repo")
+            shell.run(exe_env_root_path_parent, rm, ["-rf", exe_env_root_path_dir])
+        
         git_config = {"gitrepo":{"remote":config_git_repo, "default-branch":config_git_branch, "base-storage-dir":exe_env_root_path_parent}}
         logger.info(f"Cloning dynamic configuration from '{config_git_repo}' (on branch '{config_git_branch}')")
         try:
@@ -151,7 +158,7 @@ class ConfigBase:
 
                 # For persistent environments, configuration files should be able to exist in user's home directory
                 return str(config_path_obj.absolute())
-                
+
             else:
                 return str(Path(cls.base_dir).joinpath(config_path_obj))
         else:

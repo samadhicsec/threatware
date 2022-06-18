@@ -77,7 +77,7 @@ def get_references(model, ref_type, ref_key, ref_value, callback, callback_confi
         - The key of the reference
         - The value of the reference
     """
-    logger.info(f"Entering get_references")
+    #logger.info(f"Entering get_references")
     referenced = []
     for tag in ref_key.getTags():
 
@@ -107,7 +107,7 @@ def get_references(model, ref_type, ref_key, ref_value, callback, callback_confi
                 if found_referenced not in referenced:
                     referenced.append(found_referenced)
     
-    logger.info(f"Exiting get_references")
+    #logger.info(f"Exiting get_references")
     return referenced
 
 def check_reference(model, ref_type, ref_key, ref_value, callback, callback_config):
