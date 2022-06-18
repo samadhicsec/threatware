@@ -4,7 +4,6 @@ Converts a Threat Model document into a model
 """
 
 import logging
-import jsonpickle
 from utils.error import ConvertError, ProviderError
 from utils.output import FormatOutput
 from convertors import convertors_config
