@@ -40,8 +40,8 @@ class VerifiersConfig:
 
         self.dispatch = self._load_verifiers_dispatch(verifiers_dispatch_yaml_path)
         self.verifiers_config_dict = self._load_verifiers_config(verifiers_config_yaml_path)
-        self.verifiers_texts_dict = self._load_verifiers_texts(self.verifiers_config_dict.get("output").get("template-text-file"))
-        self.tag_mapping = self._load_tag_mapping(self.verifiers_config_dict.get("common").get("default-verifier-tag-mapping"))
+        self.verifiers_texts_dict = self._load_verifiers_texts(ConfigBase.getConfigPath(self.verifiers_config_dict.get("output").get("template-text-file")))
+        self.tag_mapping = self._load_tag_mapping(ConfigBase.getConfigPath(self.verifiers_config_dict.get("common").get("default-verifier-tag-mapping")))
 
     def _load_verifiers_config(self, verifiers_config_yaml_path) -> dict:
         
