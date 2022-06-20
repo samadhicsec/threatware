@@ -107,7 +107,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             # Get the storage-locations for the asset
             for storage_location_key, storage_location_value in find.keys_with_tag(asset, common_config["asset-tags"]['asset-location-tag']):
 
-                if storage_location_value in out_of_scope_components:
+                if match.equals(storage_location_value, out_of_scope_components, component_transform):
                     logger.debug(f"Ignoring threat coverage for asset '{row_id_key.name}' in storage location '{storage_location_value}' as '{storage_location_value}' is out of scope")
                     continue
 
@@ -150,7 +150,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                         continue
 
                     # Does the storage location for the asset match one of the components?
-                    matching_component = match.get_equals(storage_location_value, [component_name for (_, component_name) in threat_component_entries])
+                    matching_component = match.get_equals(storage_location_value, [component_name for (_, component_name) in threat_component_entries], component_transform)
                     if match.equals(matching_component, in_scope_components, component_transform):
                         matching_in_scope_component = matching_component
                     else:
