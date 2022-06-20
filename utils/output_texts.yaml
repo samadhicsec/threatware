@@ -10,4 +10,5 @@ output-texts:
 
     storage.no-git-repo: "No git remote repo was configured.  Please configure one.  Please see logs for more detail"
     storage.no-git-credentials: "The git repo configured uses the 'git@' protocol, but no git credentials have been configured."
+    storage.clone-error: "There was an error cloning '{{ storage.remote }}'"
     

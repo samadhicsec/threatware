@@ -37,7 +37,6 @@ class GitPermanentStorage(GitStorage):
 
         if not shell.run(self.base_storage_dir, git.clone, git_args, _out=buf, _err_to_out=True):
             outdata = buf.getvalue()
-            logger.debug(f"{outdata}")
-            logger.error(f"Could not clone repo '{self.remote}'")
-            raise StorageError("internal-error", {})
+            logger.error(f"Could not clone repo '{self.remote}'.  Error message: {outdata}")
+            raise StorageError("storage.clone-error", {"storage":{"remote":self.remote}})
 
