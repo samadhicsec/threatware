@@ -6,6 +6,7 @@ Loads a scheme file
 import logging
 from pathlib import Path
 from utils.config import ConfigBase
+from utils.error import SchemeError
 from utils.load_yaml import yaml_file_to_dict
 
 import utils.logging
@@ -19,11 +20,11 @@ def load_scheme(template_scheme):
     yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(SCHEMES_YAML_PATH)) 
     maps = yaml_dict["schemes"]
     
-    logger.debug("Looking up scheme file for '{}'".format(template_scheme))
-    modelmap_file = maps.get(template_scheme, "")
-    if not modelmap_file:
-        logger.error("Could not find scheme file for '{}'".format(template_scheme))
-        return {}
+    logger.debug(f"Looking up scheme file for '{template_scheme}'")
+    modelmap_file = maps.get(template_scheme, None)
+    if modelmap_file is None:
+        logger.error(f"Could not find scheme file for '{template_scheme}'")
+        raise SchemeError("scheme.unknown-scheme", {"scheme":{"known_schemes":str(list(maps.keys())).replace("'", "")}})
 
     #yaml_dict = yaml_file_to_dict(str(Path(__file__).absolute().parent.joinpath(modelmap_file)))
     yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(modelmap_file))

@@ -10,6 +10,9 @@ class ThreatwareError(Exception):
         self.template_values = template_values
         super().__init__(*args)
 
+class SchemeError(ThreatwareError):
+    pass
+
 class ConvertError(ThreatwareError):
     pass
 
