@@ -245,7 +245,7 @@ def lambda_handler(event, context):
 
                     output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
 
-                    content_type, body = output.getContent()
+                    content_type, body = output.getContent(lambda : Key.config_serialisation("none"))
 
             elif action == ACTION_MEASURE:
 

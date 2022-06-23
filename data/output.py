@@ -180,9 +180,7 @@ def process(output_def, output_data):
 
     logger.debug(f'Entering: Keys {output_def.keys()}')
 
-    if output_type := output_def.get("type"):
-        output_data = assign(output_def, output_data)
-
+    # Run post-processing first
     if post_processor := output_def.get("post-processor"):
         logger.debug(f'Found post-processors {post_processor.keys()}')
         # Need to move through the post-processors in order specified in case order matters for processing
@@ -191,6 +189,11 @@ def process(output_def, output_data):
                 output_data = post_processor_dispatch_table[proc](post_processor[proc], output_data)
             else:
                 logger.warning(f"Could not find post-processor '{proc}'")
+
+    # Change the output type last, as post-processing may have affected data structure
+    if output_type := output_def.get("type"):
+        output_data = assign(output_def, output_data)
+
 
     logger.debug(f'Leaving: Keys {output_def.keys()}')
 

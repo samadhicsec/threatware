@@ -63,11 +63,17 @@ class key:
     #     # To customise jsonpickle output
     #     return {"name":self.__str__()}
 
+    # jsonpickle has a parameter 'keys' (by default False) that when it comes across non-string dictionary keys, like how we use this class, it will call
+    # repr() on the object to get a string version.
     def __repr__(self):
-        if not self.tags:
+        if key.serialise_type == KeySerialiseType.NO_TAGS_PROPERTIES:
             return self.name
-        else:
-            return f"<name:{self.name}, tags:{self.tags}>"
+        #elif key.serialise_type == KeySerialiseType.TAGS or key.serialise_type == KeySerialiseType.TAGS_PROPERTIES:
+        return f"<name:{self.name}, tags:{self.tags}>"
+        # if not self.tags:
+        #     return self.name
+        # else:
+        #     return f"<name:{self.name}, tags:{self.tags}>"
 
     def __eq__(self, other):
 
@@ -82,10 +88,6 @@ class key:
 
     def __hash__(self):
         return hash(self.name)
-
-    # @classmethod
-    # def to_yaml(cls, representer, node):
-    #     return representer.represent_str(node.name)
 
     @classmethod
     def config_serialisation(cls, meta_level:str):

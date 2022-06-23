@@ -143,10 +143,10 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
         assign_row_identifiers(model)
 
         # Parse for the index metadata to store
-        imdCurrent = MetadataIndexEntry({})
+        imdCurrent = MetadataIndexEntry(config.get("metadata", {}), {})
         current_version = imdCurrent.createCurrentVersionEntryFromModel(schemeID, location, model)
 
-        imdApproved = MetadataIndexEntry({})
+        imdApproved = MetadataIndexEntry(config.get("metadata", {}), {})
         approved_version = imdApproved.createApprovedVersionEntryFromModel(schemeID, location, model)
 
         # Parse for complete metadata to store
@@ -158,7 +158,7 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imdCurrent.ID)
 
             # Add/update the metadata related to this version
-            tm_metadata.setApprovedVersion(imdCurrent.ID, imdCurrent, imdApproved, tmvmd)
+            tm_metadata.setApprovedVersion(imdCurrent.ID, current_version, imdCurrent, approved_version, imdApproved, tmvmd)
 
             # The model will be recorded as well
             tm_metadata.setModel(approved_version, model)
