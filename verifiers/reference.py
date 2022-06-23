@@ -3,9 +3,7 @@
 Helper methods for dealing with references
 """
 
-from cmath import log
 import logging
-import re
 import data.find as find
 from data.key import key as Key
 import utils.match as match
