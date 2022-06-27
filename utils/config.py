@@ -128,6 +128,8 @@ class ConfigBase:
             if delete_git_dir and exe_env_root_path.joinpath(".git").is_dir():
                 shell.run(exe_env_root_dir, rm, ["-rf", ".git"])
 
+            logger.info(f"Successfully cloned dynamic configuration from '{config_git_repo}' (on branch '{config_git_branch}')")
+
         except(StorageError):
             logger.error(f"Failed to download configuration from '{config_git_repo}' to '{exe_env_root_dir}'")
             # We tried and failed
