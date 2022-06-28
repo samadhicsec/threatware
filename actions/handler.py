@@ -296,12 +296,12 @@ def main():
     doc_help = 'Location identifier of the document'
     template_help = 'Identifier for the document template (overrides template in scheme)'
 
-    parser = argparse.ArgumentParser(description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
+    parser = argparse.ArgumentParser(prog='threatware', description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
 
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
     parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])
 
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="action", required=True)
 
     # convert
     parser_convert = subparsers.add_parser("convert", help='Convert a threat model for analysis')
@@ -313,11 +313,11 @@ def main():
     parser_convert = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval')
     parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
     parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
-    parser_convert.add_argument('-t', '--doctemplate', help=template_help)
+    parser_convert.add_argument('-t', '--doctemplate', required=True, help=template_help)
 
     # manage
     parser_manage = subparsers.add_parser("manage", help='Manage the status of threat models')
-    manage_subparsers = parser_manage.add_subparsers(dest="subcommand")
+    manage_subparsers = parser_manage.add_subparsers(dest="manage_command", required=True)
     # manage.indexdata
     parser_manage_indexdata = manage_subparsers.add_parser("indexdata", help='Get the threat model index metadata for a threat model')
     parser_manage_indexdata.add_argument('-id', required=True, help='The document ID for the threat model index metadata to return')
@@ -339,7 +339,7 @@ def main():
     parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its template')
     parser_measure.add_argument('-s', '--scheme', required=True, help=scheme_help)
     parser_measure.add_argument('-d', '--docloc', required=True, help=doc_help)
-    parser_measure.add_argument('-t', '--doctemplate', help=template_help)
+    parser_measure.add_argument('-t', '--doctemplate', required=True, help=template_help)
 
     #parser.add_argument('-a', '--action', required=True, help='The action to perform', choices=[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE, ACTION_MEASURE])
     #parser.add_argument('-s', '--scheme', required=True, help='Identifier for the template scheme to load')
@@ -356,9 +356,9 @@ def main():
     context = Object()
     setattr(context, "threatware.cli", True)
 
-    action = args.command
+    action = args.action
     if action == "manage":
-        action = action + "." + args.subcommand
+        action = action + "." + args.manage_command
 
     event["queryStringParameters"] = {}
     event["queryStringParameters"]["lang"] = args.lang if "lang" in args else None
