@@ -96,8 +96,10 @@ tag-mapping:
       - not-mandatory
   - key-name: "version"
     tags:
+      - version
       - validate-as-version
       - validate-as-single-entry
+      - unique/version-history-data/version
   - key-name: "version-date"
     tags: 
       - validate-as-date

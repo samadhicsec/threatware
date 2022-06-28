@@ -51,6 +51,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
         referenced = reference.get_references(model, unique_tag_prefix, key_entry, value_entry, reference_callback, callback_config)
 
+        # If len(referenced) > 1 then this key/value has been found in a different section
+        # If len(referenced) == 1 then we do an object reference compare ("is") against what was found. reference.get_references will return only the first instance it finds of a matching key/value,
+        # so the "referenced[0][1] is not key_entry" will be true when the current 'for' loop is the 2ND instance of the key/value combination i.e. 'for' loop is on duplicate, reference.get_references 
+        # returns first instance, and these are different 'key' objects.  This is what finds duplicates in the same section/table
         if len(referenced) > 1 or (len(referenced) == 1 and referenced[0][1] is not key_entry):
 
             uniq_section_ref = reference.get_reference_descriptions(model, unique_tag_prefix, key_entry)
@@ -66,7 +70,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                                                     "not-unique-fix", 
                                                     issue_dict))
 
-        # Record already founf duplicates
-        previously_referenced.update([ref[1] for ref in referenced])
+            # Record already found duplicates
+            previously_referenced.update([ref[1] for ref in referenced])
 
     return verify_return_list
