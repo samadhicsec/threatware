@@ -174,3 +174,40 @@ class Validator:
         output.description = key.getProperty(validator_tag)
 
         return output
+
+
+    def validate_from_config(self, validator_config:dict, key:Key, value:str, references:dict) -> bool:
+        """
+        Validates a Key value
+
+        Parameters
+        ----------
+        validator_name : str
+            Name of the validator to invoke
+        config : dict
+            The configuration for the validator
+        key : data.key.Key
+            The key from the model that had the tag.  Mostly used to report errors.
+        value : str
+            The value to validate
+        references : dict
+            A dict that should contain at least a 'template-model' key that contains the 
+            template model.  May be customised to contain anything though.
+
+        Returns
+        -------
+        bool : Did the value validate? True if it did, False otherwise
+        """
+
+        validator_name = validator_config.get("validator", "")
+        config = validator_config.get("config", {})
+
+        # Get the validator
+        if (validate := self.dispatch.get(validator_name)) is None:
+            logger.error(f"No validator called '{validator_name}' is configured")
+            return False
+
+        # Validate
+        result = validate(config, key, value, references)
+        
+        return result

@@ -72,8 +72,9 @@ class VerifierIssue:
 
         context = {}
 
-        # Loop through all the values of issue_dict, and any that are Key objects, create a row entry
+        # Loop through all the values of issue_dict, and copy to context
         for keyentry, valueentry in issue_dict.items():
+            # If any are Key objects, get name, colname, value, table, and create a row entry
             if isinstance(valueentry, Key):
                 context[keyentry] = {}
                 context[keyentry]["name"] = valueentry.name
@@ -112,17 +113,7 @@ class VerifierIssue:
             else:
                 context[keyentry] = valueentry
 
-        #context["translate"] = self.templated_translations["translate"]
-
-        #for known_key in self.known_error_keys:
-        #    setattr(self, known_key, issue_dict.get(known_key, None))
-        
-        # Does the error_text_key exist? It is mandatory
-        # if (error_text := self.templated_error_texts.get(error_text_key, None)) is None:
-        #     self.error_desc = f"Could not find error text for '{error_text_key}'"
-        #     return
-
-        # We support the caller setting the issue table to any value they want, but if not set we populate it
+        # We support the caller setting the issue table to any value they want, but if not set, we populate it
         if context["issue_key"] is not None and context.get("issue_table") is None:
             sectionKey = keymaster.get_section_for_key(issue_dict["issue_key"])
             context["issue_table"] = sectionKey.getProperty("section")
@@ -141,7 +132,6 @@ class VerifierIssue:
             self.issue_table_row_text = Translate.localise(self.templated_error_texts, "entry-text", context)
         
         # Set the error description
-        #self.error_desc = env.from_string(error_text).render(context)
         self.error_desc = Translate.localise(self.templated_error_texts, error_text_key, context)
         self.errordata = issue_dict.get("errordata")
         

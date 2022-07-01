@@ -27,3 +27,12 @@ default:
     threerd_party: "3rd Party"
     SaaS: "SaaS"
     internal_service: "Internal Service"
+
+    # Verification meaningful values
+    na: 
+      - "na"     # Not Applicable
+      - "n/a"
+      - "n.a."
+      - "n.a"
+      - "Not Applicable"
+    none: "None"

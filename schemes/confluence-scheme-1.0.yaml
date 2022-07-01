@@ -333,6 +333,7 @@ scheme:
                   - key: 
                       name: "authentication-method"
                       tags:
+                        - "authentication"
                         - "measure/from-this/tuple-extra"
                     value: 
                       get-data:
@@ -342,6 +343,7 @@ scheme:
                   - key: 
                       name: "authorisation-method"
                       tags:
+                        - "authorisation"
                         - "measure/from-this/tuple-extra"
                     value: 
                       get-data:

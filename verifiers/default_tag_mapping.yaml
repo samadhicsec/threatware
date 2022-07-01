@@ -1,114 +1,102 @@
 ---
 tag-mapping:
-  # Any key in the model called 'name' should have a document unique value when compared to all other keys tagged 'document-unique'
-  # Any key in the model called 'name' should be used as the idenitifer for that row in any error messages
+  # This file is used to automatically apply tags based on 'key name' specified in a scheme file.  It will apply these tags to ALL keys with the given 'key-name'.  It is a convenience file for applying tags in batches.  It is not required to use this file - all tags can be specified directly in the scheme file (but have to be repeated for each 'key name').  Note, should the 'key name' be updated in the scheme, then it would also need to be updated here (in that sense this file is inconvenient).
+
   - key-name: name
     tags:
-      - name
-      - document-unique
-      - row-identifier
-      - unique/components-details-data/name
-      - unique/functional-asset-data/name
-      - unique/functional-asset-data/type
-      - unique/technical-asset-data/name
-      - unique/technical-asset-data/type
-      - validate-as-single-entry
-  # Any key in the model called 'type' should have a document unique value when compared to all other keys tagged 'document-unique'
+      - name                                                          # tag all data with key-name 'name' with tag value 'name'
+      - row-identifier                                                # error message will use the column with this tag to identifer the row where the error occurred
+      - unique/components-details-data/name                           # value must be unique when compared to the data tagged 'name' in table tagged 'components-details-data'
+      - unique/functional-asset-data/name                             # value must be unique when compared to the data tagged 'name' in table tagged 'functional-asset-data'
+      - unique/functional-asset-data/type                             # value must be unique when compared to the data tagged 'type' in table tagged 'functional-asset-data'
+      - unique/technical-asset-data/name                              # value must be unique when compared to the data tagged 'name' in table tagged 'technical-asset-data'
+      - unique/technical-asset-data/type                              # value must be unique when compared to the data tagged 'type' in table tagged 'technical-asset-data'
+      - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
+
   - key-name: category
     tags:
-      - type
-      - unique/functional-asset-data/type/value_not_table
-      - unique/technical-asset-data/type/value_not_table
-      - validate-as-single-entry
-  # Any key in the model called 'details' is the key for data about Component Details
-  #- key-name: details
-  #  tags:
-  #    - components-details-data
-  # Any key in the model called 'access-control' is the key for data about Component Access Control
-  #- key-name: access-control
-  #  tags:
-  #    - components-access-control-data
-  # Any key in the model called 'component' should have a value that references a component name
+      - type                                                          # tag all data with key-name 'type' with tag value 'type'
+      - unique/functional-asset-data/type/value_not_table             # value must be unique (compared to values not in the same table) when compared to the data tagged 'type' in table tagged 'functional-asset-data'
+      - unique/technical-asset-data/type/value_not_table              # value must be unique (compared to values not in the same table) when compared to the data tagged 'type' in table tagged 'technical-asset-data'
+      - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
+
   - key-name: component
     tags:
-      - threat-component
-      - ref/components-details-data/name
+      - threat-component                                              # tag all data with key-name 'component' with tag value 'threat-component'
+      - ref/components-details-data/name                              # value must equal a value tagged 'name' in table tagged 'components-details-table'
+
   - key-name: "identity"
     tags:
-      - validate-as-single-entry
-  # Any key in the model called 'functional' is the key for data about Functional Assets
-  #- key-name: functional
-  #  tags:
-  #    - functional-asset-data
-  # Any key in the model called 'technical' is the key for data about Technical Assets
-  #- key-name: technical
-  #  tags:
-  #    - technical-asset-data
-  # Any key in the model called 'location' is the key for data about locations
+      - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
+
   - key-name: storage-location
     tags:
-      - storage-location
-      - ref/components-details-data/name
-      - tref/functional-asset-data/storage-location/template-approved
-      - tref/technical-asset-data/storage-location/template-approved
-      - exclude/value/in-memory
+      - storage-location                                              # tag all data with key-name 'storage-location' with tag value 'storage-location'
+      - ref/components-details-data/name                              # value must equal a value tagged 'name' in table tagged 'components-details-table'
+      - tref/functional-asset-data/storage-location/template-approved # value must have property 'template-approved' and be a value tagged 'storage-location' in table tagged 'functional-asset-data' in the template
+      - tref/technical-asset-data/storage-location/template-approved  # value must have property 'template-approved' and be a value tagged 'storage-location' in table tagged 'technical-asset-data' in the template
+      - exclude/value/in-memory                                       # value that contains 'in-memory' is excluded from reference and coverage validation
+
   - key-name: functional-asset-affected
     tags:
-      - ref/functional-asset-data/name
-      - ref/functional-asset-data/type
-      - ref/functional-asset-data/name/asset-expression
-  # Any key in the model called 'asset' should have a value that references a asset name
+      - ref/functional-asset-data/name                                # value must equal a value tagged 'name' in table tagged 'functional-asset-data'
+      - ref/functional-asset-data/type                                # value must equal a value tagged 'type' in table tagged 'functional-asset-data'
+      - ref/functional-asset-data/name/asset-expression               # value must match a text value from the values in text key 'asset-expression'
+
   - key-name: asset
     tags:
-      - threat-asset
-      - ref/functional-asset-data/name
-      - ref/functional-asset-data/type
-      - ref/functional-asset-data/storage-location/storage-expression
-      - ref/technical-asset-data/name
-      - ref/technical-asset-data/type
-      - ref/technical-asset-data/storage-location/storage-expression
+      - threat-asset                                                  # tag all data with key-name 'asset' with tag value 'threat-asset'
+      - ref/functional-asset-data/name                                # value must equal a value tagged 'name' in table tagged 'functional-asset-data'
+      - ref/functional-asset-data/type                                # value must equal a value tagged 'type' in table tagged 'functional-asset-data'
+      - ref/functional-asset-data/storage-location/storage-expression # value must match a text value from the values in text key 'storage-expression', and end in a value tagged 'storage-location' in table tagged 'functional-asset-data'
+      - ref/technical-asset-data/name                                 # value must equal a value tagged 'name' in table tagged 'technical-asset-data'
+      - ref/technical-asset-data/type                                 # value must equal a value tagged 'type' in table tagged 'technical-asset-data'
+      - ref/technical-asset-data/storage-location/storage-expression  # value must match a text value from the values in text key 'storage-expression', and end in a value tagged 'storage-location' in table tagged 'technical-asset-data'
+
   - key-name: existing-controls
     tags:
-      - not-mandatory
+      - not-mandatory             # value can be empty
+
   - key-name: impact-type
     tags:
-      - validate-as-CIA
-  # Any key in the model called 'threats-and-controls' is the key for data about Threats and Controls
-  #- key-name: threats-and-controls
-  #  tags:
-  #    - threats-and-controls-data
-  #- key-name: threat-description
-  #  tags:
-  #    - row-identifier
+      - validate-as-CIA           # value must be localised version of 'Confidentiality', 'Integrity' or 'Availability'
+
   - key-name: "tech-stack"
     tags: 
-      - tech-stack
-      - not-mandatory
+      - tech-stack                # tag all data with key-name 'tech-stack' with tag value 'tech-stack'
+      - not-mandatory             # value can be empty
+
   - key-name: "in-scope"
     tags: 
-      - in-scope
-      - validate-as-yes-no
+      - in-scope                  # tag all data with key-name 'in-scope' with tag value 'in-scope'
+      - validate-as-yes-no        # value must be localised version of 'Yes' or 'No' (runs the 'validate-as-yes-no' validator on the value, see validators/validators_config.yaml)
+
   - key-name: "ticket"
     tags: 
-      - not-mandatory
+      - not-mandatory             # value can be empty
+
   - key-name: "tickets"
     tags: 
-      - not-mandatory
+      - not-mandatory             # value can be empty
+
   - key-name: "version"
     tags:
-      - version
-      - validate-as-version
-      - validate-as-single-entry
-      - unique/version-history-data/version
+      - version                               # tag all data with key-name 'version' with tag value 'version'
+      - validate-as-version                   # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)
+      - validate-as-single-entry              # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
+      - unique/version-history-data/version   # value must be unique when compared to the data tagged 'version' in table tagged 'version-history-data'
+
   - key-name: "version-date"
     tags: 
-      - validate-as-date
+      - validate-as-date          # value must be parseable as a date, uss python's dateutil.parser.parse  (runs the 'validate-as-date' validator on the value, see validators/validators_config.yaml)
+
   - key-name: "current-version"
     tags:
-      - validate-as-version
-      - validate-as-single-entry
+      - validate-as-version       # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)
+      - validate-as-single-entry  # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
+
   - key-name: "approved-version"
     tags:
-      - not-mandatory
-      - validate-as-version
-      - validate-as-single-entry
+      - not-mandatory             # value can be empty
+      - validate-as-version       # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)
+      - validate-as-single-entry  # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)

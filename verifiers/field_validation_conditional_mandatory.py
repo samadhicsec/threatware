@@ -18,7 +18,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
     verify_return_list = []
 
     # The config could contain many tagged values to look for
-    for tag_entry in verifier_config["tags"]:
+    if (tags := verifier_config.get("tags")) is None:
+        return verify_return_list
+
+    for tag_entry in verifier_config.get("tags"):
         
         # Need to get all keys for a given tag
         tagged_data = find.keys_with_tag(model, tag_entry["tag"])

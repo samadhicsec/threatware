@@ -6,61 +6,119 @@ verifiers-config:
     default-verifier-tag-mapping: "verifiers/default_tag_mapping.yaml"
     errors:
       default-severity: error
-      #location-text: "{}"
-      #entry-text: "For entry with '{}' equal to '{}'"
-    strip-context:
+    strip-context:                                    # Value inside these characters (includsive) will be stripped for the purpose of reference comparisons e.g. if valie is "database (SQL)" then only "database" is used
       start-char: "("
       end-char: ")"
     exclude:
-      tag-prefix: "exclude"
+      tag-prefix: "exclude"                           # Look for tags beginning with this when deciding if a value should be excluded
     references:
-      doc-tag-prefix: "ref"
-      templ-tag-prefix: "tref"
+      doc-tag-prefix: "ref"                           # reference tags beginning with this will cause reference validation to look in the threat model document for the reference
+      templ-tag-prefix: "tref"                        # reference tags beginning with this will cause reference validation to look in the threat model template for the reference
     component-tags:
-      component-data-tag: components-details-data
-      component-in-scope-tag: in-scope
-      component-in-scope-value: {{ translate.yes }}
+      component-data-tag: components-details-data     # data with this tag will be used to extract the components of the threat model
+      component-in-scope-tag: in-scope                # within the component-data-tag, values with this tag will indicate if the component is in-scope
+      component-in-scope-value: {{ translate.yes }}   # the value to use to determine if a component is in-scope
     asset-tags:
       asset-data-tag:
-        - functional-asset-data
-        - technical-asset-data
+        - functional-asset-data                       # data with this tag will be used to extract the functional assets of the threat model
+        - technical-asset-data                        # data with this tag will be used to extract the technical assets of the threat model
       asset-location-tag: storage-location
     threat-tags:
-      threats-data-tag: threats-and-controls-data
-      threat-asset-tag: threat-asset
-      threat-component-tag: threat-component
-      threat-description-tag: threat-description
-      threat-control-tag: threat-control
+      threats-data-tag: threats-and-controls-data     # data with this tag will be used to extract the threats and controls of the threat model
+      threat-asset-tag: threat-asset                  # within the threats-data-tag, values with this tag will be used to extract the assets covered by a threat
+      threat-component-tag: threat-component          # within the threats-data-tag, values with this tag will be used to extract the components covered by a threat
+      threat-description-tag: threat-description      # within the threats-data-tag, values with this tag will be used to extract the description of a threat
+      threat-control-tag: threat-control              # within the threats-data-tag, values with this tag will be used to extract the controls of a threat
     # 'grouped-text' gets copied from verifiers_texts.yaml
-  coverage-validation:
-  field-validation-mandatory:
-    default: True
-    exceptions-tag: "not-mandatory"
-  field-validation-conditional-mandatory:
+  
+  coverage-validation:                                # coverage-validation configuration (mostly uses value from 'common')
+  
+  reference-validation:                               # reference-validation configuration (mostly uses value from 'common')
+  
+  field-validation-mandatory:                         # verifier for mandatory fields
+    default: True                                     # whether or not, by default, all values should be considered mandatory
+    exceptions-tag: "not-mandatory"                   # if 'default' is 'True' then any value with this tag will not be mandatory
+  
+  field-validation-conditional-mandatory:             # verifier for a value must exist if another value has a certain value
     tags:
     # The following pairs of tag define a tag that is mandatory if another tag has a value
-      - tag: "tech-stack"
-        depends-on: "in-scope"
-        depends-on-value: {{ translate.yes }}
+      - tag: "tech-stack"                             # in any given row, the value tagged 'tech-stack' is mandatory if
+        depends-on: "in-scope"                        # the value tagged 'in-scope'
+        depends-on-value: {{ translate.yes }}         # has this value
       - tag: "version-approver"
         depends-on: "version-status"
         depends-on-value: {{ translate.approved }}
-      - tag: "version-approved-date"
-        depends-on: "version-approver"
-  field-validation-uniqueness:
-    unique-tag-prefix: "unique"
+      - tag: "version-approved-date"                  # in any given row, the value tagged 'version-approved-date' is mandatory if
+        depends-on: "version-approver"                # the value tagged 'version-approver' has ANY value
+      - tag: "version-approver"                       # in any given row, the value tagged 'version-approver' is mandatory if
+        depends-on: "version-approved-date"           # the value tagged 'version-approved-date' has ANY value
+
+  field-validation-conditional:                      # verifier for a value with a condition if another value has a certain value
     tags:
-      # Any key tagged with this tag must have a value that is document unique amongst all values for keys with this tag
+    # The following pairs of tag define if a tag has a certain value, then a certain value of another tag is prohibited
+      #- if-tag: "version-approver"                    # in any given row, the value tagged 'version-approver' 
+      #  has-tag-value: ""                             # when it has value "" i.e. empty
+      #  then-tag: "version-approved-date"             # then the value tagged 'version-approved-date'
+      #  must-not-have-value:                          # must not have any value
+      - if:
+          value-tag: "version-approver"
+          validator: "string"
+          config:
+            method: "isempty"
+        then:
+          value-tag: "version-approved-date"
+          validator: "string"
+          config:
+            method: "isempty"
+        issue-text-key: "conditional-is-empty"
+      #- if-tag: "authorisation"                       # in any given row, the value tagged 'authorisation' 
+      #  has-tag-value:  "n/a"                         # when it the value 'n/a'
+      #  then-tag: "authentication"                    # then the value tagged 'authentication'
+      #  must-have-value: "n/a"                        # must have value 'n/a' i.e. authorisation can only be 'n/a' if authenticationis also 'n/a'
+      - if:                                            # If 'Authentication' is not 'n/a' then 'Authorisation' must also NOT be 'n/a' i.e. if there is authn there is always authz, although maybe 'None'
+          value-tag: "authentication"
+          validator: "string"
+          config:
+            method: "notequals"
+            expected-result: {{ translate.na | safe }}
+        then:
+          value-tag: "authorisation"
+          validator: "string"
+          config:
+            method: "notequals"
+            expected-result: {{ translate.na | safe }}
+        issue-text-key: "conditional-authnz-na"
+        fix-text-key: "conditional-authnz-na-fix"
+      - if:                                             # If 'Authorisation' IS NOT 'n/a' then 'Authentication' must also NOT be 'n/a' i.e. if there is authz, then there is authn, although maybe 'None'
+          value-tag: "authorisation"
+          validator: "string"
+          config:
+            method: "notequals"
+            expected-result: {{ translate.na | safe }}
+        then:
+          value-tag: "authentication"
+          validator: "string"
+          config:
+            method: "notequals"
+            expected-result: {{ translate.na | safe }}
+        issue-text-key: "conditional-authnz-na"
+        fix-text-key: "conditional-authnz-na-fix"
+  
+  field-validation-uniqueness:                        # verifier to check if a value is unique, according the criteria in it's tag
+    unique-tag-prefix: "unique"                       # how to identity tags containing uniqueness criteria
+    tags:                                             # Any key tagged with these tags must have a value that is document unique amongst all values for keys with the same tag
       - tag: document-unique
-  field-validation-value:
+  
+  field-validation-value:                             # verifier that runs all the possible field validators
     validator-config:
-      validator-values-yaml-path: "./verifiers/verifiers_values.yaml"
-    not-mandatory-tag: "not-mandatory"  
-    tags:
+      validator-config-yaml-path: "validators/validators_config.yaml"
+      validator-text-yaml-path: "validators/validators_text.yaml"
+    not-mandatory-tag: "not-mandatory"                # we don't want to validate empty fields against our criteria, so for field validation, if a value is tagged not-mandatory, we don't fail validation if it is empty
+    tags:                                             # the list of tags to look for on values to perform validation.  The validators these correspond to are in validators/validators_config.yaml
       - tag: validate-as-version
       - tag: validate-as-date
       - tag: validate-as-single-entry
       - tag: validate-as-yes-no
       - tag: validate-as-CIA
       - tag: validate-from-template
-  reference-validation:
+  
