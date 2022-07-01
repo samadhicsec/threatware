@@ -11,12 +11,12 @@ from utils.error import ManageError, StorageError
 from utils.model import assign_row_identifiers, assign_parent_keys
 from data import find
 from utils import match
+from storage.gitrepo import GitStorage
 from manage import manage_config
 from manage.metadata import IndexMetaData, ThreatModelMetaData
 from manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
 from manage.manage_storage import IndexStorage
 from manage.manage_storage import ThreatModelStorage
-from actions import measure
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -41,7 +41,7 @@ def indexdata(config:dict, execution_env, ID:str) -> MetadataIndexEntry:
             logger.error(f"An ID must be provided")
             raise ManageError("internal-error", {})
 
-        with IndexStorage(config.get("storage", {}), execution_env, False) as storage:
+        with GitStorage(config.get("storage", {}), execution_env) as storage:
         
             index = IndexMetaData(config.get("metadata", {}), storage)
             

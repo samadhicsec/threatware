@@ -9,7 +9,6 @@ from utils import keymaster, match, tags, load_yaml
 from utils.load_yaml import yaml_register_class
 from data import find
 from utils.error import ManageError
-from manage.manage_storage import IndexStorage
 from manage.manage_storage import ThreatModelStorage
 
 import utils.logging

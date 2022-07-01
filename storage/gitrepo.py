@@ -198,6 +198,8 @@ class GitStorage:
 
         self.is_entered = True
 
+        return self
+
 
     def checkout_directory(self, dir_name:str):
 

@@ -36,7 +36,7 @@ class IndexStorage(GitStorage):
         super().__enter__()
 
         # Need to check if the remote branch has been merged i.e. git branch -r --merged approved, if so create a new branch
-        # Once create branch merged the official approved branch may have been changed, so we need to us that, as opposed to the old create branch.  This
+        # Once create branch merged the official approved branch may have been changed, so we need to use that, as opposed to the old create branch.  This
         # can still happen if the create branch has not been updated, but someone will be merging at some stage and can review
         if super().is_merged_to_default(self.index_create_branch_name):
             super().branch_replace(self.index_create_branch_name)
