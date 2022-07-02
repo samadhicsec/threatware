@@ -31,7 +31,7 @@ def _output(config:dict):
     return FormatOutput(config.get("output", {}))
 
 
-def indexdata(config:dict, execution_env, ID:str) -> MetadataIndexEntry:
+def indexdata(config:dict, execution_env, ID:str):
     """ Given a document ID retrieve the metadata associated with the threat model """
 
     output = _output(config)
@@ -60,37 +60,57 @@ def indexdata(config:dict, execution_env, ID:str) -> MetadataIndexEntry:
     return output
 
 
-def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
+def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str, model:dict):
     """ Given a document location and id format, generate the unique document ID, and store and return the result """
 
     output = _output(config)
 
+    entry_exists = False
     try:
+        assign_row_identifiers(model)
+
         if IDprefix is None or scheme is None or location is None:
             logger.error(f"An ID prefix, scheme and location, must all be provided")
             raise ManageError("internal-error", {})
 
-        with IndexStorage(config.get("storage", {}), execution_env, persist_changes=True, output_texts=output.templated_texts) as storage:
+        with IndexStorage(config.get("storage", {}), execution_env, output_texts=output.templated_texts) as storage:
 
             index = IndexMetaData(config.get("metadata", {}), storage)
 
             entry = index.getIndexEntryByLocation(scheme, location)
             if entry is not None:
+                entry_exists = True
+                # Need to tell IndexStorage to not try to persist anything, because there has been no changes.
+                storage.persistChanges(False)
+            else:
+                new_ID = index.createIndexEntryID(IDprefix)
+
+                new_entry = MetadataIndexEntry(config.get("metadata", {}), {})
+                new_entry.createCurrentVersionEntryFromModel(scheme, location, model)
+                new_entry.ID = new_ID
+                # We never create new metadata for a threat model indicating it is approved.  Only Submit can change the status
+                new_entry.stripApproval()
+
+                index.setIndexEntry(new_ID, new_entry)
+
+                index.persist()
+
+        if entry_exists:
+            # In the rare case the entry already exists, we determine if existing extry is on default branch or not, 
+            # so users aren't confused why they can't see the TM ID if they call indexdata (whcih only returns approved TM metadata)
+            indexdata_output = indexdata(config, execution_env, entry.ID)
+            default_existing_entry = indexdata_output.getDetails()
+
+            if default_existing_entry is not None:
+                # Existing entry is on default branch
                 logger.info(f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}'")
                 raise ManageError("index-entry-exists", {"scheme":scheme, "location":location, "ID":entry.ID})
-        
-            new_ID = index.createIndexEntryID(IDprefix)
+            else:
+                # Existing entry is not on default branch
+                logger.info(f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}', but this ID allocation has not been merged yet")
+                raise ManageError("index-entry-exists-create", {"scheme":scheme, "location":location, "ID":entry.ID})
 
-            new_entry = MetadataIndexEntry({})
-            new_entry.ID = new_ID
-            new_entry.scheme = scheme
-            new_entry.location = location
-
-            index.setIndexEntry(new_ID, new_entry)
-
-            index.persist()
-
-        output.setSuccess("success-create", {}, new_entry)
+        output.setSuccess("success-create", {}, new_entry.get_state())
 
     except StorageError as error:
         output.setError(error.text_key, error.template_values)
@@ -98,35 +118,6 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str):
         output.setError(error.text_key, error.template_values)
 
     return output
-
-
-# def submit_old(config:dict, output:ManageOutput, location:str, schemeID:str, model:dict):
-#     """ 
-#     Submit the threat model for approval 
-    
-#     Given config and a threat model ID, check to see this TM has been submitted before, and if not create dir.  Otherwise, get the TM, get the version,
-#     and metadata, and create/update metadata for that version.
-#     """
-#     try:
-#         assign_row_identifiers(model)
-
-#         # Parse for complete metadata to store
-#         tmvmd = ThreatModelVersionMetaData()
-#         docID, current_version, approved_version = tmvmd.fromModel(schemeID, location, model)
-
-#         storage = ThreatModelStorage(config.get("storage", {}), docID)
-
-#         with ThreatModelMetaData(config.get("metadata", {}), storage, docID) as tm_metadata:                
-#             # Add/update the metadata related to this version
-#             tm_metadata.setApprovedVersion(docID, tmvmd)
-
-#     except ManageError as error:
-#         return output.getError(error.text_key, error.template_values)
-
-#     if match.equals(current_version, approved_version):
-#         return output.getSuccess("success-approver", {"ID":docID, "tm_version":tmvmd})
-#     else:
-#         return output.getSuccess("success-submitter", {"ID":docID, "tm_version":tmvmd})
 
 
 def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
@@ -145,6 +136,9 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
         # Parse for the index metadata to store
         imdCurrent = MetadataIndexEntry(config.get("metadata", {}), {})
         current_version = imdCurrent.createCurrentVersionEntryFromModel(schemeID, location, model)
+
+        if match.is_empty(imdCurrent.ID):
+            raise ManageError("empty-id", {})
 
         imdApproved = MetadataIndexEntry(config.get("metadata", {}), {})
         approved_version = imdApproved.createApprovedVersionEntryFromModel(schemeID, location, model)

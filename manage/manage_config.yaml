@@ -1,13 +1,15 @@
 ---
 manage-config:
-  #template-values-file: "verifiers/verifiers_values.yaml"
   storage:
     gitrepo:
-      remote: "git@github.com-threat-models:samadhicsec/threat-models.git"
-      #remote: "git@github.com:samadhicsec/threat-models.git"
+      # The git remote value of the repo to interact with e.g. "git@github.com:samadhicsec/threat-models.git"
+      remote: 
+      # The branch containing approved versions of data.  threatware will use this value to ensure it never commits directly to this branch.
       default-branch: "approved"
+      # The local base directory to clone the git remote repo into
       base-storage-dir: "/tmp"
     index:
+      # The name of the branch to use when manage.create is called
       index-create-branch: "create"
       # This is the key from manage_texts.yaml to use as a commit message when calling manage.create
       index-commit-message-text-key: "manage.create-commit-message"
@@ -15,11 +17,18 @@ manage-config:
       # This is the key from manage_texts.yaml to use as a commit message when calling manage.submit
       tm-commit-message-text-key: "manage.submit-commit-message"
   metadata:
+    # The filename, in the root of the repo, where a list of all threat models and their approval status is stored
     index-filename: "threatmodels.yaml"
+    # The filename, in the dir named after the threat model ID, that contains the full version history of a threat model
     metadata-filename: "metadata.yaml"
+    # The localised value to use in the 'Status' column of the 'Version History' Table for new threat models
+    draft-status: {{ translate.draft }}
+    # The localised value to compare to in the 'Status' column of the 'Version History' Table to determine if a threat model is approved
     approved-status: {{ translate.approved }}
+    # Whether or not to write a plain (i.e. human-readable) version of the threat model to repo when maange.submit is called to commit the threat model to the repo
     write-plain-model: True
   check:
+    # Number of days until an approved threat model is no longer considered approved
     approval-expiry-days: 365
   output:
     template-text-file: "manage/manage_texts.yaml"

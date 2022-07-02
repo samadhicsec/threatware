@@ -202,11 +202,21 @@ def lambda_handler(event, context):
 
             elif action == ACTION_MANAGE_CREATE:
                 
-                manage_config = manage.config()
+                convert_config = convert.config()
 
-                output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc)
+                # Convert the TM document
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
+                content_type, body = convert_output.getContent()
 
-                content_type, body = output.getContent()
+                if convert_output.getResult() != OutputType.ERROR:
+
+                    doc_model = convert_output.getDetails()
+
+                    manage_config = manage.config()
+
+                    output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc, doc_model)
+
+                    content_type, body = output.getContent()
 
             elif action == ACTION_MANAGE_CHECK:
                 

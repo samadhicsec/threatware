@@ -13,14 +13,14 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 class IndexStorage(GitStorage):
 
-    def __init__(self, config:dict, execution_env, persist_changes:bool = True, output_texts:dict = {}):
+    def __init__(self, config:dict, execution_env, output_texts:dict = {}):
         super().__init__(config, execution_env)
 
         indexstorage_config = config.get("index", {})
         self.index_create_branch_name = indexstorage_config.get("index-create-branch", "create")
         self.output_texts = output_texts
         self.commit_message_key = indexstorage_config.get("index-commit-message-text-key")
-        self.persist_changes = persist_changes
+        self.persist_changes = True
 
         self.entered = False
 

@@ -25,6 +25,7 @@ class MetadataIndexEntry:
         yaml_register_class(MetadataIndexEntry)
 
         self.approvedStatus = config.get("approved-status", "Approved")
+        self.draftStatus = config.get("draft-status", "Draft")
 
         self.ID = entry.get("ID", None)
         self.title = entry.get("title", None)
@@ -46,14 +47,8 @@ class MetadataIndexEntry:
         _, self.ID = find.key_with_tag(ddd_value, "document-id")
         _, version_tag_value = find.key_with_tag(ddd_value, version_tag)
 
-        if match.is_empty(self.ID):
-            raise ManageError("empty-id", {})
-
         self.scheme = scheme
         self.location = location
-
-        version_approver = None
-        version_approved_date = None
 
         _, vhd_value = find.key_with_tag(model, "version-history-data")
         versions = find.keys_with_tag(vhd_value, "row-identifier")
@@ -70,10 +65,6 @@ class MetadataIndexEntry:
 
             if self.isApproved():
                 self.approved_version = version_tag_value
-            # if match.equals(self.version_status, self.approvedStatus) and version_approver is not None and version_approved_date is not None:
-            #     self.approved_version = version_tag_value
-            #     self.approver = version_approver
-            #     self.approved_date = version_approved_date
 
         return version_tag_value
 
@@ -113,50 +104,18 @@ class MetadataIndexEntry:
         else:
             return False
 
+    def stripApproval(self):
+
+        self.approved_version = ""
+        self.version_status = self.draftStatus
+        self.approver = ""
+        self.approved_date = ""
+
     def versionStatus(self) -> str:
         return self.version_status
 
-    # def fromModel(self, scheme, location, model):
-    #     """ 
-    #     This extracts approval data dependant on whether approval has been given 
-        
-    #     approved_version and approved_date are only set if version-approver and version-approved-date have been set
-    #     for the document-details-data approved-version value
-    #     """
-
-    #     _, ddd_value = find.key_with_tag(model, "document-details-data")
-    #     _, id_value = find.key_with_tag(ddd_value, "document-id")
-    #     _, current_version_value = find.key_with_tag(ddd_value, "current-version")
-    #     _, approved_version_value = find.key_with_tag(ddd_value, "approved-version")
-
-    #     self.ID = id_value
-    #     self.scheme = scheme
-    #     self.location = location
-    #     #self.approved_version = current_version_value
-
-    #     version_approver = None
-    #     version_approved_date = None
-
-    #     _, vhd_value = find.key_with_tag(model, "version-history-data")
-    #     versions = find.keys_with_tag(vhd_value, "row-identifier")
-    #     #match_found = False
-    #     for version_key, version_value in versions:
-    #         if match.equals(approved_version_value, version_value):
-    #             version_row = version_key.getProperty("row")
-    #             version_approver = find.key_with_tag(version_row, "version-approver")[1]
-    #             version_approved_date = find.key_with_tag(version_row, "version-approved-date")[1]
-    #             #match_found = True
-    #             break
-
-    #     if version_approver is not None and version_approved_date is not None:
-    #         self.approved_version = approved_version_value
-    #         self.approved_date = version_approved_date
-
-    #     #if not match_found:
-    #     #    logger.error(f"Could not find entry in version history table for threat model approved version '{current_version_value}'")
-    #     #    raise ManageError("no-version-history", {"current_version":current_version_value})
-
-    #     return current_version_value, approved_version_value
+    def get_state(self):
+        return self._get_state()
 
     def _get_state(self):
         output = {}
