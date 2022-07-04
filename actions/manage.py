@@ -149,7 +149,11 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
 
         with ThreatModelStorage(config.get("storage", {}), execution_env, imdCurrent.ID, persist_changes=True, output_texts=output.templated_texts) as storage:
 
-            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, imdCurrent.ID)
+            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, schemeID, location)
+
+            if not match.equals(imdCurrent.ID, tm_metadata.ID):
+                logger.error(f"The ID value in the threat model does not match the ID value in the metadata for the registered scheme and location")
+                raise ManageError("model-and-metadata-ID-mismatch", {})
 
             # Add/update the metadata related to this version
             tm_metadata.setApprovedVersion(imdCurrent.ID, current_version, imdCurrent, approved_version, imdApproved, tmvmd)
@@ -191,7 +195,11 @@ def check(config:dict, execution_env, location:str, schemeID:str, model:dict, me
         with ThreatModelStorage(config.get("storage", {}), execution_env, docID, persist_changes=False) as storage:
 
             # Get the index data and metadata for the ID
-            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, docID)
+            tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, schemeID, location)
+
+            if not match.equals(docID, tm_metadata.ID):
+                logger.error(f"The ID value in the threat model does not match the ID value in the metadata for the registered scheme and location")
+                raise ManageError("model-and-metadata-ID-mismatch", {})
 
             indexentry = tm_metadata.index.getIndexEntryByLocation(schemeID, location)
 

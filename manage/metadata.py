@@ -228,6 +228,12 @@ class IndexMetaData:
 
         return location_based_index.get((scheme, location), None)
 
+    def getIDByLocation(self, scheme:str, location:str) -> str:
+
+        location_based_index = {(entry.scheme, entry.location):ID for ID, entry in self.indexdata.items()}
+
+        return location_based_index.get((scheme, location), None)
+
     def createIndexEntryID(self, IDprefix:str):
 
         #last_entry_ID = list(self.indexdata.keys())[-1]
@@ -303,7 +309,7 @@ class ThreatModelMetaData:
     Can retrieve entries, update new entries and persist all entries.  It also sets a version as the approved version.
     """
 
-    def __init__(self, config:dict, storage:ThreatModelStorage, ID:str) -> None:
+    def __init__(self, config:dict, storage:ThreatModelStorage, schemeID:str = None, location:str = None) -> None:
         yaml_register_class(ThreatModelMetaData)
 
         self.index = IndexMetaData(config, storage)
@@ -312,10 +318,15 @@ class ThreatModelMetaData:
         self.storage = storage
         self.approvedStatus = config.get("approved-status", "Approved")
         self.write_plain_model = config.get("write-plain-model", True)
-        self.ID = ID
-        self._set_empty()
 
         self.index._load_index()
+
+        self.ID = self.index.getIDByLocation(schemeID, location)
+        if self.ID is None:
+            logger.error(f"No ID was found in the metadata for a threat model with scheme '{schemeID}' and location '{location}'")
+            raise ManageError("no-ID-in-metadata", {"scheme":schemeID, "location":location})
+
+        self._set_empty()
 
         self._load_metadata() 
 
