@@ -6,8 +6,9 @@ Handler to invoke verifier
 import logging
 import sys
 import argparse
-import json
+import configparser
 from pathlib import Path
+from importlib.metadata import version
 from storage.gitrepo import GitStorage
 from utils.error import ThreatwareError
 from utils.config import ConfigBase
@@ -300,6 +301,19 @@ def lambda_handler(event, context):
         'body': body
     }
 
+def getVersion(prog):
+
+    if version_number := version(prog):
+        return version_number
+
+    setup_config_parser = configparser.ConfigParser()
+    setup_config_parser.read(str(Path(__file__).absolute().parent.parent.joinpath("setup.cfg")))
+    setup_config_dict = dict(setup_config_parser.items("metadata"))
+    if "version" in setup_config_dict:
+        return setup_config_dict["version"]
+
+    return None
+
 def main():
 
     scheme_help = 'Identifier for the threat model scheme (which contains location information)'
@@ -308,6 +322,8 @@ def main():
 
     parser = argparse.ArgumentParser(prog='threatware', description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
 
+    version_str = f"{parser.prog} v{getVersion(parser.prog)}"
+    parser.add_argument("-v", "--version", action="version", version=version_str)
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
     parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])
 
@@ -357,6 +373,9 @@ def main():
     #parser.add_argument('-t', '--doctemplate', help='Identifier for the document template (overrides template in scheme)')
     #parser.add_argument('-v', '--verifiers', nargs='*', help='Space separated list of verifiers to use (overrides verifiers in mapping)')
     args = parser.parse_args()
+
+    # Print out version string for the logs.  Do it after we parse the args so we don't print it twice if run with --version
+    print(version_str, file=sys.stderr)
 
     # Build input for handler
     event ={}

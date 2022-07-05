@@ -16,7 +16,7 @@ logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 DEFAULT_CONFIG_BASE_DIR = "~/.threatware"
 DEFAULT_CONFIG_REPO = "https://github.com/samadhicsec/threatware-config.git"
-DEFAULT_CONFIG_REPO_BRANCH = "v1.0"
+DEFAULT_CONFIG_REPO_BRANCH = "main"
 
 class ConfigBase:
 
