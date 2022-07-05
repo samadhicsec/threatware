@@ -155,6 +155,16 @@ def lambda_handler(event, context):
                 # Convert the TM document
                 output = convert.convert(convert_config, execution_env, schemeDict, docloc)
 
+                if output.getResult() != OutputType.ERROR:
+
+                    doc_model = output.getDetails()
+
+                    verify_config = verify.config(schemeDict)
+
+                    # Convert output is much more useful if it contains the default verify tags as well
+                    # This will update the model in place
+                    verify.assign_default_tags(verify_config, doc_model)
+
                 content_type, body = output.getContent(lambda : Key.config_serialisation(convert_meta))
 
             elif action == ACTION_VERIFY:

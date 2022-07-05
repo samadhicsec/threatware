@@ -21,6 +21,16 @@ def config(scheme:dict):
 
     return VerifiersConfig(verifiers_config)
 
+
+def assign_default_tags(config:VerifiersConfig, model:dict):
+    """
+    Utility method to populate a model with the default verify tags.
+    """
+    verifiers = Verifiers(config)
+
+    verifiers.assign_key_tags(model)
+
+
 def verify(config:VerifiersConfig, threatmodel:dict, tm_template:dict):
 
     logger.info("Entering verify")
