@@ -203,7 +203,7 @@ scheme:
                 get-data:
                   - query:
                       type: html-table-row
-                      column-num: 1
+                      column-num: 3
                   - query:
                       type: text-split
                       split-by:
