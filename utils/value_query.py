@@ -2,6 +2,7 @@
 
 import logging
 import re
+import urllib.parse
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -72,8 +73,22 @@ def replace(input, query_cfg):
 
     return output
 
+def url_decode(input, query_cfg):
+    """ Expects input to be a string and outputs the string URL decoded """
+    
+    output = None
+
+    if not isinstance(input, str):
+        logger.error(f"Input was expecting string and got '{type(input)}'")
+        return None
+
+    output = urllib.parse.unquote(input)
+
+    return output
+
 value_dispatch_table = {
     "value-extract":extract,
     "value-match":match,
     "value-replace":replace,
+    "value-urldecode":url_decode
 }
