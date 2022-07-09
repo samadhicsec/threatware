@@ -36,12 +36,12 @@ class Translate:
         yaml_config_dict = yaml_file_to_dict(ConfigBase.getConfigPath(TRANSLATE_CONFIG_YAML_PATH))
 
         if languageCode is None or languageCode == "":
-            languageCode = "default"
+            languageCode = cls.defLanguageCode
 
         if languageCode not in yaml_config_dict:
-            logger.warning(f"Could not find language code '{languageCode}' in translation file '{TRANSLATE_CONFIG_YAML_PATH}'.  Using default.")
-            languageCode = "default"
-            if (languageCode := "default") not in yaml_config_dict:
+            logger.warning(f"Could not find language code '{languageCode}' in translation file '{TRANSLATE_CONFIG_YAML_PATH}'.  Using {cls.defLanguageCode}.")
+            languageCode = cls.defLanguageCode
+            if languageCode not in yaml_config_dict:
                 logger.warning(f"Could not find language code '{languageCode}' in translation file '{TRANSLATE_CONFIG_YAML_PATH}'.")
 
         cls.languageCode = languageCode
@@ -91,3 +91,7 @@ class Translate:
         localised_yaml_str = env.from_string(yaml_str).render(cls.translations | cls.global_context)
 
         return yaml_str_to_dict(localised_yaml_str)
+
+    @classmethod
+    def getTranslation(cls, key:str):
+        return cls.translations.get("translate", {}).get(key, None)

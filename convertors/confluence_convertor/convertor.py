@@ -10,7 +10,7 @@ from convertors.html_convertor.convertor import doc_to_model
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-def convert(connection:dict, mapping:dict, doc_identifers:dict):
+def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
     doc_store = reader.connect(connection)
@@ -30,5 +30,5 @@ def convert(connection:dict, mapping:dict, doc_identifers:dict):
     query_document = query.get_document(document)
 
     # Convert the document
-    return doc_to_model(query_document, mapping)
+    return doc_to_model(config, query_document, mapping)
 

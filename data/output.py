@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import logging
+from data.data_config import DataConfig
 from data.key import key as Key
+from language.translate import Translate
 import utils.match as match
 import utils.model as model
 
@@ -189,6 +191,27 @@ def process(output_def, output_data):
                 output_data = post_processor_dispatch_table[proc](post_processor[proc], output_data)
             else:
                 logger.warning(f"Could not find post-processor '{proc}'")
+
+    # Mandatory output processing
+
+    # Cleaning up 'n/a' lists
+    # If the output value is a list with 1 entry, and that one entry is a dict with 1 key, and that key value is a string that matches 'n/a' -> then change to an empty list
+    # This avoids the model looking like it contains a list entry of values, when really there is no value.
+    # Need to mark changes like this, so verification knows that this change happened e.g. mandatory verification can ignore this.
+    remove_na, apply_na_tags = DataConfig.remove_na_single_list_entry()
+    if remove_na and isinstance(output_data, list):
+        for list_entry in output_data:
+            if isinstance(list_entry, dict):
+                for entry_key, entry_value in list_entry.items():
+                    if isinstance(entry_value, list) and \
+                        len(entry_value) == 1 and \
+                        isinstance(entry_value[0], dict) and \
+                        len(entry_value[0]) == 1 and \
+                        isinstance(list(entry_value[0].values())[0], str) and \
+                        match.equals(list(entry_value[0].values())[0], Translate.getTranslation("na")):
+                        list_entry[entry_key] = []
+                        entry_key.addTags(apply_na_tags)
+
 
     # Change the output type last, as post-processing may have affected data structure
     if output_type := output_def.get("type"):

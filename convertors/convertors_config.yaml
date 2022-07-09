@@ -2,3 +2,13 @@
 convertors-config:
   output:
     template-text-file: "convertors/convertors_texts.yaml"
+  data:
+    output:
+      # A multi-valued entry that convert splits into a list of values will sometimes be 'not applicable', 
+      # but a single list entry of 'not applicable' isn't a good representation, so this config allows 
+      # for the entry to be removed.
+      list-with-single-not-applicable-entry:
+        remove: True
+        apply-tags:
+          - not-mandatory
+          - data.output.removed

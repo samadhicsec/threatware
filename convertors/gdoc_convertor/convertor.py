@@ -42,7 +42,7 @@ SCOPES = ['https://www.googleapis.com/auth/documents.readonly', 'https://www.goo
 
 #     return creds
 
-def convert(connection:dict, mapping:dict, doc_identifers:dict):
+def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict):
 
     # Establish connection to document location
     doc_store = reader.connect(connection)
@@ -57,4 +57,4 @@ def convert(connection:dict, mapping:dict, doc_identifers:dict):
     query_document = query.get_document(document)
 
     # Convert the document
-    return doc_to_model(query_document, mapping)
+    return doc_to_model(config, query_document, mapping)

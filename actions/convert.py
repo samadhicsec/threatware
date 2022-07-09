@@ -31,9 +31,9 @@ def convert(config:dict, execution_env, scheme:dict, doc_location:str):
 
     try: 
         if scheme['document-storage'] == "confluence":
-            model = convertors.confluence_convertor.convertor.convert(execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location})
+            model = convertors.confluence_convertor.convertor.convert(config, execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location})
         elif scheme['document-storage'] == "googledoc":
-            model = convertors.gdoc_convertor.convertor.convert(execution_env.getGoogleCredentials(), scheme, {"id":doc_location})
+            model = convertors.gdoc_convertor.convertor.convert(config, execution_env.getGoogleCredentials(), scheme, {"id":doc_location})
         else:
             logger.error(f"Unknown document storage type '{scheme['document-storage']}'")
             raise ConvertError("unknown-doc-storage", {"doc_storage":scheme['document-storage']})
