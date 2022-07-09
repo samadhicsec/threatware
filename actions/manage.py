@@ -77,7 +77,7 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str, m
 
             index = IndexMetaData(config.get("metadata", {}), storage)
 
-            entry = index.getIndexEntryByLocation(scheme, location)
+            entry = index.getIndexEntryByLocation(location)
             if entry is not None:
                 entry_exists = True
                 # Need to tell IndexStorage to not try to persist anything, because there has been no changes.
@@ -97,18 +97,18 @@ def create(config:dict, execution_env, IDprefix:str, scheme:str, location:str, m
 
         if entry_exists:
             # In the rare case the entry already exists, we determine if existing extry is on default branch or not, 
-            # so users aren't confused why they can't see the TM ID if they call indexdata (whcih only returns approved TM metadata)
+            # so users aren't confused why they can't see the TM ID if they call indexdata (which only returns approved TM metadata)
             indexdata_output = indexdata(config, execution_env, entry.ID)
             default_existing_entry = indexdata_output.getDetails()
 
             if default_existing_entry is not None:
                 # Existing entry is on default branch
                 logger.info(f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}'")
-                raise ManageError("index-entry-exists", {"scheme":scheme, "location":location, "ID":entry.ID})
+                raise ManageError("index-entry-exists", {"location":location, "ID":entry.ID})
             else:
                 # Existing entry is not on default branch
                 logger.info(f"Cannot create ID for threat model in location '{location}' as that location is used by threat model '{entry.ID}', but this ID allocation has not been merged yet")
-                raise ManageError("index-entry-exists-create", {"scheme":scheme, "location":location, "ID":entry.ID})
+                raise ManageError("index-entry-exists-create", {"location":location, "ID":entry.ID})
 
         output.setSuccess("success-create", {}, new_entry.get_state())
 

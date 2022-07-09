@@ -211,7 +211,6 @@ class IndexMetaData:
 
         self.indexdata = {}
 
-        #threatmodels = load_yaml.yaml_file_to_dict(Path(self.storage.repodir).joinpath(self.index_filename))
         if (threatmodels := self.storage.load_yaml([], Path(self.storage.repodir).joinpath(self.index_filename))) is not None:
             for TMindex_list_entry in threatmodels.get("threatmodels", []):
                 mdie = MetadataIndexEntry(self.config, TMindex_list_entry)
@@ -222,17 +221,17 @@ class IndexMetaData:
     def getIndexEntry(self, ID:str) -> MetadataIndexEntry:
         return self.indexdata.get(ID, None)
 
-    def getIndexEntryByLocation(self, scheme:str, location:str) -> MetadataIndexEntry:
+    def getIndexEntryByLocation(self, location:str) -> MetadataIndexEntry:
 
-        location_based_index = {(entry.scheme, entry.location):entry for entry in self.indexdata.values()}
+        location_based_index = {entry.location:entry for entry in self.indexdata.values()}
 
-        return location_based_index.get((scheme, location), None)
+        return location_based_index.get(location, None)
 
-    def getIDByLocation(self, scheme:str, location:str) -> str:
+    def getIDByLocation(self, location:str) -> str:
 
-        location_based_index = {(entry.scheme, entry.location):ID for ID, entry in self.indexdata.items()}
+        location_based_index = {entry.location:ID for ID, entry in self.indexdata.items()}
 
-        return location_based_index.get((scheme, location), None)
+        return location_based_index.get(location, None)
 
     def createIndexEntryID(self, IDprefix:str):
 
@@ -321,10 +320,10 @@ class ThreatModelMetaData:
 
         self.index._load_index()
 
-        self.ID = self.index.getIDByLocation(schemeID, location)
+        self.ID = self.index.getIDByLocation(location)
         if self.ID is None:
-            logger.error(f"No ID was found in the metadata for a threat model with scheme '{schemeID}' and location '{location}'")
-            raise ManageError("no-ID-in-metadata", {"scheme":schemeID, "location":location})
+            logger.error(f"No ID was found in the metadata for a threat model with location '{location}'")
+            raise ManageError("no-ID-in-metadata", {"location":location})
 
         self._set_empty()
 
