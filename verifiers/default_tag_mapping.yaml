@@ -41,7 +41,7 @@ tag-mapping:
       - ref/components-details-data/name                              # value must equal a value tagged 'name' in table tagged 'components-details-table'
       - tref/functional-asset-data/storage-location/template-approved # value must have property 'template-approved' and be a value tagged 'storage-location' in table tagged 'functional-asset-data' in the template
       - tref/technical-asset-data/storage-location/template-approved  # value must have property 'template-approved' and be a value tagged 'storage-location' in table tagged 'technical-asset-data' in the template
-      - exclude/value/in-memory                                       # value that contains 'in-memory' is excluded from reference and coverage validation
+      - "exclude/value/{{ translate.in_memory }}"                                       # value that contains 'in-memory' is excluded from reference and coverage validation
 
   - key-name: 
       default: functional-asset-affected

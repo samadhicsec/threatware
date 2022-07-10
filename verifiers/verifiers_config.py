@@ -82,6 +82,7 @@ class VerifiersConfig:
 
     def _load_tag_mapping(self, tag_mapping_yaml_path) -> list:
     
-        yaml_config_dict = yaml_file_to_dict(tag_mapping_yaml_path) 
+        #yaml_config_dict = yaml_file_to_dict(tag_mapping_yaml_path) 
+        yaml_config_dict = Translate.localiseYamlFile(Path(tag_mapping_yaml_path)) 
 
         return yaml_config_dict["tag-mapping"]
