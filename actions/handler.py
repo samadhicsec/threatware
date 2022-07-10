@@ -8,7 +8,7 @@ import sys
 import argparse
 import configparser
 from pathlib import Path
-from importlib.metadata import version
+from importlib.metadata import version, PackageNotFoundError
 from storage.gitrepo import GitStorage
 from utils.error import ThreatwareError
 from utils.config import ConfigBase
@@ -313,9 +313,17 @@ def lambda_handler(event, context):
 
 def getVersion(prog):
 
-    if version_number := version(prog):
+    # This will search sys.path for threatware.egg-info/.dist-info directory to get the version from the PKG-INFO file
+    try:
+        
+        version_number = version(prog)
+
         return version_number
 
+    except PackageNotFoundError:
+        pass
+
+    # If the above fails then get the version from the local setup.cfg file
     setup_config_parser = configparser.ConfigParser()
     setup_config_parser.read(str(Path(__file__).absolute().parent.parent.joinpath("setup.cfg")))
     setup_config_dict = dict(setup_config_parser.items("metadata"))
@@ -377,11 +385,6 @@ def main():
     parser_measure.add_argument('-d', '--docloc', required=True, help=doc_help)
     parser_measure.add_argument('-t', '--doctemplate', required=True, help=template_help)
 
-    #parser.add_argument('-a', '--action', required=True, help='The action to perform', choices=[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE, ACTION_MEASURE])
-    #parser.add_argument('-s', '--scheme', required=True, help='Identifier for the template scheme to load')
-    #parser.add_argument('-d', '--docloc', required=True, help='Identifier for the document to verify')
-    #parser.add_argument('-t', '--doctemplate', help='Identifier for the document template (overrides template in scheme)')
-    #parser.add_argument('-v', '--verifiers', nargs='*', help='Space separated list of verifiers to use (overrides verifiers in mapping)')
     args = parser.parse_args()
 
     # Print out version string for the logs.  Do it after we parse the args so we don't print it twice if run with --version
@@ -409,8 +412,6 @@ def main():
     event["queryStringParameters"]["doctemplate"] = args.doctemplate if "doctemplate" in args else None
     event["queryStringParameters"]["ID"] = args.id if "id" in args else None
     event["queryStringParameters"]["IDprefix"] = args.idprefix if "idprefix" in args else None
-    #if args.verifiers:
-    #    event["queryStringParameters"]["verifiers"] = ",".join(args.verifiers)
 
     response = lambda_handler(event, context)
 
