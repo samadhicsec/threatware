@@ -2,7 +2,9 @@
 tag-mapping:
   # This file is used to automatically apply tags based on 'key name' specified in a scheme file.  It will apply these tags to ALL keys with the given 'key-name'.  It is a convenience file for applying tags in batches.  It is not required to use this file - all tags can be specified directly in the scheme file (but have to be repeated for each 'key name').  Note, should the 'key name' be updated in the scheme, then it would also need to be updated here (in that sense this file is inconvenient).
 
-  - key-name: name
+  - key-name: 
+      default: name
+      #en-GB: name                                                    # The key-name (from the scheme) can be localised by adding an entry for the desired country code
     tags:
       - name                                                          # tag all data with key-name 'name' with tag value 'name'
       - row-identifier                                                # error message will use the column with this tag to identifer the row where the error occurred
@@ -13,23 +15,27 @@ tag-mapping:
       - unique/technical-asset-data/type                              # value must be unique when compared to the data tagged 'type' in table tagged 'technical-asset-data'
       - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: category
+  - key-name: 
+      default: category
     tags:
       - type                                                          # tag all data with key-name 'type' with tag value 'type'
       - unique/functional-asset-data/type/value_not_table             # value must be unique (compared to values not in the same table) when compared to the data tagged 'type' in table tagged 'functional-asset-data'
       - unique/technical-asset-data/type/value_not_table              # value must be unique (compared to values not in the same table) when compared to the data tagged 'type' in table tagged 'technical-asset-data'
       - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: component
+  - key-name: 
+      default: component
     tags:
       - threat-component                                              # tag all data with key-name 'component' with tag value 'threat-component'
       - ref/components-details-data/name                              # value must equal a value tagged 'name' in table tagged 'components-details-table'
 
-  - key-name: "identity"
+  - key-name: 
+      default: "identity"
     tags:
       - validate-as-single-entry                                      # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: storage-location
+  - key-name: 
+      default: storage-location
     tags:
       - storage-location                                              # tag all data with key-name 'storage-location' with tag value 'storage-location'
       - ref/components-details-data/name                              # value must equal a value tagged 'name' in table tagged 'components-details-table'
@@ -37,13 +43,15 @@ tag-mapping:
       - tref/technical-asset-data/storage-location/template-approved  # value must have property 'template-approved' and be a value tagged 'storage-location' in table tagged 'technical-asset-data' in the template
       - exclude/value/in-memory                                       # value that contains 'in-memory' is excluded from reference and coverage validation
 
-  - key-name: functional-asset-affected
+  - key-name: 
+      default: functional-asset-affected
     tags:
       - ref/functional-asset-data/name                                # value must equal a value tagged 'name' in table tagged 'functional-asset-data'
       - ref/functional-asset-data/type                                # value must equal a value tagged 'type' in table tagged 'functional-asset-data'
       - ref/functional-asset-data/name/asset-expression               # value must match a text value from the values in text key 'asset-expression'
 
-  - key-name: asset
+  - key-name: 
+      default: asset
     tags:
       - threat-asset                                                  # tag all data with key-name 'asset' with tag value 'threat-asset'
       - ref/functional-asset-data/name                                # value must equal a value tagged 'name' in table tagged 'functional-asset-data'
@@ -53,49 +61,59 @@ tag-mapping:
       - ref/technical-asset-data/type                                 # value must equal a value tagged 'type' in table tagged 'technical-asset-data'
       - ref/technical-asset-data/storage-location/storage-expression  # value must match a text value from the values in text key 'storage-expression', and end in a value tagged 'storage-location' in table tagged 'technical-asset-data'
 
-  - key-name: existing-controls
+  - key-name: 
+      default: existing-controls
     tags:
       - not-mandatory             # value can be empty
 
-  - key-name: impact-type
+  - key-name: 
+      default: impact-type
     tags:
       - validate-as-CIA           # value must be localised version of 'Confidentiality', 'Integrity' or 'Availability'
 
-  - key-name: "tech-stack"
+  - key-name: 
+      default: "tech-stack"
     tags: 
       - tech-stack                # tag all data with key-name 'tech-stack' with tag value 'tech-stack'
       - not-mandatory             # value can be empty
 
-  - key-name: "in-scope"
+  - key-name: 
+      default: "in-scope"
     tags: 
       - in-scope                  # tag all data with key-name 'in-scope' with tag value 'in-scope'
       - validate-as-yes-no        # value must be localised version of 'Yes' or 'No' (runs the 'validate-as-yes-no' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: "ticket"
+  - key-name: 
+      default: "ticket"
     tags: 
       - not-mandatory             # value can be empty
 
-  - key-name: "tickets"
+  - key-name: 
+      default: "tickets"
     tags: 
       - not-mandatory             # value can be empty
 
-  - key-name: "version"
+  - key-name: 
+      default: "version"
     tags:
       - version                               # tag all data with key-name 'version' with tag value 'version'
       - validate-as-version                   # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)
       - validate-as-single-entry              # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
       - unique/version-history-data/version   # value must be unique when compared to the data tagged 'version' in table tagged 'version-history-data'
 
-  - key-name: "version-date"
+  - key-name: 
+      default: "version-date"
     tags: 
       - validate-as-date          # value must be parseable as a date, uss python's dateutil.parser.parse  (runs the 'validate-as-date' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: "current-version"
+  - key-name: 
+      default: "current-version"
     tags:
       - validate-as-version       # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)
       - validate-as-single-entry  # value must not contain a newline (runs the 'validate-as-single-entry' validator on the value, see validators/validators_config.yaml)
 
-  - key-name: "approved-version"
+  - key-name: 
+      default: "approved-version"
     tags:
       - not-mandatory             # value can be empty
       - validate-as-version       # value must have 'version' format e.g. 1.0, 2.1 (runs the 'validate-as-version' validator on the value, see validators/validators_config.yaml)

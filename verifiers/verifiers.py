@@ -4,9 +4,10 @@ Loads verifiers dynamically
 """
 
 import logging
+from verifiers.verifiers_config import VerifiersConfig
+from language.translate import Translate
 from utils import keymaster
 from utils import tags
-from verifiers.verifiers_config import VerifiersConfig
 import data.find as find
 import verifiers.reference as reference
 
@@ -100,7 +101,7 @@ class Verifiers:
         tags_dict = {}
         # Create dict of tags key-name (as key) and tags list (as value) to easily match on key-name
         for tag_entry in tags_list:
-            tags_dict[tag_entry["key-name"]] = tag_entry["tags"]
+            tags_dict[Translate.localise(tag_entry["key-name"])] = tag_entry["tags"]
         
         def _assign_tags(parentKey, model):
 

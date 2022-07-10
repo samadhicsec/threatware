@@ -5,6 +5,7 @@ Translate class responsible for localisation
 
 import logging
 from pathlib import Path
+from utils import match
 from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_str, yaml_str_to_dict, yaml_file_to_dict
 
@@ -48,7 +49,7 @@ class Translate:
         cls.translations = yaml_config_dict.get(cls.languageCode, {})
 
     @classmethod
-    def localise(cls, texts:dict, texts_key:str, context:dict = {}, cache_key = None):
+    def localise(cls, texts:dict, texts_key:str = None, context:dict = {}, cache_key = None):
 
         # localise is expensive to call a lot, so cache context free values.  This is fine as language does not change per execution
         if context is None or len(context) == 0:
@@ -65,7 +66,13 @@ class Translate:
                 logger.warning(f"Could not find language code '{languageCode}' in text dict.")
 
         textsLanguage = texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"})
-        textsLanguageText = textsLanguage.get(texts_key, f"Could not find text for key '{texts_key}'")
+        if not match.is_empty(texts_key):
+            # textsLanguage is a dict
+            textsLanguageText = textsLanguage.get(texts_key, f"Could not find text for key '{texts_key}'")
+        else:
+            # textsLanguage is the actual string
+            textsLanguageText = textsLanguage
+
         if isinstance(textsLanguageText, str):
             output = env.from_string(textsLanguageText).render(context | cls.translations | cls.global_context)
         elif isinstance(textsLanguageText, list):
