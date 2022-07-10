@@ -22,6 +22,9 @@ def _trim(value):
 # Returns values split by different possible methods
 def extract(input, query_cfg):
 
+    if input is None:
+        return None
+
     output = input
 
     if regex := query_cfg.get("regex"):
@@ -43,6 +46,9 @@ def extract(input, query_cfg):
 # Returns all values that match.  Returned values are unchanged.
 def match(input, query_cfg):
 
+    if input is None:
+        return None
+
     output = ""
 
     if regex := query_cfg.get("regex"):
@@ -57,6 +63,9 @@ def match(input, query_cfg):
 
 # Returns all values that match.  Returned values are unchanged.
 def replace(input, query_cfg):
+
+    if input is None:
+        return None
 
     output = None
 
@@ -75,7 +84,10 @@ def replace(input, query_cfg):
 
 def url_decode(input, query_cfg):
     """ Expects input to be a string and outputs the string URL decoded """
-    
+
+    if input is None:
+        return None
+
     output = None
 
     if not isinstance(input, str):
