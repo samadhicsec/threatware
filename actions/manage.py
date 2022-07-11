@@ -152,8 +152,8 @@ def submit(config:dict, execution_env, location:str, schemeID:str, model:dict):
             tm_metadata = ThreatModelMetaData(config.get("metadata", {}), storage, schemeID, location)
 
             if not match.equals(imdCurrent.ID, tm_metadata.ID):
-                logger.error(f"The ID value in the threat model does not match the ID value in the metadata for the registered scheme and location")
-                raise ManageError("model-and-metadata-ID-mismatch", {})
+                logger.error(f"The ID value in the threat model ('{imdCurrent.ID}') does not match the ID value in the metadata ('{tm_metadata.ID}') for the registered scheme and location")
+                raise ManageError("model-and-metadata-ID-mismatch", {"current_ID":imdCurrent.ID, "metadata_ID":tm_metadata.ID})
 
             # Add/update the metadata related to this version
             tm_metadata.setApprovedVersion(imdCurrent.ID, current_version, imdCurrent, approved_version, imdApproved, tmvmd)
