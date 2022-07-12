@@ -3,6 +3,7 @@
 import logging
 from lxml import etree
 import lxml.html
+from lxml.etree import XPathError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
 
@@ -24,7 +25,14 @@ def get_document(document_str):
 
 def get_document_section(document, query_cfg):
 
-    section_list = document.xpath(query_cfg[XPATH_FIELD])
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return None
+
+    try:
+        section_list = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        section_list = []
 
     if len(section_list) == 0:
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' returned no results")
@@ -37,7 +45,14 @@ def get_document_section(document, query_cfg):
 
 def get_document_list_items(document, query_cfg):
 
-    list_items = document.xpath(query_cfg[XPATH_FIELD])
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return []
+
+    try:
+        list_items = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        list_items = []
 
     logger.debug(f"Query '{query_cfg[XPATH_FIELD]}' return {len(list_items)} elements")
 
@@ -45,7 +60,14 @@ def get_document_list_items(document, query_cfg):
 
 def get_document_value(document, query_cfg) -> str:
 
-    value_list = document.xpath(query_cfg[XPATH_FIELD])
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return None
+
+    try:
+        value_list = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        value_list = []
 
     logger.debug(f"Query '{query_cfg[XPATH_FIELD]}' return {len(value_list)} elements")
 
@@ -88,8 +110,15 @@ def _remove_rows_if_empty(proc_def, table_data):
 
 def get_document_row_table(document, query_cfg):
 
-    # Navigate to the <table> element
-    table_list = document.xpath(query_cfg[XPATH_FIELD])
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return None
+
+    try:
+        # Navigate to the <table> element
+        table_list = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        table_list = []
 
     if len(table_list) == 0:
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' returned no results")
@@ -153,6 +182,13 @@ def get_document_row_table(document, query_cfg):
 
 def get_table_entry(row, query_cfg):
 
+    if not query_key_defined(query_cfg, COLUMN_NUM):
+        return None
+
+    if query_cfg[COLUMN_NUM] >= len(row):
+        logger.warning(f"Query configuration '{COLUMN_NUM}' with value '{query_cfg[COLUMN_NUM]}' was larger than the '{len(row)}' available columns (using zero-based indexing)")
+        return None
+    
     return row[query_cfg[COLUMN_NUM]]
 
 # Split an existing table into multiple smaller tables
@@ -194,14 +230,26 @@ def get_constrained_table_entry(row, query_cfg, current_row_index, current_col_i
 
     return None
 
-def col_index_defined(query_cfg):
+def query_key_defined(query_cfg, query_cfg_key):
 
-    if query_cfg[COLUMN_NUM] is not None:
-        return True
+    if query_cfg is None:
+        logger.warning(f"Query configuration is not specified")
+        return False
+
+    if not isinstance(query_cfg, dict):
+        logger.warning(f"Query configuration is not a set of key/value pairs")
+        return False
+
+    if query_cfg_key not in query_cfg:
+        logger.warning(f"Query configuration '{COLUMN_NUM}' was not present in '{query_cfg}'")
+        return False
     
-    return False
+    return True
 
 def does_col_index_match(query_cfg, index):
+
+    if not query_key_defined(query_cfg, COLUMN_NUM):
+        return False
 
     cfg_index = query_cfg[COLUMN_NUM]
     if cfg_index:
@@ -213,9 +261,16 @@ def does_col_index_match(query_cfg, index):
 
 def get_row_entry_by_col_index(row, index):
 
+    if index >= len(row):
+        logger.warning(f"Index value '{index}' was larger than the '{len(row)}' available rows (using zero-based indexing)")
+        return None
+
     return row[index]
 
 def set_table_entry(row, query_cfg, value):
+
+    if not query_key_defined(query_cfg, COLUMN_NUM):
+        return
 
     row[query_cfg[COLUMN_NUM]] = value
 
@@ -224,7 +279,14 @@ def set_table_entry(row, query_cfg, value):
 # Expecting the xpath to return a list of text nodes,whcih get concatenated
 def get_text_section(document, query_cfg):
 
-    paragraphs = document.xpath(query_cfg[XPATH_FIELD])
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return None
+
+    try: 
+        paragraphs = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        paragraphs = []
 
     output = ""
     for paragraph in paragraphs:
