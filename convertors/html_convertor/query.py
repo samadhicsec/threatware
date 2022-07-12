@@ -3,6 +3,7 @@
 import logging
 from lxml import etree
 import lxml.html
+#from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
 
 import utils.logging
@@ -106,18 +107,32 @@ def get_document_row_table(document, query_cfg):
     # when you download the doc as HTML, where that text is hihglight as part of a comment.  Lesser of two evils is to 
     # not support 'superscript' elements (as we have to allow a document with comments to be verified)
     etree.strip_elements(table_ele, "sup")
+
+    ## Removing this code as using HTMLTableParser with data_separator='\n' should have the same affecet
     # Stripping attributes of <p> elements doesn't affect content, but we leave them in because they are usually used
-    # like newlines, whcih is what we replace them with further down.
-    for ele in table_ele.findall('.//p'):
-        etree.strip_attributes(ele, "style")
+    # like newlines, which is what we replace them with further down.
+    #for ele in table_ele.findall('.//p'):
+    #for ele in table_ele.findall('.'):
+    #    etree.strip_attributes(ele, "style")
 
     # Extract as string
     table_bstr = lxml.html.tostring(table_ele, encoding='unicode')
+
+    ## TODO maybe use lxml.html.clean.clean_html in the future, but need to check how it handles imperfect HTML (I'm looking at you Confluence)
+    #table_bstr = clean_html(table_bstr)
+    
+    ## Removing this code as using HTMLTableParser with data_separator='\n' should have the same affecet
     # HTMLTableParser will strip all tags from table entries, but sometimes that information is relevant e.g. <p></p> as newlines
-    table_str = table_bstr.replace("</p><p>", "\n")
+    # This doesn't always work.  The '\n' need to be adjacent to actual text.  If the p-tags surround a <a> for instance then the '\n' is removed by HTMLTableParser
+    #table_str = table_bstr.replace("</p><p>", "<a>\n</a>")
+    #table_str = table_bstr.replace("</p><p>", "</p>\n<p>")
+    table_str = table_bstr
 
     # Parse as table
-    p = HTMLTableParser()
+    # Tags in cells are stripped and the tags text content is joined using data_separator
+    p = HTMLTableParser(data_separator='\n')
+    #p = HTMLTableParser(data_separator=' ')
+
     p.feed(table_str)
 
     if len(p.tables) != 1:
