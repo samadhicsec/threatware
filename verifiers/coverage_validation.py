@@ -55,6 +55,13 @@ def template_reference_callback(callback_config, tag_comparison, compare_value, 
 
 def verify(common_config:dict, verifier_config:dict, model:dict, template_model:dict) -> list:
 
+    verify_return_list = assets_verify(common_config, verifier_config, model, template_model)
+
+    verify_return_list.extend(cov_verify(common_config, verifier_config, model, template_model))
+
+    return verify_return_list
+
+def assets_verify(common_config:dict, verifier_config:dict, model:dict, template_model:dict) -> list:
     verify_return_list = []
 
     # Get all the data required to do the validation
@@ -198,5 +205,112 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 else:
                     # Store covering threats
                     storage_location_key.addProperty("covering-threats", covering_threats)
+
+    return verify_return_list
+
+in_scope_components = []
+out_of_scope_components = []
+
+def _filter(common_config, model, comparison, covered_key_values):
+
+    filtered_keyvalues = []
+
+    if match.equals(comparison, "equals"):
+        return covered_key_values
+
+    if match.equals(comparison, "component_in_scope"):
+        if len(in_scope_components) == 0 and len(out_of_scope_components) == 0:
+            components_key, components_data = find.key_with_tag(model, common_config["component-tags"]["component-data-tag"])
+            for component_row in components_data:
+                component_row_id_key, component_row_id_data = find.key_with_tag(component_row, "row-identifier")
+                in_scope_key, in_scope_data = find.key_with_tag(component_row, common_config["component-tags"]["component-in-scope-tag"])
+                if match.equals(in_scope_data, common_config["component-tags"]["component-in-scope-value"]):
+                    in_scope_components.append(component_row_id_data)
+                else:
+                    out_of_scope_components.append(component_row_id_data)
+        
+        for key_entry, value_entry in covered_key_values:
+            if match.equals(value_entry, in_scope_components):
+                filtered_keyvalues.append((key_entry, value_entry))
+
+    return filtered_keyvalues
+
+def cov_verify(common_config:dict, verifier_config:dict, model:dict, template_model:dict) -> list:
+
+    verify_return_list = []
+
+    # Get all the "cov" references
+    # Find every key with a tag that starts with the configured prefix.
+    all_cov_tagged_keys = find.keys_with_tag_matching_regex(model, "^cov/.*$")
+
+    all_cov_tagged_keys = [(key, value, tag) for key, value in all_cov_tagged_keys for tag in tags.get_prefixed_tag("cov", key)]
+               
+    # Group by 'covered' context and 'covering' context
+    covered_tagged_keys = [(key, value, tag) for key, value, tag in all_cov_tagged_keys if (tags.get_quad_tag_parts(tag)[1]).startswith("covered") ]
+    covering_tagged_keys = [(key, value, tag) for key, value, tag in all_cov_tagged_keys if (tags.get_quad_tag_parts(tag)[1]).startswith("covering") ]
+
+    # For each 'covered' context identifier
+    for covered_section_key, covered_section_value, tag in covered_tagged_keys:
+
+        if (section := covered_section_key.getProperty("section")) is None:
+            logger.warning(f"Coverage tag '{tag}' was not applied to section.  Ignoring")
+            continue
+
+        prefix, context, covered_key_tag, comparison = tags.get_quad_tag_parts(tag)
+        if len(context.split("=")) != 2:
+            logger.warning(f"Found coverage tag '{context}' with context that didn't include an ID")
+            continue
+        covered_context_id = context.split("=")[1]
+
+        # Get the covered tagged keys
+        covered_key_values = find.keys_with_tag(covered_section_value, covered_key_tag)
+
+        # Filter the covered tagged keys
+        covered_key_values = _filter(common_config, model, comparison, covered_key_values)
+
+        # For each 'covering' context with same identifier
+        for covering_section_key, covering_section_value, tag in covering_tagged_keys:
+
+            if (section := covering_section_key.getProperty("section")) is None:
+                logger.warning(f"Coverage tag '{tag}' was not applied to section.  Ignoring")
+                continue
+
+            prefix, context, covering_key_tag, comparison = tags.get_quad_tag_parts(tag)
+            if len(context.split("=")) != 2:
+                logger.warning(f"Found coverage tag '{context}' with context that didn't include an ID")
+                continue
+            covering_context_id = context.split("=")[1]
+
+            if not match.equals(covered_context_id, covering_context_id):
+                continue
+
+            # Get the covering tagged keys
+            covering_key_values = find.keys_with_tag(covering_section_value, covering_key_tag)
+
+            # Filter the covering tagged keys
+            covering_key_values_filtered = _filter(common_config, model, comparison, covering_key_values)
+
+            # Check if there is a covering tagged key value that matches each covered tagged key value
+            covering_values = [value_entry for key_entry, value_entry in covering_key_values_filtered]
+
+            for key_entry, value_entry in covered_key_values:
+
+                if not match.equals(value_entry, covering_values):
+                    # Coverage finding
+                    issue_dict = {}
+                    issue_dict["issue_key"] = key_entry
+                    issue_dict["issue_value"] = value_entry
+                    issue_dict["issue_table"] = covering_section_key.getProperty("section")
+                    issue_dict["issue_table_row"] = None    # Disable showing this in the error message
+                    if len(covering_key_values) > 0:
+                        key_eg, _ = covering_key_values[0]
+                        issue_dict["covering_col"] = key_eg.getProperty("colname")
+                    else:
+                        # Best we can do when there is no example of a covering key value
+                        issue_dict["covering_col"] = covering_key_tag
+
+                    issue_dict["covering_table"] = covering_section_key.getProperty("section")
+                    
+                    verify_return_list.append(VerifierIssue(covered_context_id, covered_context_id + "-fix", issue_dict, ErrorType.NOT_SET))
 
     return verify_return_list

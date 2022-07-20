@@ -260,6 +260,7 @@ scheme:
                 section: Components Detail Table
                 tags:
                   - components-details-data
+                  - cov/covered=cov-authnz/name/component_in_scope
               value:
                 get-data:
                   query:
@@ -314,6 +315,7 @@ scheme:
                 section: "Component AuthN and AuthZ Table"
                 tags:
                   - components-access-control-data
+                  - cov/covering=cov-authnz/threat-component
               value:
                 get-data:
                   query:
