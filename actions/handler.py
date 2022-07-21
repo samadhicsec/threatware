@@ -61,6 +61,8 @@ def lambda_handler(event, context):
         filtered_qsp["request"]["format"] = output_format
     if (convert_meta := qsp.get("meta", None)) is not None:
         filtered_qsp["request"]["meta"] = convert_meta
+    if (verify_reports := qsp.get("reports", None)) is not None:
+        filtered_qsp["request"]["reports"] = verify_reports
 
     logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
@@ -198,7 +200,7 @@ def lambda_handler(event, context):
                             issues = verify_output.getDetails()
 
                             # Generate a report on verification issues and analysis
-                            verify_output = verify.report(verify_config, doc_model, issues)
+                            verify_output = verify.report(verify_config, doc_model, issues, verify_reports)
 
                             #body = verify_output.tojson()
                             content_type, body = verify_output.getContent()
@@ -337,6 +339,7 @@ def main():
     scheme_help = 'Identifier for the threat model scheme (which contains location information)'
     doc_help = 'Location identifier of the document'
     template_help = 'Identifier for the document template (overrides template in scheme)'
+    reports_help = "Additional reports can be returned with more information.\n'assets' will show the controls covering each asset per (in-scope) storage location.\n'controls' will show which assets each control covers per (in-scope) storage location"
 
     parser = argparse.ArgumentParser(prog='threatware', description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
 
@@ -354,10 +357,11 @@ def main():
     parser_convert.add_argument("-m", "--meta", required=False, help="What level of meta data about fields should be returned.  Note, 'properties' returns 'tags' as well.", default="tags", choices=['none', 'tags', 'properties'])
 
     # verify
-    parser_convert = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval')
-    parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
-    parser_convert.add_argument('-t', '--doctemplate', required=True, help=template_help)
+    parser_verify = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval', formatter_class=argparse.RawTextHelpFormatter)
+    parser_verify.add_argument('-s', '--scheme', required=True, help=scheme_help)
+    parser_verify.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_verify.add_argument('-t', '--doctemplate', required=True, help=template_help)
+    parser_verify.add_argument("-r", "--reports", required=False, help=reports_help, default='none', choices=['none', 'assets', 'controls', 'all'])
 
     # manage
     parser_manage = subparsers.add_parser("manage", help='Manage the status of threat models')
@@ -412,6 +416,7 @@ def main():
     event["queryStringParameters"]["doctemplate"] = args.doctemplate if "doctemplate" in args else None
     event["queryStringParameters"]["ID"] = args.id if "id" in args else None
     event["queryStringParameters"]["IDprefix"] = args.idprefix if "idprefix" in args else None
+    event["queryStringParameters"]["reports"] = args.reports if "reports" in args else None
 
     response = lambda_handler(event, context)
 

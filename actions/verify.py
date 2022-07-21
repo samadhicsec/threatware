@@ -7,6 +7,7 @@ import logging
 from utils.error import VerifyError
 from language.translate import Translate
 from utils.output import FormatOutput
+from utils import match
 from verifiers.verifiers_config import VerifiersConfig
 from verifiers.threat_coverage import ThreatCoverage
 from verifiers.verifiers_report import VerifiersReport
@@ -64,7 +65,25 @@ def _coverage(config:VerifiersConfig, threatmodel:dict):
 
     return coverage
 
-def report(config:VerifiersConfig, threatmodel:dict, issues:list):
+def _reports_to_show(reports_parameter:str):
+    """ Returns a bool 2-tuple indicating if the asset and control reports should be shown """
+
+    if match.is_empty(reports_parameter):
+        return False, False
+
+    if reports_parameter == "none":
+        return False, False
+    elif reports_parameter == "assets":
+        return True, False
+    elif reports_parameter == "controls":
+        return False, True
+    elif reports_parameter == "all":
+        return True, True
+
+    logger.warning(f"Unrecognised value '{reports_parameter}' for 'reports' parameter.  Using default.")
+    return False, False
+
+def report(config:VerifiersConfig, threatmodel:dict, issues:list, verify_reports:str):
 
     logger.info("Entering report")
 
@@ -74,7 +93,9 @@ def report(config:VerifiersConfig, threatmodel:dict, issues:list):
         
         coverage = _coverage(config, threatmodel)
 
-        verifiers_report = VerifiersReport(config)
+        show_asset_report, show_control_report = _reports_to_show(verify_reports)
+
+        verifiers_report = VerifiersReport(config, show_asset_report, show_control_report)
 
         verifiers_report.report(issues, coverage)
 
