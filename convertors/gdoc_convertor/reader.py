@@ -17,7 +17,10 @@ import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/documents.readonly', 'https://www.googleapis.com/auth/drive.readonly']
+#SCOPES = ['https://www.googleapis.com/auth/documents.readonly', 'https://www.googleapis.com/auth/drive.readonly']
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# I would like to use the below scope, but it doesn't seem possible with a CLI app
+#SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def _getCredentials(connection):
 
