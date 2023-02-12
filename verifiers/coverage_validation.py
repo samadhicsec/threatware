@@ -25,8 +25,9 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
         if match.equals(storage_location_value, compare_to_value):
 
             grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+            component_transform = callback_config.get("component-transform", transform.identity)
 
-            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
+            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
                 return True
             if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
                 return True
@@ -41,8 +42,9 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
 
     if tag_comparison == "storage-expression":
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+        component_transform = callback_config.get("component-transform", transform.identity)
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
             return True
         if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
             return True
@@ -94,11 +96,11 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
         else:
             out_of_scope_components.append(component_row_id_data)
 
-    callback_config = {"grouped-text":common_config["grouped-text"]}
+    component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
+
+    callback_config = {"grouped-text":common_config["grouped-text"], "component-transform":component_transform}
 
     exclude_callback = lambda callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value: match.contains(compare_value, compare_to_value)
-
-    component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
 
     # Loop through the asset data tables
     for asset_data_tag, asset_data_key, asset_data_value in all_assets:

@@ -48,9 +48,10 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     strip_config = callback_config["strip-context"]
+    strip_fn = transform.strip(strip_config["start-char"], strip_config["end-char"])
 
     # We want to strip any context for the purpose of copmarison of references
-    if match.equals(compare_value, compare_to_value, transform.strip(strip_config["start-char"], strip_config["end-char"])):
+    if match.equals(compare_value, compare_to_value, strip_fn):
         return True
 
     if tag_comparison == "storage-expression":
@@ -58,7 +59,7 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
         # text match e.g. "All assets stored in environment variables"
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), strip_fn(compare_to_value)):
             return True
         if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key = "grouped_text")):
             return True
