@@ -196,13 +196,23 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
                     issue_dict["storage_location"] = storage_location_value
                     issue_dict["threats_and_controls_table"] = threats_and_controls_key.getProperty("section")
                     
+                    issue_dict["asset_key"] = None
+                    # We need to get information about the key tagged "threat-asset-tag" but have to handle the scenario where no entries have yet been put in the column 
                     if len(threats_and_controls_data) > 0:
-                        threat_asset_entries = find.keys_with_tag(threats_and_controls_data[0], common_config["threat-tags"]["threat-asset-tag"])
-                        issue_dict["asset_key"] = threat_asset_entries[0][0]
+                        threat_asset_entries = find.keys_with_tag(threats_and_controls_data, common_config["threat-tags"]["threat-asset-tag"])
+                        if len (threat_asset_entries) > 0:
+                            for keyentry, valueentry in threat_asset_entries:
+                                if not keyentry is None:
+                                    issue_dict["asset_key"] = keyentry
+                                    break
+                    
+                    if issue_dict["asset_key"] is None:
+                        # We could find a key tagged with "threat-asset-tag"
+                        fix_text_key = "no-covering-threat-fix-no-threat-or-asset"
                     else:
-                        issue_dict["asset_key"] = "undefined"
+                        fix_text_key = "no-covering-threat-fix"
 
-                    verify_return_list.append(VerifierIssue("no-covering-threat", "no-covering-threat-fix", issue_dict, ErrorType.NOT_SET))
+                    verify_return_list.append(VerifierIssue("no-covering-threat", fix_text_key, issue_dict, ErrorType.NOT_SET))
             
                 else:
                     # Store covering threats
