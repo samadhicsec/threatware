@@ -128,6 +128,10 @@ def get_document_row_table(document, query_cfg):
 
     table_ele = table_list[0]
 
+    # For future reference:
+    #  'strip_tags' will remove the element tag and attributes but not the content
+    #  'strip_elements' will remove everything, tag, attributes and content
+
     # Parsing a table is much easier if we remove HTML elements that just style the output, and since the output of
     # this method is no longer XML, we know subsequent queries don't rely on these elements.
     # Stripping span doesn't affect content (and Google Docs have A LOT of span elements)
@@ -136,6 +140,12 @@ def get_document_row_table(document, query_cfg):
     # when you download the doc as HTML, where that text is hihglight as part of a comment.  Lesser of two evils is to 
     # not support 'superscript' elements (as we have to allow a document with comments to be verified)
     etree.strip_elements(table_ele, "sup")
+
+    # When we call HTMLTableParser it will strip links i.e. <a> and replace them with data_separator, which is /n, 
+    # this causes problems because if the link is in the middle of text it introduces a /n which messes up formatting.
+    # We don't want to change data_separator because actual html breaks need to be preserved.  So we just strip links,
+    # which is fine because we can't store them anyway and they should affect validation
+    etree.strip_tags(table_ele, "a")
 
     ## Removing this code as using HTMLTableParser with data_separator='\n' should have the same affecet
     # Stripping attributes of <p> elements doesn't affect content, but we leave them in because they are usually used
