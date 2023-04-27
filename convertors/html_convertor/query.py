@@ -159,7 +159,8 @@ def get_document_row_table(document, query_cfg):
 
     # Parse as table
     # Tags in cells are stripped and the tags text content is joined using data_separator
-    p = HTMLTableParser(data_separator='\n')
+    # HTMLTableParser defaults to decode_html_entities=False, but we want to keep those characters e.g. &
+    p = HTMLTableParser(data_separator='\n', decode_html_entities=True)
     #p = HTMLTableParser(data_separator=' ')
 
     p.feed(table_str)
