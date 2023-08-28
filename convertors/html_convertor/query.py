@@ -6,6 +6,7 @@ import lxml.html
 from lxml.etree import XPathError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
+#from html_table_extractor.extractor import Extractor
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -166,6 +167,14 @@ def get_document_row_table(document, query_cfg):
     #table_str = table_bstr.replace("</p><p>", "<a>\n</a>")
     #table_str = table_bstr.replace("</p><p>", "</p>\n<p>")
     table_str = table_bstr
+
+    # Would like to use this libary, but it doesn't support changing the separator character.
+    # extractor = Extractor(table_str)
+    # extractor.parse()
+    # table_output = extractor.return_list()
+
+    # Non-breaking spaces cause string matching issues (usually from cut & paste from somewhere else).  So let's replace those with normal spaces.
+    table_str = table_str.replace("\xa0", " ")
 
     # Parse as table
     # Tags in cells are stripped and the tags text content is joined using data_separator
