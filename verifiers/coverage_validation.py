@@ -59,7 +59,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     verify_return_list = assets_verify(common_config, verifier_config, model, template_model)
 
-    verify_return_list.extend(cov_verify(common_config, verifier_config, model, template_model))
+    # Not currently used.  Likely to be deprecated.  Too complicated.
+    #verify_return_list.extend(cov_verify(common_config, verifier_config, model, template_model))
 
     return verify_return_list
 
