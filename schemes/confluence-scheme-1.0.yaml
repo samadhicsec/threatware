@@ -2,6 +2,17 @@
 scheme:
   version: 1.0
   document-storage: confluence
+  preprocess:
+    # This removes all tags (but not their contents) from heading elements.  
+    # Since our queries match on heading text, we need to strip any tags in headings
+    - selector: "//h1|//h2|//h3|//h4|//h5|//h6"
+      strip-tags: "*"
+    # This removes all <a> tags (but not their contents) from table elements.
+    # When <table> is converted to a dict, <a> are replaced with a '\n' separator
+    # character, but this messes up text formatting.  Can remove links because
+    # they are lost anyway
+    - selector: "//table"
+      strip-tags: "a"
   verifiers:
     disable:
 

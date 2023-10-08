@@ -2,6 +2,46 @@
 scheme:
   version: 1.0
   document-storage: googledoc
+  preprocess:
+    #############################################################################
+    # To be get backward compatibility with 0.9.2 copy this preprocess section to 
+    # the 0.9.2 scheme file and follow the comment instructions in this section
+    #############################################################################
+    # This removes all 
+    #   <span> tags (but not their contents).  
+    #   <meta> and <style> elements (and their contents)
+    #   style= attributes (and their contents)
+    # from the whole document.  Removing styling makes the document, 
+    # much smaller.
+    - selector: "/*"                  # Comment out this for 0.9.2 compat
+      strip-tags: "span"              # Comment out this for 0.9.2 compat
+    - selector: "/*"                  # Comment out this for 0.9.2 compat
+      strip-elements: "meta"          # Comment out this for 0.9.2 compat
+    - selector: "/*"                  # Comment out this for 0.9.2 compat
+      strip-elements: "style"         # Comment out this for 0.9.2 compat
+    - selector: "//*[@style]"         # Comment out this for 0.9.2 compat
+      strip-attributes: "style"       # Comment out this for 0.9.2 compat
+    # This removes all tags (but not their contents) from heading elements.  
+    # Since our queries match on heading text, we need to strip any tags in headings
+    - selector: "//h1|//h2|//h3|//h4|//h5|//h6"   # Comment out this for 0.9.2 compat
+      strip-tags: "*"                             # Comment out this for 0.9.2 compat
+     
+    # This removes all <span> tags (but not their contents) from table elements.
+    #- selector: "//table"            # Un-comment out this for 0.9.2 compat
+    #  strip-tags: "span"             # Un-comment out this for 0.9.2 compat
+    #############################################################################
+
+    # This removes all <sup> elements (and their contents) from table elements.
+    # <sup> is used by Google Docs for inline comments when exported to HTML, 
+    # and they make writing queries more difficult
+    - selector: "//table"
+      strip-elements: "sup"
+    # This removes all <a> tags (but not their contents) from table elements.
+    # When <table> is converted to a dict, <a> are replaced with a '\n' separator
+    # character, but this messes up text formatting.  Can remove links because
+    # they are lost anyway
+    - selector: "//table"
+      strip-tags: "a"
   verifiers:
     disable:
 
@@ -18,7 +58,7 @@ scheme:
           get-data:
             - query:
                 type: "html-table"
-                xpath: "//span[text()='Details']/following::table[1]"
+                xpath: "//html/body/h1[text()='Details']/following::table[1]"
             - query:
                 type: "html-table-transpose"
           map-data:
@@ -73,7 +113,7 @@ scheme:
           get-data:
             - query:
                 type: "html-table"
-                xpath: "//span[text()='Version History']/following::table[1]"
+                xpath: "//html/body/h1[text()='Version History']/following::table[1]"
           map-data:
             - key: 
                 name: "version"
@@ -167,7 +207,7 @@ scheme:
           get-data:
             - query:
                 type: html-table
-                xpath: "//span[text()='Scope']/following::table[1]"
+                xpath: "//html/body/h1[text()='Scope']/following::table[1]"
             - query:
                 type: "html-table-transpose"
           map-data:
@@ -224,7 +264,7 @@ scheme:
           get-data:
             query:
               type: html-text-section
-              xpath: "//h1[span[1]/text()='Description']/following::span[following::h2[1][span[1]/text()='References']]/text()"
+              xpath: "//html/body/h1[text()='Description']/following::p[following::h2[1][text()='References']]/text()"
       - key: 
           name: references
           section: References
@@ -232,7 +272,7 @@ scheme:
           get-data:
             query:
               type: html-ul
-              xpath: "//span[text()='References']/following::ul[following::h1[1][span[1]/text()='Components']]/li"
+              xpath: "//html/body/h2[text()='References']/following::ul[following::h1[1][text()='Components']]/li"
           map-data:
             - key: "description"
               value:
@@ -264,7 +304,7 @@ scheme:
                 get-data:
                   query:
                     type: html-table
-                    xpath: "//span[text()='Components']/following::span[text()='Details']/following::table[1]"
+                    xpath: "//html/body/h1[text()='Components']/following::h2[text()='Details']/following::table[1]"
                     remove-rows-if-empty:
                 map-data:
                   - key: 
@@ -318,7 +358,7 @@ scheme:
                 get-data:
                   query:
                     type: html-table
-                    xpath: "//span[text()='Components']/following::span[text()='AuthN and AuthZ']/following::table[1]"
+                    xpath: "//html/body/h1[text()='Components']/following::h2[text()='AuthN and AuthZ']/following::table[1]"
                     remove-rows-if-empty:
                 map-data:
                   - key: 
@@ -373,7 +413,7 @@ scheme:
                 get-data:
                   query:
                     type: html-table
-                    xpath: "//span[text()='Assets']/following::span[text()='Functional Assets']/following::table[1]"
+                    xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Functional Assets']/following::table[1]"
                 map-data:
                   - key: "category"
                     value: 
@@ -464,7 +504,7 @@ scheme:
                 get-data:
                   query:
                     type: html-table
-                    xpath: "//span[text()='Assets']/following::span[text()='Technical Assets']/following::table[1]"
+                    xpath: "//html/body/h1[text()='Assets']/following::h2[text()='Technical Assets']/following::table[1]"
                     #remove-rows-if-empty:
                     #  ignore-cols: 
                     #    - 0
@@ -570,7 +610,7 @@ scheme:
           get-data:
             - query:
                 type: "html-table"
-                xpath: "//span[text()='Operational Security']/following::table[1]"
+                xpath: "//html/body/h1[text()='Operational Security']/following::table[1]"
                 remove-header-row: True
             - query:
                 type: "html-split-table"
@@ -604,7 +644,7 @@ scheme:
           get-data:
             query:
               type: html-table
-              xpath: "//span[text()='Threats and Controls']/following::table[1]"
+              xpath: "//html/body/h1[text()='Threats and Controls']/following::table[1]"
               remove-rows-if-empty:
           map-data:
             - key: "components"
