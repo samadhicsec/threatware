@@ -27,7 +27,7 @@ def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict):
 
     # Read the document as html xml element
     # This will return an lxml element at the root node which is the 'html' tag
-    query_document = query.get_document(document)
+    query_document = query.get_document(document, mapping)
 
     # Convert the document
     return doc_to_model(config, query_document, mapping)

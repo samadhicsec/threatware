@@ -8,6 +8,8 @@ import logging
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
+def identity():
+    return lambda val : val
 
 def c14n(value:str, transform_fn = None) -> str:
     if transform_fn is not None:

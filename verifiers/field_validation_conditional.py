@@ -59,6 +59,28 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict["if_value"] = if_tagged_value
                 issue_dict["then_key"] = then_tagged_key
                 issue_dict["then_value"] = then_tagged_value
+
+                # The actual issue may be located somewhere else, so accomodate overrides to better explain how to fix the issue
+                # Allow "issue-table-tag" to be set to allow override
+                issue_table_value = model
+                if (issue_table_tag := conditional.get("issue-table-tag", None)) is not None:
+                    issue_table_key, issue_table_value = find.key_with_tag(model, issue_table_tag)
+                    if issue_table_key is not None:
+                        if (sectionKey := keymaster.get_section_for_key(issue_table_key)) is not None:
+                            issue_dict["issue_table"] = sectionKey.getProperty("section")
+
+                # Allow "issue-table-row" to be 'None' to indicate that no 'Location' is shown in the error
+                if (issue_table_row := conditional.get("issue-table-row", 1)) is None:
+                    if match.is_empty(issue_table_row):
+                        issue_dict["issue_table_row"] = None
+
+                # Use "issue-key-tag" to override the "issue_key" passed to VerifierIssue
+                if (issue_key_tag := conditional.get("issue-key-tag", None)) is not None:
+                    issue_key_key, _ = find.key_with_tag(issue_table_value, issue_key_tag)
+                    if issue_key_key is not None:
+                        issue_dict["issue_key"] = issue_key_key
+                        issue_dict["issue_value"] = None
+
                 verify_return_list.append(VerifierIssue(conditional["issue-text-key"], conditional.get("fix-text-key", None), issue_dict))
 
     return verify_return_list

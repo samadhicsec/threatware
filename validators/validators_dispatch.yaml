@@ -6,3 +6,4 @@ validators:
   regex: "validators.regex"
   date: "validators.date"
   template: "validators.template"
+  exists: "validators.exists"

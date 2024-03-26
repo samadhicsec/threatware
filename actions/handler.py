@@ -41,7 +41,8 @@ ACTION_MEASURE = 'measure'
 def lambda_handler(event, context):
 
     # Fitler the set of query string parameters to just ones we know about
-    qsp = event.get("queryStringParameters", {})
+    if (qsp := event.get("queryStringParameters", {})) is None:
+        qsp = {}
     filtered_qsp = {"request":{}}
     if (action := qsp.get("action", None)) is not None:
         filtered_qsp["request"]["action"] = action

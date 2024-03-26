@@ -25,8 +25,9 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
         if match.equals(storage_location_value, compare_to_value):
 
             grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+            component_transform = callback_config.get("component-transform", transform.identity)
 
-            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
+            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
                 return True
             if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
                 return True
@@ -41,8 +42,9 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
 
     if tag_comparison == "storage-expression":
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+        component_transform = callback_config.get("component-transform", transform.identity)
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), compare_to_value):
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
             return True
         if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
             return True
@@ -57,7 +59,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
     verify_return_list = assets_verify(common_config, verifier_config, model, template_model)
 
-    verify_return_list.extend(cov_verify(common_config, verifier_config, model, template_model))
+    # Not currently used.  Likely to be deprecated.  Too complicated.
+    #verify_return_list.extend(cov_verify(common_config, verifier_config, model, template_model))
 
     return verify_return_list
 
@@ -94,11 +97,11 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
         else:
             out_of_scope_components.append(component_row_id_data)
 
-    callback_config = {"grouped-text":common_config["grouped-text"]}
+    component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
+
+    callback_config = {"grouped-text":common_config["grouped-text"], "component-transform":component_transform}
 
     exclude_callback = lambda callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value: match.contains(compare_value, compare_to_value)
-
-    component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
 
     # Loop through the asset data tables
     for asset_data_tag, asset_data_key, asset_data_value in all_assets:
@@ -194,13 +197,23 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
                     issue_dict["storage_location"] = storage_location_value
                     issue_dict["threats_and_controls_table"] = threats_and_controls_key.getProperty("section")
                     
+                    issue_dict["asset_key"] = None
+                    # We need to get information about the key tagged "threat-asset-tag" but have to handle the scenario where no entries have yet been put in the column 
                     if len(threats_and_controls_data) > 0:
-                        threat_asset_entries = find.keys_with_tag(threats_and_controls_data[0], common_config["threat-tags"]["threat-asset-tag"])
-                        issue_dict["asset_key"] = threat_asset_entries[0][0]
+                        threat_asset_entries = find.keys_with_tag(threats_and_controls_data, common_config["threat-tags"]["threat-asset-tag"])
+                        if len (threat_asset_entries) > 0:
+                            for keyentry, valueentry in threat_asset_entries:
+                                if not keyentry is None:
+                                    issue_dict["asset_key"] = keyentry
+                                    break
+                    
+                    if issue_dict["asset_key"] is None:
+                        # We could find a key tagged with "threat-asset-tag"
+                        fix_text_key = "no-covering-threat-fix-no-threat-or-asset"
                     else:
-                        issue_dict["asset_key"] = "undefined"
+                        fix_text_key = "no-covering-threat-fix"
 
-                    verify_return_list.append(VerifierIssue("no-covering-threat", "no-covering-threat-fix", issue_dict, ErrorType.NOT_SET))
+                    verify_return_list.append(VerifierIssue("no-covering-threat", fix_text_key, issue_dict, ErrorType.NOT_SET))
             
                 else:
                     # Store covering threats

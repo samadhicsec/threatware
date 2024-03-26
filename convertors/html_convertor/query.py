@@ -6,6 +6,7 @@ import lxml.html
 from lxml.etree import XPathError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
+#from html_table_extractor.extractor import Extractor
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -18,10 +19,53 @@ PROCESS_REMOVE_HEADER_ROW = 'remove-header-row'
 PROCESS_REMOVE_ROWS_IF_EMPTY = "remove-rows-if-empty"
 PROCESS_SPLIT_TYPE = "split-type"
 
-def get_document(document_str):
+# def _strip_element_list(ele_list):
 
+#     for ele in ele_list:
+#         etree.strip_elements(ele, "*")
+#     return
+
+def get_document(document_str, mapping):
+
+    document = lxml.html.document_fromstring(document_str)
+
+    if preprocess := mapping.get("preprocess", None):
+
+        for processor in preprocess:
+            selector = processor.get("selector", "//")
+
+            try:
+                # Navigate to the <table> element
+                selection = document.xpath(selector)
+            except XPathError:
+                logger.warning(f"Pre-process selector '{selector}' caused an error")
+                continue
+            
+            for ele in selection:
+                if tags_to_strip := processor.get("strip-tags", None):
+                    etree.strip_tags(ele, tags_to_strip)
+                if elements_to_strip := processor.get("strip-elements", None):
+                    etree.strip_elements(ele, elements_to_strip)
+                if attributes_to_strip := processor.get("strip-attributes", None):
+                    etree.strip_attributes(ele, attributes_to_strip)
+
+    # This is a hack.  For reasons unknown XPath queries start failing for no obvious reason
+    # once strip_* methods are called.  So we reload the processed XML from a string.  Lame.
+    new_doc_bstr = lxml.html.tostring(document, encoding='unicode')
+    new_doc_str = new_doc_bstr
+    document = lxml.html.document_fromstring(new_doc_str)
+
+    return document
+
+    # try:
+    #     h1_list = document.xpath("//h1")
+    #     _strip_element_list(h1_list)
+    # except XPathError:
+    #     logger.warning(f"XPath query to find headers caused an error")
+
+    # return document
     # Note, can't do much pre-processing of the XML here as the scheme might be referencing something that we might change
-    return lxml.html.document_fromstring(document_str)
+    #return lxml.html.document_fromstring(document_str)
 
 def get_document_section(document, query_cfg):
 
@@ -128,14 +172,24 @@ def get_document_row_table(document, query_cfg):
 
     table_ele = table_list[0]
 
+    # For future reference:
+    #  'strip_tags' will remove the element tag and attributes but not the content
+    #  'strip_elements' will remove everything, tag, attributes and content
+
     # Parsing a table is much easier if we remove HTML elements that just style the output, and since the output of
     # this method is no longer XML, we know subsequent queries don't rely on these elements.
     # Stripping span doesn't affect content (and Google Docs have A LOT of span elements)
-    etree.strip_tags(table_ele, "span")
+    #etree.strip_tags(table_ele, "span")
     # Reluctantly removing 'superscript' elements.  It seems Google Docs will add single letter superscript to elements
     # when you download the doc as HTML, where that text is hihglight as part of a comment.  Lesser of two evils is to 
     # not support 'superscript' elements (as we have to allow a document with comments to be verified)
-    etree.strip_elements(table_ele, "sup")
+    #etree.strip_elements(table_ele, "sup")
+
+    # When we call HTMLTableParser it will strip links i.e. <a> and replace them with data_separator, which is /n, 
+    # this causes problems because if the link is in the middle of text it introduces a /n which messes up formatting.
+    # We don't want to change data_separator because actual html breaks need to be preserved.  So we just strip links,
+    # which is fine because we can't store them anyway and they should affect validation
+    #etree.strip_tags(table_ele, "a")
 
     ## Removing this code as using HTMLTableParser with data_separator='\n' should have the same affecet
     # Stripping attributes of <p> elements doesn't affect content, but we leave them in because they are usually used
@@ -157,9 +211,18 @@ def get_document_row_table(document, query_cfg):
     #table_str = table_bstr.replace("</p><p>", "</p>\n<p>")
     table_str = table_bstr
 
+    # Would like to use this libary, but it doesn't support changing the separator character.
+    # extractor = Extractor(table_str)
+    # extractor.parse()
+    # table_output = extractor.return_list()
+
+    # Non-breaking spaces cause string matching issues (usually from cut & paste from somewhere else).  So let's replace those with normal spaces.
+    table_str = table_str.replace("\xa0", " ")
+
     # Parse as table
     # Tags in cells are stripped and the tags text content is joined using data_separator
-    p = HTMLTableParser(data_separator='\n')
+    # HTMLTableParser defaults to decode_html_entities=False, but we want to keep those characters e.g. &
+    p = HTMLTableParser(data_separator='\n', decode_html_entities=True)
     #p = HTMLTableParser(data_separator=' ')
 
     p.feed(table_str)

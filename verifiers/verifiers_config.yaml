@@ -42,65 +42,131 @@ verifiers-config:
   field-validation-conditional-mandatory:             # verifier for a value must exist if another value has a certain value
     tags:
     # The following pairs of tag define a tag that is mandatory if another tag has a value
-      - tag: "tech-stack"                             # in any given row, the value tagged 'tech-stack' is mandatory if
-        depends-on: "in-scope"                        # the value tagged 'in-scope'
-        depends-on-value: {{ translate.yes }}         # has this value
-      - tag: "version-approver"
-        depends-on: "version-status"
-        depends-on-value: {{ translate.approved }}
-      - tag: "version-approved-date"                  # in any given row, the value tagged 'version-approved-date' is mandatory if
-        depends-on: "version-approver"                # the value tagged 'version-approver' has ANY value
-      - tag: "version-approver"                       # in any given row, the value tagged 'version-approver' is mandatory if
-        depends-on: "version-approved-date"           # the value tagged 'version-approved-date' has ANY value
+      #- tag: "tech-stack"                             # in any given row, the value tagged 'tech-stack' is mandatory if
+      #  depends-on: "in-scope"                        # the value tagged 'in-scope'
+      #  depends-on-value: {{ translate.yes }}         # has this value
+      #- tag: "version-approver"
+      #  depends-on: "version-status"
+      #  depends-on-value: {{ translate.approved }}
+      #- tag: "version-approved-date"                  # in any given row, the value tagged 'version-approved-date' is mandatory if
+      #  depends-on: "version-approver"                # the value tagged 'version-approver' has ANY value
+      #- tag: "version-approver"                       # in any given row, the value tagged 'version-approver' is mandatory if
+      #  depends-on: "version-approved-date"           # the value tagged 'version-approved-date' has ANY value
 
   field-validation-conditional:                      # verifier for a value with a condition if another value has a certain value
-    tags:
-    # The following pairs of tag define if a tag has a certain value, then a certain value of another tag is prohibited
-      #- if-tag: "version-approver"                    # in any given row, the value tagged 'version-approver' 
-      #  has-tag-value: ""                             # when it has value "" i.e. empty
-      #  then-tag: "version-approved-date"             # then the value tagged 'version-approved-date'
-      #  must-not-have-value:                          # must not have any value
+    conditionals:
+    # The following are conditional 'if ... then ...' statements where if the 'if' condition is True and the 'then' condition is false, an issue is raised
+      # If 'In Scope' is 'Yes' then 'Tech Stack' must not be empty
+      - if:
+          value-tag: "in-scope"
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.yes }}
+        then:
+          value-tag: "tech-stack"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
+        issue-text-key: conditional-mandatory
+      # If 'In Scope' is 'Yes' then 'Component' name must exist in the 'AuthN/Z' table
+      - if:
+          value-tag: "in-scope"
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.yes }}
+        then:
+          value-tag: "name"
+          value-condition:
+            validator: "exists"
+            config:
+              template: false
+              data-tag: "components-access-control-data"
+              value-tag: "threat-component"
+        issue-text-key: conditional-mandatory-exists
+        fix-text-key: conditional-mandatory-exists-fix
+        issue-table-tag: "components-access-control-data"       # When there's an error, use the table with this tag
+        issue-table-row:                                        # When there's an error, leaving this blank means no (row) location is shown
+        issue-key-tag: "threat-component"                       # When there's an error, the 'issue_key' used in templates has this tag
+      # If 'Status' is 'Approved' then 'Approver Name' must not be empty
+      - if:
+          value-tag: "version-status"
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.approved }}
+        then:
+          value-tag: "version-approver"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
+        issue-text-key: "conditional-mandatory"
+      # If 'Approver Name' is not empty then 'Approved Date' must also be not empty
       - if:
           value-tag: "version-approver"
-          validator: "string"
-          config:
-            method: "isempty"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
         then:
           value-tag: "version-approved-date"
-          validator: "string"
-          config:
-            method: "isempty"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
+        issue-text-key: "conditional-mandatory-any-value"
+      # If 'Approver Name' is empty then 'Approved Date' must also be empty
+      - if:
+          value-tag: "version-approver"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isempty"
+        then:
+          value-tag: "version-approved-date"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isempty"
         issue-text-key: "conditional-is-empty"
-      #- if-tag: "authorisation"                       # in any given row, the value tagged 'authorisation' 
-      #  has-tag-value:  "n/a"                         # when it the value 'n/a'
-      #  then-tag: "authentication"                    # then the value tagged 'authentication'
-      #  must-have-value: "n/a"                        # must have value 'n/a' i.e. authorisation can only be 'n/a' if authenticationis also 'n/a'
-      - if:                                            # If 'Authentication' is not 'n/a' then 'Authorisation' must also NOT be 'n/a' i.e. if there is authn there is always authz, although maybe 'None'
+      # If 'Authentication' is 'n/a' then 'Authorisation' must also be 'n/a' i.e. if authn is not possible, then authz is not possible.  Usually authors mean authn is 'None' i.e. there is no authn
+      - if:                                            
           value-tag: "authentication"
-          validator: "string"
-          config:
-            method: "notequals"
-            expected-result: {{ translate.na | safe }}
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.na | safe }}
         then:
           value-tag: "authorisation"
-          validator: "string"
-          config:
-            method: "notequals"
-            expected-result: {{ translate.na | safe }}
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.na | safe }}
         issue-text-key: "conditional-authnz-na"
         fix-text-key: "conditional-authnz-na-fix"
-      - if:                                             # If 'Authorisation' IS NOT 'n/a' then 'Authentication' must also NOT be 'n/a' i.e. if there is authz, then there is authn, although maybe 'None'
+      # If 'Authorisation' is 'n/a' then 'Authentication' must also be 'n/a' i.e. if authz is not possible, then authn is not possible.  Uusally authors mean authz is 'None' i.e. there is no authz
+      - if:                                             
           value-tag: "authorisation"
-          validator: "string"
-          config:
-            method: "notequals"
-            expected-result: {{ translate.na | safe }}
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.na | safe }}
         then:
           value-tag: "authentication"
-          validator: "string"
-          config:
-            method: "notequals"
-            expected-result: {{ translate.na | safe }}
+          value-condition:
+            validator: "string"
+            config:
+              method: "equals"
+              expected-result: {{ translate.na | safe }}
         issue-text-key: "conditional-authnz-na"
         fix-text-key: "conditional-authnz-na-fix"
   

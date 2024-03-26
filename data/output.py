@@ -27,9 +27,10 @@ def assign(output_def, output_data):
         if isinstance(output_data, dict):
             return output_data
         if isinstance(output_data, list):
-            if len(output_data) > 1:
-                logger.warning(f"dict output specified, but input was of length {len(output_data)} (>1). Just using first.")
-            return output_data[0]
+            if len(output_data) >= 1:
+                if len(output_data) > 1:
+                    logger.warning(f"dict output specified, but input was of length {len(output_data)} (>1). Just using first.")
+                return output_data[0]
 
         logger.warning(f"Could not convert output data type '{type(output_data)}' to dict")
         return None
