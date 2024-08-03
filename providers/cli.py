@@ -40,12 +40,21 @@ class CLIContext:
     def getGoogleCredentials(self):
 
         credentials = {}
-        credentials["credentials-file"] = ConfigBase.getConfigPath(self.config.get("google", {}).get("credentials_file", "credentials.json"))
-        credentials["token-file"] = ConfigBase.getConfigPath(self.config.get("google", {}).get("token_file", "token.json"))
+        if (credentials_file := self.config.get("google", {}).get("credentials_file", None)) is None:
+            # No credentials file specified
+            if (api_key := self.config.get("google", {}).get("api_key", None)) is not None:
+                credentials["api_key"] = api_key
+            else:
+                # Default to using the credentials.json file
+                credentials_file = "credentials.json"
+        
+        if credentials_file is not None:
+            credentials["credentials-file"] = ConfigBase.getConfigPath(credentials_file)
+            credentials["token-file"] = ConfigBase.getConfigPath(self.config.get("google", {}).get("token_file", "token.json"))
 
-        if not os.path.exists(credentials["credentials-file"]):
-            logger.error(f"The Google credentials file '{credentials['credentials-file']}' does not exist")
-            raise ProviderError("providers.noGoolgeCredsFile", {"providers":{"creds_file":credentials["credentials-file"]}})
+            if not os.path.exists(credentials["credentials-file"]):
+                logger.error(f"The Google credentials file '{credentials['credentials-file']}' does not exist")
+                raise ProviderError("providers.noGoolgeCredsFile", {"providers":{"creds_file":credentials["credentials-file"]}})
 
         # For local testing with service credentials
         #svc_credentials_path = "convertors/gdoc_convertor/svc_credentials.json"
@@ -69,6 +78,16 @@ class CLIContext:
         #     credentials["public-key"] = ssh_public_file.read()
 
         # return credentials
+
+    def setupGit(self, remote:str, base_storage_dir:str):
+
+        # For the CLI we rely on the user's existing SSH credentials
+        if remote.startswith("git@"):
+            logger.info("Using user's existing git setup, including their SSH credentials for accessing git repositories")
+        elif remote.startswith("http"):
+            logger.info("Using git with anonymous HTTP")
+        else:
+            logger.warning("Unrecognised git remote, assuming anonymous HTTP")
 
     def get_config_base_dir(self, suggested_base_dir):
         """ Return the directory where we expect the configuration file to be based 

@@ -12,6 +12,7 @@ from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as SvcAcctCredentials
 from utils.error import ConvertError
 from utils.config import ConfigBase
+import httplib2
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -24,6 +25,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def _getCredentials(connection):
 
+    creds_dict ={}
     if "credentials-file" in connection:
         # Use the credentials file to create credentials
     
@@ -53,21 +55,25 @@ def _getCredentials(connection):
                 with open(token_path, 'w') as token:
                     token.write(creds.to_json())
 
+        creds_dict = {"credentials": creds}
+
+    elif "api_key" in connection:
+        creds_dict = {"developerKey":connection.get("api_key")}
     else:
 
-        creds = SvcAcctCredentials.from_service_account_info(connection, scopes=SCOPES)
+        creds_dict = {"credentials":SvcAcctCredentials.from_service_account_info(connection, scopes=SCOPES)}
 
-    return creds
+    return creds_dict
 
 def connect(connection:dict):
 
-    api_key = _getCredentials(connection)
+    creds_dict = _getCredentials(connection)
 
-    if api_key is None:
+    if not creds_dict:
         logger.error("Could not retrieve Google Doc credentials")
         raise ConvertError("internal-error", {})
-  
-    service = build('drive', 'v3', credentials=api_key)
+    
+    service = build('drive', 'v3', **creds_dict)
 
     return service
 
