@@ -50,7 +50,7 @@ def indexdata(config:dict, execution_env, ID:str):
                 logger.error(f"An entry with ID '{ID}' was not found")
                 raise ManageError("no-index-ID", {"ID":ID})
 
-            output.setSuccess("success-indexdata", {"ID":ID}, entry)
+            output.setSuccess("success-indexdata", {"ID":ID}, entry.get_state())
     
     except StorageError as error:
         output.setError(error.text_key, error.template_values)
