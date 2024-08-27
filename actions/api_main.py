@@ -53,37 +53,37 @@ def convert(scheme: str, docloc: str, lang: str = None, format: str = None, meta
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
 
 @app.get("/verify/")
-def convert(scheme: str, docloc: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
+def verify(scheme: str, docloc: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, meta=meta)
 
 @app.get("/manage/indexdata")
-def convert(ID: str, lang: str = None, format: str = None, meta: str = None):
+def manage_indexdata(ID: str, lang: str = None, format: str = None, meta: str = None):
     action = "manage.indexdata"
 
     return apicall(lang=lang, format=format, action=action, ID=ID, meta=meta)
 
 @app.get("/manage/create")
-def convert(IDprefix: str, scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_create(IDprefix: str, scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
     action = "manage.create"
 
     return apicall(lang=lang, format=format, action=action, IDprefix=IDprefix, scheme=scheme, docloc=docloc, meta=meta)
 
 @app.get("/manage/check")
-def convert(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_check(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
     action = "manage.check"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
 
 @app.get("/manage/submit")
-def convert(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_submit(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
     action = "manage.submit"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
 
 @app.get("/measure/")
-def convert(scheme: str, docloc: str, doctemplate: str, lang: str = None, format: str = None, meta: str = None):
+def measure(scheme: str, docloc: str, doctemplate: str, lang: str = None, format: str = None, meta: str = None):
     action = "measure"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, meta=meta)
