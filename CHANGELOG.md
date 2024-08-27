@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 ### Removed
 
+## [0.9.4] - 2024-08-28
+
+### Added
+
+- threatware can now run as an API.  Install requirements from `api_requirements.txt`.  It uses the [FastAPI framework](https://fastapi.tiangolo.com/) e.g. `fastapi run actions/api_main.py --port 8080`.  Once running you can see API docs at either `/docs` or `/redoc` URL paths.  A containerised version of threatware running as an API is available at https://hub.docker.com/r/threatwaretryit/api_threatware.
+
+### Fixed
+
+- the `manage.indexdata` action no longer returns internal information and just returns the information stored in threatmodels.yaml.
+- the `validate-as-status` validation is now configured correctly and reports when the `Verision History` `Status` entry is invalid.
+
 ## [0.9.3] - 2024-03-26
 
 ### Added
