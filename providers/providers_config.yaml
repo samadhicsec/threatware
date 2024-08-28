@@ -1,5 +1,12 @@
 ---
 providers:
+  api:
+    confluence:
+      creds_config_file: "~/.atlassian"
+      creds_config_section: "DEFAULT"
+    google:
+      credentials_file: "credentials.json"
+      token_file: "token.json"
   cli:
     confluence:
       creds_config_file: "~/.atlassian"

@@ -25,6 +25,11 @@ validators-text:
       default:
         output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
         output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' must begin with either; '{{ translate.confidentiality }}:', '{{ translate.integrity }}:' or '{{ translate.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
+  - tag: validate-as-status
+    text:
+      default:
+        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
   - tag: validate-from-template
     text:
       default:

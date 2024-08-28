@@ -71,8 +71,9 @@ def lambda_handler(event, context):
     # How we do that depends what env we are in.  Providers usually take a config file, but we don't have them yet, so load without config (which limits what methods we can use)
     if getattr(context, "threatware.cli", False):
         execution_env = provider.get_provider("cli", no_config_mode=True)
+    elif getattr(context, "threatware.api", False):
+        execution_env = provider.get_provider("api", no_config_mode=True)
     else:
-        GitStorage.containerised = True
         # We are being called as a lambda, so get credentials from cloud
         execution_env = provider.get_provider("aws.lambda", no_config_mode=True)
     
@@ -142,11 +143,11 @@ def lambda_handler(event, context):
             if getattr(context, "threatware.cli", False):
                 # Get creds locally
                 execution_env = provider.get_provider("cli")
+            elif getattr(context, "threatware.api", False):
+                execution_env = provider.get_provider("api")
             else:
-                GitStorage.containerised = True
                 # We are being called as a lambda, so get credentials from cloud
                 execution_env = provider.get_provider("aws.lambda")
-                #execution_env = provider.get_provider("cli")
 
             if schemeID is not None:
                 schemeDict = load_scheme(schemeID)
