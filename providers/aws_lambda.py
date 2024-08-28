@@ -6,6 +6,11 @@ Makes available configuration for AWS Lambda execution context
 import logging
 import os
 import json
+from sh import ssh_keyscan
+from sh.contrib import git
+from pathlib import Path
+import utils.shell as shell
+from utils.error import StorageError
 import boto3
 from botocore.exceptions import ClientError
 
@@ -90,6 +95,118 @@ class AWSLambdaContext:
         credentials = json.loads(self.secret_dict.get("git"))
 
         return credentials
+    
+    def _format_openssh_private_key(self, key:str) -> str:
+        """
+        Reformat OpenSSH private key in-case user has just cut and paste
+
+        Ensures OpenSSH header and footer text ends in newline - without this ssh considers the private key file invalid
+        """
+        openssh_header = "-----BEGIN OPENSSH PRIVATE KEY-----"
+        openssh_footer = "-----END OPENSSH PRIVATE KEY-----"
+
+        # Check if key contains correct newline terminated header
+        if key.find(openssh_header + "\n") == -1:
+            # Check if key contains header, just not newline terminated
+            if key.find(openssh_header) != -1:
+                # Replace non newline terminated header with newline terminated header
+                key = key.replace(openssh_header, openssh_header + "\n")
+            else:
+                # Not an OpenSSH private key
+                return key
+
+        # Check if key contains correct newline terminated footer
+        if key.find(openssh_footer + "\n") == -1:
+            # Check if key contains footer, just not newline terminated
+            if key.find(openssh_footer) != -1:
+                # Replace non newline terminated footer with newline terminated footer
+                key = key.replace(openssh_footer, openssh_footer + "\n")
+            else:
+                logger.error("Private does not have an OpenSSH footer")
+                # Not an OpenSSH private key
+                return key
+
+        return key
+
+    def setupGit(self, gitrepo_config):
+
+        # On AWS Lambda, to setup git, since we can't write to the local user's /home directory, we must
+        # configure git in the only location we can write to, which is /tmp
+
+        base_storage_dir = gitrepo_config.get("base-storage-dir", "/tmp/")
+        remote = gitrepo_config.get("remote")
+
+        if remote.startswith("git@"):
+            logger.info("Setting up git to use SSH credentials in /tmp")
+            ssh_path = Path.joinpath(Path(base_storage_dir), ".ssh")
+            ssh_config_path = str(Path.joinpath(ssh_path, "config"))
+            ssh_private_key_path = str(Path.joinpath(ssh_path, "key"))
+            ssh_public_key_path = str(Path.joinpath(ssh_path, "key.pub"))
+            ssh_known_hosts_path = str(Path.joinpath(ssh_path, "known_hosts"))
+            ssh_path = str(ssh_path)
+
+            # To work in lambda which doesn't have '/dev/fd' (which this argument that defaults to true relies on), we need to set this to False.  Hope this has no negative side effects
+            shell.global_kwargs["_close_fds"] = False
+            # To work in lambda, which seems to have no or few TTYs (because you get errors about it running out of them), set this to False
+            shell.global_kwargs["_tty_out"] = False
+            # To work in lambda which only allows us to write to /tmp, we need to configure ssh to use the config file there, and we need to set this env var so git uses ssh with this file
+            git_env = os.environ.copy()
+            git_env["GIT_SSH_COMMAND"] = "ssh -F " + ssh_config_path
+            shell.global_kwargs["_env"] = git_env
+
+            # The dockerfile created a symlink to /tmp/.ssh, but in AWS lambda that doesn't exist, so we need to create it.
+            os.makedirs(ssh_path, exist_ok=True)
+
+            # Write private and public keys to /tmp/.ssh/key and /tmp/.ssh/key.pub
+            git_keys = self.getGitCredentials()
+            if git_keys is None or len(git_keys) == 0:
+                raise StorageError("storage.no-git-credentials", {})
+            git_private_key = git_keys["private-key"]
+            git_public_key = git_keys["public-key"]
+            git_public_key_list = git_public_key.split(" ")
+            if len(git_public_key_list) != 3:
+                logger.error(f"Expected public key to consist of 3 space separated parts, instead found {len(git_public_key_list)} parts")
+                raise StorageError("internal-error", None)
+            git_alg, git_key, git_email = git_public_key_list[0], git_public_key_list[1], git_public_key_list[2]
+
+            # ssh is REALLY fussy about the private key file contents, so we need to do a sanity check on the contents we read in and ensure it will parse correctly
+            # Header and footer lines need to be be perfect i.e. "-----BEGIN OPENSSH PRIVATE KEY-----\n", "-----END OPENSSH PRIVATE KEY-----\n"
+            git_private_key = self._format_openssh_private_key(git_private_key)
+
+            with open(os.open(ssh_private_key_path, os.O_CREAT | os.O_WRONLY, 0o600), "w") as key_file:
+                key_file.writelines(git_private_key)
+                # Private key must have restricted access or git complains.
+            with open(ssh_public_key_path, "w") as key_file:
+                key_file.writelines(git_public_key)
+
+            # Write .ssh/config for the key file
+            with open(ssh_config_path, "w") as ssh_config:
+                ssh_config.writelines(["IdentityFile=" + ssh_private_key_path + "\n", "UserKnownHostsFile=" + ssh_known_hosts_path + "\n"])
+
+            # Get the host from the 'remote' value of the form 'protocol@host:path'
+            #if not self.remote.startswith("git@"):
+            #    logger.error("Currently only remotes using 'git@' are supported")
+            #    raise StorageError("internal-error", None)
+            git_host = (remote.split("@")[1]).split(":")[0]
+
+            # Need to populate .ssh/known_hosts with remote pub key i.e. ssh-keyscan -t ed25519 github.com >> /tmp/.ssh/known_hosts
+            shell.run(base_storage_dir, ssh_keyscan, ["-t", git_alg, git_host], _out=ssh_known_hosts_path)
+
+            # Change the location where git config looks for the config file
+            os.environ["XDG_CONFIG_HOME"] = base_storage_dir
+            os.makedirs(os.path.join(base_storage_dir, "git"), exist_ok=True)
+            # Other options are to set
+            # GIT_CONFIG_GLOBAL to the name of the global config file to use
+            # GIT_CONFIG_SYSTEM to /dev/null to prevent git from reading the system config file (or set GIT_CONFIG_NOSYSTEM to 1)
+
+            # Git must know who the user is before it can commit. Configure git user.name and user.email
+            shell.run(self.repodir, git.config, ["--global", "user.name", gitrepo_config.get("git-user-name", git_email)])
+            shell.run(self.repodir, git.config, ["--global", "user.email", gitrepo_config.get("git-user-email", git_email)])
+
+        elif remote.startswith("http"):
+            logger.info("Using git with anonymous HTTP")
+        else:
+            logger.warning("Unrecognised git remote, assuming anonymous HTTP")
 
     def get_config_base_dir(self, suggested_base_dir):
         """ Return the directory where we expect the configuration file to be based 

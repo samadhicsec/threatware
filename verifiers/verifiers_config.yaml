@@ -186,5 +186,6 @@ verifiers-config:
       - tag: validate-as-single-entry
       - tag: validate-as-yes-no
       - tag: validate-as-CIA
+      - tag: validate-as-status
       - tag: validate-from-template
   
