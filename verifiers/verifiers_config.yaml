@@ -91,7 +91,7 @@ verifiers-config:
         fix-text-key: conditional-mandatory-exists-fix
         issue-table-tag: "components-access-control-data"       # When there's an error, use the table with this tag
         issue-table-row:                                        # When there's an error, leaving this blank means no (row) location is shown
-        issue-key-tag: "threat-component"                       # When there's an error, the 'issue_key' used in templates has this tag
+        issue-table-col-tag: "threat-component"                 # When there's an error, the 'issue_table_col' value used in templates has this tag in teh 'issue_table' table
       # If 'Status' is 'Approved' then 'Approver Name' must not be empty
       - if:
           value-tag: "version-status"

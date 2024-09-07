@@ -74,12 +74,13 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                     if match.is_empty(issue_table_row):
                         issue_dict["issue_table_row"] = None
 
-                # Use "issue-key-tag" to override the "issue_key" passed to VerifierIssue
-                if (issue_key_tag := conditional.get("issue-key-tag", None)) is not None:
+                # Use "issue-table-col-tag" to set the "issue_table_col" passed to VerifierIssue
+                if (issue_key_tag := conditional.get("issue-table-col-tag", None)) is not None:
                     issue_key_key, _ = find.key_with_tag(issue_table_value, issue_key_tag)
                     if issue_key_key is not None:
-                        issue_dict["issue_key"] = issue_key_key
-                        issue_dict["issue_value"] = None
+                        issue_dict["issue_table_col"] = issue_key_key.getProperty("colname")
+                        #issue_dict["issue_key"] = issue_key_key
+                        #issue_dict["issue_value"] = None
 
                 verify_return_list.append(VerifierIssue(conditional["issue-text-key"], conditional.get("fix-text-key", None), issue_dict))
 

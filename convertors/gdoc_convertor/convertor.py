@@ -10,6 +10,7 @@ from convertors.html_convertor.convertor import doc_to_model
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from utils.output import FormatOutput
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -42,7 +43,7 @@ SCOPES = ['https://www.googleapis.com/auth/documents.readonly', 'https://www.goo
 
 #     return creds
 
-def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict):
+def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict, store_doc:bool):
 
     # Establish connection to document location
     doc_store = reader.connect(connection)
@@ -51,6 +52,10 @@ def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict):
     
     # Read the document into a string
     document = reader.read(doc_store, doc_identifers.get('id', ''))
+
+    # Store the string
+    if store_doc:
+        FormatOutput.setDocument(document)
 
     # Read the document as html xml element
     # This will return an lxml element at the root node which is the 'html' tag

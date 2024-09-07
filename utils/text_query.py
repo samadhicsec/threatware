@@ -2,7 +2,7 @@
 
 import logging
 import re
-
+from utils.property_str import pstr
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
@@ -44,7 +44,10 @@ def split(text_value, query_cfg):
             
                 output.append(match.group(group))
 
-    return [i for i in _trim(output) if len(i) > 0]
+    #return [i for i in _trim(output) if len(i) > 0]
+    
+    # Maintain the properties of the input pstr in the output
+    return [pstr(i, properties = text_value.properties) for i in _trim(output) if len(i) > 0]
 
 # Returns all values that match.  Returned values are unchanged.
 def match(text_value, query_cfg):
@@ -81,8 +84,25 @@ def replace(input, query_cfg):
 
     return output
 
+def _wrapper(text_fn, input_value, query_cfg):
+    
+    if isinstance(input_value, dict) and "value" in input_value:
+            
+        output = text_fn(input_value["value"], query_cfg)
+    else:
+        output = text_fn(input_value, query_cfg)
+
+    if isinstance(output, dict):
+        return
+            
+# text_dispatch_table = {
+#     "text-split": lambda input_value, query_cfg: _wrapper(split, input_value, query_cfg),
+#     "text-match": lambda input_value, query_cfg: _wrapper(match, input_value, query_cfg),
+#     "text-replace": lambda input_value, query_cfg: _wrapper(replace, input_value, query_cfg),
+# }
+
 text_dispatch_table = {
-    "text-split":split,
-    "text-match":match,
-    "text-replace":replace,
+    "text-split": split,
+    "text-match": match,
+    "text-replace": replace
 }

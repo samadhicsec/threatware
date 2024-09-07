@@ -69,6 +69,7 @@ class VerifierIssue:
             logger.error("The 'issue_dict' dict must include an 'issue_key' key with a Key object as it's value")
             self.error_desc = f"There was an problem generating the VerifierIssue"
             return
+        self.issue_key = issue_dict["issue_key"]
 
         context = {}
 

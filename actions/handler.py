@@ -13,6 +13,7 @@ from storage.gitrepo import GitStorage
 from utils.error import ThreatwareError
 from utils.config import ConfigBase
 from utils.output import FormatOutput
+from utils.html_output import set_html_output
 import utils.logging
 from providers import provider
 from language.translate import Translate
@@ -96,7 +97,7 @@ def lambda_handler(event, context):
             Translate.init(lang, filtered_qsp)
 
             # Determine output Content-Type
-            if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
+            if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml", "html"]:
                 FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
             content_type = "application/json"
 
@@ -109,6 +110,10 @@ def lambda_handler(event, context):
     
 
         # Validate input
+        if output_format == "html" and action not in [ACTION_VERIFY]:
+            output_format = "json"
+            logger.warning(f"'html' format is only supported for the 'verify' action, defaulting format to 'json'")
+
         if action is None:
             logger.error("action is a mandatory parameter")
             handler_output.setError("action-is-mandatory", {})
@@ -205,7 +210,7 @@ def lambda_handler(event, context):
                             verify_output = verify.report(verify_config, doc_model, issues, verify_reports)
 
                             #body = verify_output.tojson()
-                            content_type, body = verify_output.getContent()
+                            content_type, body = verify_output.getContent(lambda : FormatOutput.setDocument(set_html_output(FormatOutput.output_format, issues, verify_output.html_document)))
 
             elif action == ACTION_MANAGE_INDEXDATA:
                 
@@ -348,7 +353,7 @@ def main():
     version_str = f"{parser.prog} v{getVersion(parser.prog)}"
     parser.add_argument("-v", "--version", action="version", version=version_str)
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
-    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])
+    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml', 'html'])
 
     subparsers = parser.add_subparsers(dest="action", required=True)
 

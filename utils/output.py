@@ -38,6 +38,7 @@ class FormatOutput:
     request_parameters:dict
     output_format:str = "json"
     #translator:Translate
+    html_document:str = ""
 
     def __init__(self, output_config:dict):
 
@@ -149,5 +150,13 @@ class FormatOutput:
 
         if FormatOutput.output_format == "yaml":
             return ("text/yaml", self.toyaml())
+        
+        if FormatOutput.output_format == "html":
+            return ("text/html", self.html_document)
 
         return ("application/json", self.tojson())
+    
+    @classmethod
+    def setDocument(cls, document):
+
+        cls.html_document = document
