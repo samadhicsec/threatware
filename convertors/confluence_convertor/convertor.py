@@ -6,6 +6,7 @@ import logging
 import convertors.confluence_convertor.reader as reader
 import convertors.html_convertor.query as query
 from convertors.html_convertor.convertor import doc_to_model
+from utils.output import FormatOutput
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
