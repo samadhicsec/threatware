@@ -8,6 +8,7 @@ from pathlib import Path
 from utils import match
 from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_str, yaml_str_to_dict, yaml_file_to_dict
+from utils.output import FormatOutput
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -26,6 +27,7 @@ class Translate:
     translations:dict = {}
     global_context:dict = {}
     defLanguageCode:str = "default"
+    defOutputFormatKey:str = "default"
     languageCode:str = ""
     _cache:dict = {}
 
@@ -73,6 +75,16 @@ class Translate:
             # textsLanguage is the actual string
             textsLanguageText = textsLanguage
 
+        # We may have different versions of the text for different output formats e.g. json vs html
+        if isinstance(textsLanguageText, dict):
+            # Check if the requested output format text is available, otherwise use the default
+            if FormatOutput.output_format in textsLanguageText:
+                textsLanguageText = textsLanguageText.get(FormatOutput.output_format)
+            elif cls.defOutputFormatKey in textsLanguageText:
+                textsLanguageText = textsLanguageText.get(cls.defOutputFormatKey)
+            else:
+                logger.warning(f"The localised texts didn't have a format entry matching '{FormatOutput.output_format}' or the default '{cls.defOutputFormatKey}'.")
+                
         if isinstance(textsLanguageText, str):
             output = env.from_string(textsLanguageText).render(context | cls.translations | cls.global_context)
         elif isinstance(textsLanguageText, list):
