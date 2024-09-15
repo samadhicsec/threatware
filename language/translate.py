@@ -8,7 +8,7 @@ from pathlib import Path
 from utils import match
 from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_str, yaml_str_to_dict, yaml_file_to_dict
-from utils.output import FormatOutput
+from utils.request import Request
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -32,9 +32,12 @@ class Translate:
     _cache:dict = {}
 
     @classmethod
-    def init(cls, languageCode:str = "", global_context:dict = {}):
+    def init(cls):
+    #def init(cls, languageCode:str = "", global_context:dict = {}):
 
-        cls.global_context = global_context
+        #cls.global_context = global_context
+        cls.global_context = {"request": Request.get()}
+        languageCode = Request.lang
 
         yaml_config_dict = yaml_file_to_dict(ConfigBase.getConfigPath(TRANSLATE_CONFIG_YAML_PATH))
 
@@ -51,7 +54,7 @@ class Translate:
         cls.translations = yaml_config_dict.get(cls.languageCode, {})
 
     @classmethod
-    def localise(cls, texts:dict, texts_key:str = None, context:dict = {}, cache_key = None):
+    def localise(cls, texts:dict, texts_key:str = None, context:dict = {}, cache_key = None, ignore_format:bool = False):
 
         # localise is expensive to call a lot, so cache context free values.  This is fine as language does not change per execution
         if context is None or len(context) == 0:
@@ -77,13 +80,16 @@ class Translate:
 
         # We may have different versions of the text for different output formats e.g. json vs html
         if isinstance(textsLanguageText, dict):
+            format = Request.format
+            if ignore_format is True:
+                format = "default"
             # Check if the requested output format text is available, otherwise use the default
-            if FormatOutput.output_format in textsLanguageText:
-                textsLanguageText = textsLanguageText.get(FormatOutput.output_format)
+            if format in textsLanguageText:
+                textsLanguageText = textsLanguageText.get(format)
             elif cls.defOutputFormatKey in textsLanguageText:
                 textsLanguageText = textsLanguageText.get(cls.defOutputFormatKey)
             else:
-                logger.warning(f"The localised texts didn't have a format entry matching '{FormatOutput.output_format}' or the default '{cls.defOutputFormatKey}'.")
+                logger.warning(f"The localised texts didn't have a format entry matching '{format}' or the default '{cls.defOutputFormatKey}'.")
                 
         if isinstance(textsLanguageText, str):
             output = env.from_string(textsLanguageText).render(context | cls.translations | cls.global_context)

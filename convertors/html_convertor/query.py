@@ -155,13 +155,16 @@ def _remove_rows_if_empty(proc_def, table_data):
 
 def get_table_xpaths(table_element):
     row_xpaths = []
+    roottree = table_element.getroottree()
     rows = table_element.xpath('.//tr')
     
     for row_index, row in enumerate(rows):
         col_xpaths = []
         cells = row.xpath('.//td | .//th')
         for cell_index, cell in enumerate(cells):
-            cell_xpath = f"{table_element.getroottree().getpath(table_element)}//tr[{row_index + 1}]//td[{cell_index + 1}]"
+            #cell_xpath = f"{table_element.getroottree().getpath(table_element)}//tr[{row_index + 1}]//td[{cell_index + 1}]"
+            # Since the cell element could be a td or th, we must make sure we get the correct xpath
+            cell_xpath = roottree.getpath(cell)
             col_xpaths.append(cell_xpath)
         
         row_xpaths.append(col_xpaths)

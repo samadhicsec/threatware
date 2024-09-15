@@ -5,7 +5,7 @@ output-texts:
     success: "{{ translate.success }}"
     error: "{{ translate.error }}"
     
-    format-error: "The format parameter can only be 'json' or 'yaml'"
+    format-error: "The format parameter can only be 'json' or 'yaml' or 'html'"
     internal-error: "An internal error occurred, please see logs for more detail"
 
     scheme.unknown-scheme: "No scheme file for '{{ request.scheme }}' found.  Known schemes are: {{ scheme.known_schemes }}"

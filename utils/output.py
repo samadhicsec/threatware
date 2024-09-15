@@ -9,6 +9,7 @@ from pathlib import Path
 from utils.config import ConfigBase
 from utils import load_yaml
 from utils.config import ConfigBase
+from utils.request import Request
 from language.translate import Translate
 import jsonpickle
 
@@ -35,7 +36,7 @@ class OutputType(Enum):
 
 class FormatOutput:
 
-    request_parameters:dict
+    #request_parameters:dict
     output_format:str = "json"
     #translator:Translate
     html_document:str = ""
@@ -77,8 +78,9 @@ class FormatOutput:
             output["description"] = self.description
         if self.details is not None:
             output["details"] = self.details
-        if FormatOutput.request_parameters is not None:
-            output["request"] = FormatOutput.request_parameters["request"]
+        #if FormatOutput.request_parameters is not None:
+        #    output["request"] = FormatOutput.request_parameters["request"]
+        output["request"] = Request.get()
 
         return output
 
@@ -89,7 +91,8 @@ class FormatOutput:
             template_values = {}
             
         self.type = OutputType.INFO
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
         #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
         
@@ -102,7 +105,8 @@ class FormatOutput:
             template_values = {}
 
         self.type = OutputType.SUCCESS
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
         #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 
@@ -115,7 +119,8 @@ class FormatOutput:
             template_values = {}
 
         self.type = OutputType.ERROR
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
         #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
         self.details = details
 

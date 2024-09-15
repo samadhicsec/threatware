@@ -6,7 +6,7 @@ import logging
 import convertors.confluence_convertor.reader as reader
 import convertors.html_convertor.query as query
 from convertors.html_convertor.convertor import doc_to_model
-from utils.output import FormatOutput
+from response.response import Response
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -28,7 +28,7 @@ def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict, sto
 
     # Store the string
     if store_doc:
-        FormatOutput.setDocument(document)
+        Response.setDocument(document)
 
     # Read the document as html xml element
     # This will return an lxml element at the root node which is the 'html' tag

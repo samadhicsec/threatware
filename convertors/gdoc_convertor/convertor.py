@@ -10,7 +10,7 @@ from convertors.html_convertor.convertor import doc_to_model
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from utils.output import FormatOutput
+from response.response import Response
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -55,7 +55,7 @@ def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict, sto
 
     # Store the string
     if store_doc:
-        FormatOutput.setDocument(document)
+        Response.setDocument(document)
 
     # Read the document as html xml element
     # This will return an lxml element at the root node which is the 'html' tag

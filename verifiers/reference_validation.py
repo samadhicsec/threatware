@@ -59,7 +59,8 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
         # text match e.g. "All assets stored in environment variables"
         grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), strip_fn(compare_to_value)):
+        # Since we are trying to match text we don't want the localised version to be output specific, we just want the default output format
+        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text", ignore_format=True), strip_fn(compare_to_value)):
             return True
         if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key = "grouped_text")):
             return True
