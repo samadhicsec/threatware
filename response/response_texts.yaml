@@ -2,3 +2,9 @@ output-texts:
   default:
     html-banner-missing-findings:
       html: "Not all errors could be highlighted in the document.  Please re-run threatware with the parameter 'format=json' to see all errors."
+    fixdata-document:
+      html: "In this threat model document"
+    fixdata-template:
+      html: "In the threat model template"
+    fixdata-location:
+      html: "The column '{{ fixdata.column }}' in the {{ fixdata.table }}"

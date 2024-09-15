@@ -85,8 +85,16 @@ def _inject_banner_into_HTML(document, banner_config:BannerConfig, issues, showi
         }
     }))
     
+def _map_fixdata_to_html(fixdata:list, template_values:dict):
 
-def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsConfig):
+    html_fixdata = "<ul>\n"
+    for fixdata_entry in fixdata:
+        html_fixdata = html_fixdata + f"<li>{Translate.localise(template_values, 'fixdata-location', {'fixdata':fixdata_entry})}</li>\n"
+    html_fixdata = html_fixdata + "</ul>\n"
+
+    return html_fixdata
+
+def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsConfig, template_values:dict):
     """
     Injects the findings into the HTML document
     """
@@ -124,6 +132,27 @@ def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsCo
 
     # Inject the findings into the document
     json_issues = jsonpickle.encode(issues, unpicklable=False)
+    # The 'fix-data' section can be an object, and so that won't display correctly.
+    basic_issues = jsonpickle.decode(json_issues)
+    for issue in basic_issues:
+        if "fix-data" in issue and issue["verifier"] == "reference-validation":
+            document_fixdata = ""
+            template_fixdata = ""
+            if "document" in issue["fix-data"]:
+                document_fixdata = f"{Translate.localise(template_values, 'fixdata-document')}<br/>{_map_fixdata_to_html(issue['fix-data']['document'], template_values)}"
+            if "template" in issue["fix-data"]:
+                template_fixdata = f"{Translate.localise(template_values, 'fixdata-template')}<br/>{_map_fixdata_to_html(issue['fix-data']['template'], template_values)}"
+
+            issue["fix-data"] = f"""<br/>
+                {document_fixdata}
+                {template_fixdata}
+                """
+        elif "fix-data" in issue and issue["verifier"] == "field-validation-uniqueness":
+            html_fixdata = _map_fixdata_to_html(issue["fix-data"], template_values)
+            issue["fix-data"] = html_fixdata
+
+    json_issues = jsonpickle.encode(basic_issues, unpicklable=False)
+
     _inject_into_HTML(document, HTMLInject({
         "location": {
             "element": "//html/body", 
@@ -152,7 +181,7 @@ def get_html_response(config:HTMLConfig, result:FormatOutput, html_doc:str, temp
     _inject_scheme_specfic_into_HTML(document, config.schemeSpecificConfig, Request.scheme)
 
     # Add the findings to the HTML document, and the ability to show the findings to the user
-    showing_all_errors = _inject_findings_into_HTML(document, issues, config.findingsConfig)
+    showing_all_errors = _inject_findings_into_HTML(document, issues, config.findingsConfig, template_values)
 
     # Add a banner to the top of the body saying whether the validation passed, failed,or failed and not all errors are shown
     _inject_banner_into_HTML(document, config.bannerConfig, issues, showing_all_errors, result, template_values)

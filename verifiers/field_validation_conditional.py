@@ -53,8 +53,13 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             if if_lambda(if_tagged_key, if_tagged_value) and not then_lambda(then_tagged_key, then_tagged_value):
 
                 issue_dict = {}
-                issue_dict["issue_key"] = if_tagged_key
-                issue_dict["issue_value"] = if_tagged_value
+                issue_dict["issue_key"] = then_tagged_key
+                issue_dict["issue_value"] = then_tagged_value
+                if (issue_location := conditional.get("issue-location", None)) is not None:
+                    # Override which of the 'if'/'then' keys is the 'issue_key', as sometimes errors can't report the 'then' key e.g. when testing for existence
+                    if (issue_location == "if"):
+                        issue_dict["issue_key"] = if_tagged_key
+                        issue_dict["issue_value"] = if_tagged_value
                 issue_dict["if_key"] = if_tagged_key
                 issue_dict["if_value"] = if_tagged_value
                 issue_dict["then_key"] = then_tagged_key
