@@ -14,7 +14,6 @@ from utils.error import ThreatwareError
 from utils.request import Request
 from utils.config import ConfigBase
 from utils.output import FormatOutput
-from utils.html_output import set_html_output
 import utils.logging
 from providers import provider
 from language.translate import Translate
@@ -47,29 +46,6 @@ def lambda_handler(event, context):
     if (qsp := event.get("queryStringParameters", {})) is None:
         qsp = {}
     Request.set(qsp)
-    # filtered_qsp = {"request":{}}
-    # if (action := qsp.get("action", None)) is not None:
-    #     filtered_qsp["request"]["action"] = action
-    # if (schemeID := qsp.get("scheme", None)) is not None:
-    #     filtered_qsp["request"]["scheme"] = schemeID
-    # if (docloc := qsp.get("docloc", None)) is not None:
-    #     filtered_qsp["request"]["docloc"] = docloc
-    # if (doctemplate := qsp.get("doctemplate", None)) is not None:
-    #     filtered_qsp["request"]["doctemplate"] = doctemplate
-    # if (id := qsp.get("ID", None)) is not None:
-    #     filtered_qsp["request"]["ID"] = id
-    # if (IDprefix := qsp.get("IDprefix", None)) is not None:
-    #     filtered_qsp["request"]["IDprefix"] = IDprefix
-    # if (lang := qsp.get("lang", None)) is not None:
-    #     filtered_qsp["request"]["lang"] = lang
-    # if (output_format := qsp.get("format", None)) is not None:
-    #     filtered_qsp["request"]["format"] = output_format
-    # if (convert_meta := qsp.get("meta", None)) is not None:
-    #     filtered_qsp["request"]["meta"] = convert_meta
-    # if (verify_reports := qsp.get("reports", None)) is not None:
-    #     filtered_qsp["request"]["reports"] = verify_reports
-
-    # logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
 
     # Very first thing we need to do is find where all the configuration files are, and if they are not already present, download them.
     # How we do that depends what env we are in.  Providers usually take a config file, but we don't have them yet, so load without config (which limits what methods we can use)
@@ -97,16 +73,7 @@ def lambda_handler(event, context):
             ###
 
             # We need this to support localisation of keywords
-            #Translate.init(lang, filtered_qsp)
             Translate.init()
-
-            # # Determine output Content-Type
-            # if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml", "html"]:
-            #     FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
-            content_type = "application/json"
-
-            # We can treat the parameters as static
-            #FormatOutput.request_parameters = filtered_qsp
 
             # Load the texts file with localised error messages
             handler_output = FormatOutput({"template-text-file":ConfigBase.getConfigPath(HANDLER_TEXTS_YAML_PATH)})
@@ -127,37 +94,30 @@ def lambda_handler(event, context):
             logger.error("action is a mandatory parameter")
             handler_output.setError("action-is-mandatory", {})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
             logger.error(f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}")
             handler_output.setError("action-value", {"actions":[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.scheme is None:
             logger.error("scheme is a mandatory parameter")
             handler_output.setError("scheme-is-mandatory", {})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None:
             logger.error("docloc is a mandatory parameter")
             handler_output.setError("docloc-is-mandatory", {})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
             logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
             handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action in [ACTION_MANAGE_INDEXDATA] and id is None:
             logger.error(f"ID is a mandatory parameter when action = {Request.action}")
             handler_output.setError("id-is-mandatory", {"action":Request.action})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
         elif Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
             logger.error(f"IDprefix is a mandatory parameter when action = {Request.action}")
             handler_output.setError("idprefix-is-mandatory", {"action":Request.action})
             response = Response(handler_output)
-            #content_type, body = handler_output.getContent()
 
         else:
             # Load the execution environment again, as this time we have configuration files to enable full functionality
@@ -191,7 +151,6 @@ def lambda_handler(event, context):
                     # This will update the model in place
                     verify.assign_default_tags(verify_config, doc_model)
 
-                #content_type, body = output.getContent(lambda : Key.config_serialisation(Request.meta))
                 response = Response(convert_output, Request.meta)
 
             elif Request.action == ACTION_VERIFY:
@@ -227,13 +186,7 @@ def lambda_handler(event, context):
                             # Generate a report on verification issues and analysis
                             verify_output = verify.report(verify_config, doc_model, issues, Request.reports)
 
-                            #body = verify_output.tojson()
-                            #html_doc_copy = FormatOutput.html_document
-                            #content_type, body = verify_output.getContent(lambda : FormatOutput.setDocument(set_html_output(FormatOutput.output_format, issues, verify_output.html_document)))
-
                             response = Response(verify_output)
-                            #Response.setDocument(html_doc_copy)
-                            #content_type, body = response.getContentType(), response.getBody()
 
             elif Request.action == ACTION_MANAGE_INDEXDATA:
                 
@@ -241,7 +194,6 @@ def lambda_handler(event, context):
 
                 output = manage.indexdata(manage_config, execution_env, id)
 
-                #content_type, body = output.getContent()
                 response = Response(output)
 
             elif Request.action == ACTION_MANAGE_CREATE:
@@ -260,7 +212,6 @@ def lambda_handler(event, context):
 
                     output = manage.create(manage_config, execution_env, Request.IDprefix, Request.scheme, Request.docloc, doc_model)
 
-                    #content_type, body = output.getContent()
                     response = Response(output)
 
             elif Request.action == ACTION_MANAGE_CHECK:
@@ -282,7 +233,6 @@ def lambda_handler(event, context):
 
                     output = manage.check(manage_config, execution_env, Request.docloc, Request.scheme, doc_model, measure_config, measure.distance)
 
-                    #content_type, body = output.getContent()
                     response = Response(output)
             
             elif Request.action == ACTION_MANAGE_SUBMIT:
@@ -301,7 +251,6 @@ def lambda_handler(event, context):
 
                     output = manage.submit(manage_config, execution_env, Request.docloc, Request.scheme, doc_model)
 
-                    #content_type, body = output.getContent(lambda : Key.config_serialisation("none"))
                     response = Response(output, "none")
 
             elif Request.action == ACTION_MEASURE:
@@ -328,7 +277,6 @@ def lambda_handler(event, context):
                         
                         output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
 
-                        #content_type, body = output.getContent()
                         response = Response(output)
     
     except Exception as e:
@@ -338,7 +286,6 @@ def lambda_handler(event, context):
         else:
             handler_output.setError("internal-error", {})
         response = Response(handler_output, force_api_format=True)
-        #content_type, body = handler_output.getContent()
 
     # Respond
     return {
