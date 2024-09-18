@@ -337,7 +337,7 @@ def lambda_handler(event, context):
             handler_output.setError(e.text_key, e.template_values)
         else:
             handler_output.setError("internal-error", {})
-        response = Response(handler_output)
+        response = Response(handler_output, force_api_format=True)
         #content_type, body = handler_output.getContent()
 
     # Respond

@@ -48,3 +48,7 @@ class Request:
             "meta": cls.meta,
             "reports": cls.reports
         }
+    
+    @classmethod
+    def isAPIFormat(cls) -> bool:
+        return cls.format in ["json", "yaml"]

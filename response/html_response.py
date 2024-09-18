@@ -94,6 +94,27 @@ def _map_fixdata_to_html(fixdata:list, template_values:dict):
 
     return html_fixdata
 
+def _map_errordata_to_html(errordata:list, template_values:dict):
+
+    #html_errordata = "<ul>\n"
+    html_errordata = "<table><tr><th>Validator</th><th>Status</th><th>Description</th></tr>\n"
+    for errordata_entry in errordata:
+        #html_errordata = html_errordata + f"<li>{Translate.localise(template_values, 'errordata-status', {'errordata':errordata_entry})}<br />{Translate.localise(template_values, 'errordata-description', {'errordata':errordata_entry})}</li>\n"
+        html_errordata = html_errordata + f"<tr><td>{errordata_entry['validator']}</td><td>{Translate.localise(template_values, 'errordata-status', {'errordata':errordata_entry})}</td><td>{Translate.localise(template_values, 'errordata-description', {'errordata':errordata_entry})}</td></tr>\n"
+    #html_errordata = html_errordata + "</ul>\n"
+    html_errordata = html_errordata + "</table>\n"
+
+    return html_errordata
+
+def _map_uniqueness_errordata_to_html(errordata:list, template_values:dict):
+
+    html_errordata = "<ul>\n"
+    for errordata_entry in errordata:
+        html_errordata = html_errordata + f"<li>{Translate.localise(template_values, 'errordata-location', {'errordata':errordata_entry})}</li>\n"
+    html_errordata = html_errordata + "</ul>\n"
+
+    return html_errordata
+
 def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsConfig, template_values:dict):
     """
     Injects the findings into the HTML document
@@ -119,6 +140,8 @@ def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsCo
                 element.attrib[findings_config.finding_type] = "error"
             elif issue.errortype.name == "WARNING" and findings_config.finding_type not in element.attrib:
                 element.attrib[findings_config.finding_type] = "warning"
+            elif issue.errortype.name == "INFO" and findings_config.finding_type not in element.attrib:
+                element.attrib[findings_config.finding_type] = "info"
 
             if findings_config.finding_class in element.attrib:
                 element.attrib[findings_config.finding_class] = f"multiple"
@@ -133,25 +156,32 @@ def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsCo
     # Inject the findings into the document
     json_issues = jsonpickle.encode(issues, unpicklable=False)
     # The 'fix-data' section can be an object, and so that won't display correctly.
-    basic_issues = jsonpickle.decode(json_issues)
-    for issue in basic_issues:
-        if "fix-data" in issue and issue["verifier"] == "reference-validation":
-            document_fixdata = ""
-            template_fixdata = ""
-            if "document" in issue["fix-data"]:
-                document_fixdata = f"{Translate.localise(template_values, 'fixdata-document')}<br/>{_map_fixdata_to_html(issue['fix-data']['document'], template_values)}"
-            if "template" in issue["fix-data"]:
-                template_fixdata = f"{Translate.localise(template_values, 'fixdata-template')}<br/>{_map_fixdata_to_html(issue['fix-data']['template'], template_values)}"
+    # basic_issues = jsonpickle.decode(json_issues)
+    # for issue in basic_issues:
+    #     # if "fix-data" in issue and issue["verifier"] == "reference-validation":
+    #     #     document_fixdata = ""
+    #     #     template_fixdata = ""
+    #     #     if "document" in issue["fix-data"]:
+    #     #         document_fixdata = f"{Translate.localise(template_values, 'fixdata-document')}<br/>{_map_fixdata_to_html(issue['fix-data']['document'], template_values)}"
+    #     #     if "template" in issue["fix-data"]:
+    #     #         template_fixdata = f"{Translate.localise(template_values, 'fixdata-template')}<br/>{_map_fixdata_to_html(issue['fix-data']['template'], template_values)}"
 
-            issue["fix-data"] = f"""<br/>
-                {document_fixdata}
-                {template_fixdata}
-                """
-        elif "fix-data" in issue and issue["verifier"] == "field-validation-uniqueness":
-            html_fixdata = _map_fixdata_to_html(issue["fix-data"], template_values)
-            issue["fix-data"] = html_fixdata
+    #     #     issue["fix-data"] = f"""<br/>
+    #     #         {document_fixdata}
+    #     #         {template_fixdata}
+    #     #         """
+    #     # elif issue["verifier"] == "field-validation-uniqueness":
+    #     #     if "fix-data" in issue:
+    #     #         html_fixdata = _map_fixdata_to_html(issue["fix-data"], template_values)
+    #     #         issue["fix-data"] = html_fixdata
+    #     #     # if "error-data" in issue:
+    #     #     #     html_errordata = _map_uniqueness_errordata_to_html(issue["error-data"], template_values)
+    #     #     #     issue["error-data"] = html_errordata
+    #     if "error-data" in issue and issue["verifier"] == "field-validation-value":
+    #         html_errordata = _map_errordata_to_html(issue["error-data"], template_values)
+    #         issue["error-data"] = html_errordata
 
-    json_issues = jsonpickle.encode(basic_issues, unpicklable=False)
+    # json_issues = jsonpickle.encode(basic_issues, unpicklable=False)
 
     _inject_into_HTML(document, HTMLInject({
         "location": {

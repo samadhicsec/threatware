@@ -61,7 +61,7 @@ class Translate:
             if cache_key is None:
                 # TODO making texts hashable via str(texts) is one way, there might be faster other ways e.g. frozenset
                 cache_key = str(texts)
-            if (cached_value := cls._cache.get((cache_key, texts_key), None)) is not None:
+            if (cached_value := cls._cache.get((cache_key, texts_key, ignore_format), None)) is not None:
                 return cached_value
 
         languageCode = cls.languageCode
@@ -103,7 +103,7 @@ class Translate:
             output = textsLanguageText
 
         if context is None or len(context) == 0:
-            cls._cache[(cache_key, texts_key)] = output
+            cls._cache[(cache_key, texts_key, ignore_format)] = output
 
         return output
         #return env.from_string(texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"}).get(texts_key, f"Could not find text for key '{texts_key}'")).render(context | cls.translations | cls.global_context)

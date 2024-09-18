@@ -42,13 +42,15 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict["depends_on_key"] = depends_on_key
                 issue_dict["depends_on_value"] = depends_on_key_value
                 if "depends-on-value" in tag_entry:
-                    verify_return_list.append(VerifierIssue("missing-conditional-mandatory",
-                                                        None, 
-                                                        issue_dict))
+                    verify_return_list.append(VerifierIssue(
+                        error_text_key="missing-conditional-mandatory", 
+                        fix_text_key=None, 
+                        issue_dict=issue_dict))
                 else:
-                    verify_return_list.append(VerifierIssue("missing-conditional-mandatory-any-value",
-                                                        None, 
-                                                        issue_dict))
+                    verify_return_list.append(VerifierIssue(
+                        error_text_key="missing-conditional-mandatory-any-value", 
+                        fix_text_key=None, 
+                        issue_dict=issue_dict))
 
 
         # # Since we need to look at adjacent fields for the condition, get a list of all sections containing tagged data.  A section is like a table

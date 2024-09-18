@@ -24,7 +24,10 @@ class pstr(str):
 
     def __init__(self, value, **kwargs):
         super().__init__()
-        self._str_value = value
+        if type(value) == pstr:
+            self._str_value = value._str_value
+        else:
+            self._str_value = value
 
     def to_str(self):
         # Return an instance of the superclass (str)

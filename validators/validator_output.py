@@ -46,36 +46,69 @@ class ValidatorOutput:
         self.validating_value = validating_value
         self.validator_name = None
         self.validator_module = None
-        self.result = False
-        self.description = None
+        self.validator_result = False
         self.error = None
 
-
-    def _get_state(self):
-
-        output = {}
-        output['validator'] = self.validator_tag
-        if not self.error:
-            output['validates'] = self.result
-            
+    def tag(self):
+        return self.validator_tag
+    
+    def result(self):
+        return self.validator_result
+    
+    def details(self):
+        if not self.error:    
             context = {}
-            #context["translate"] = self.templated_translations["translate"]
             context["key"] = {}
             context["key"]["name"] = self.validating_key.name
             context["key"]["colname"] = self.validating_key.getProperty("colname")
             context["key"]["value"] = self.validating_value
             context["config"] = ValidatorOutput.validator_config.get(self.validator_tag, {}).get("config")
-            
-            validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
-            if self.result:
-                output['description'] = Translate.localise(validator_output_texts, "output_text_valid", context)
-            else:
-                output['description'] = Translate.localise(validator_output_texts, "output_text_invalid", context)
 
+            validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
+            if self.validator_result:
+                return Translate.localise(validator_output_texts, "output_text_valid", context)
+            else:
+                return Translate.localise(validator_output_texts, "output_text_invalid", context)
+        else:
+            return self.error
+        
+    def _get_state(self):
+
+        output = {}
+        output['validator'] = self.tag()
+        if not self.error:
+            output['validates'] = self.result()
+            output['description'] = self.details()
         else:
             output["error"] = self.error
         
         return output
+
+    # def _get_state(self):
+
+    #     output = {}
+    #     output['validator'] = self.validator_tag
+    #     if not self.error:
+    #         output['validates'] = self.validator_result
+            
+    #         context = {}
+    #         #context["translate"] = self.templated_translations["translate"]
+    #         context["key"] = {}
+    #         context["key"]["name"] = self.validating_key.name
+    #         context["key"]["colname"] = self.validating_key.getProperty("colname")
+    #         context["key"]["value"] = self.validating_value
+    #         context["config"] = ValidatorOutput.validator_config.get(self.validator_tag, {}).get("config")
+            
+    #         validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
+    #         if self.validator_result:
+    #             output['description'] = Translate.localise(validator_output_texts, "output_text_valid", context)
+    #         else:
+    #             output['description'] = Translate.localise(validator_output_texts, "output_text_invalid", context)
+
+    #     else:
+    #         output["error"] = self.error
+        
+    #     return output
 
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """

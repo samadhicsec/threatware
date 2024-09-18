@@ -91,6 +91,14 @@ response-config:
             #tippytip {
               font-size: 1.3em;
             }
+            .tippy-box[data-theme~=light-border] {
+              background-color: #fcfcfc;
+            }
+            #tippytip > table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+              padding: 3px;
+            }
           script: |
             function formatfinding(finding) {
                   return `<div id="tippytip">
@@ -98,6 +106,7 @@ response-config:
                   <p><b>Description:</b> ${finding["error-description"]}</p>
                   <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
                   <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
+                  <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
                   </div>`
               }
             // Call `tippy()` with a CSS selector and a `content` prop:

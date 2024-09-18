@@ -46,6 +46,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             # Get the rowID for the 'if' tagged key
             rowIDkey = keymaster.get_row_identifier_for_key(if_tagged_key)
             row_data = rowIDkey.getProperty("row")
+            
             # Get the 'then' key and value
             then_tagged_key, then_tagged_value = find.key_with_tag(row_data, then_value_tag)
 
@@ -87,6 +88,9 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                         #issue_dict["issue_key"] = issue_key_key
                         #issue_dict["issue_value"] = None
 
-                verify_return_list.append(VerifierIssue(conditional["issue-text-key"], conditional.get("fix-text-key", None), issue_dict))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key=conditional["issue-text-key"], 
+                        fix_text_key=conditional.get("fix-text-key", None), 
+                        issue_dict=issue_dict))
 
     return verify_return_list

@@ -22,6 +22,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         def _inner_is_empty(key, value, context):
             is_empty = False
             if not key.hasTag(verifier_config["exceptions-tag"]):
+                if value is None:
+                    is_empty = True
                 if isinstance(value, str):
                     if match.is_empty(value):
                         is_empty = True
@@ -33,9 +35,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict = {}
                 issue_dict["issue_key"] = key
                 issue_dict["issue_value"] = value
-                verify_return_list.append(VerifierIssue("missing-mandatory", 
-                                                        None,
-                                                        issue_dict))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="missing-mandatory", 
+                    fix_text_key=None, 
+                    issue_dict=issue_dict))
                 return True, True
             else:
                 return True, False
@@ -80,10 +83,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict = {}
                 issue_dict["issue_key"] = tagged_key
                 issue_dict["issue_value"] = tagged_value
-                verify_return_list.append(VerifierIssue("missing-mandatory", 
-                                            None,
-                                            issue_dict
-                                            ))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="missing-mandatory", 
+                    fix_text_key=None, 
+                    issue_dict=issue_dict))
 
 
     return verify_return_list

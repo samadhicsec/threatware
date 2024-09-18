@@ -56,7 +56,8 @@ class Verifiers:
         verifier_errors_list = []
 
         common_config = self.config.verifiers_config_dict["common"]
-        common_config["grouped-text"] = self.config.verifiers_texts_dict["grouped-text"]
+        #common_config["grouped-text"] = self.config.verifiers_texts_dict["grouped-text"]
+        common_config["output-texts"] = self.config.verifiers_texts_dict["output-texts"]
 
         for verifier in self.config.dispatch:
 

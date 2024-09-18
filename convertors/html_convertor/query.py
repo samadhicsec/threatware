@@ -3,7 +3,7 @@
 import logging
 from lxml import etree
 import lxml.html
-from lxml.etree import XPathError
+from lxml.etree import XPathError, XPathEvalError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
 #from html_table_extractor.extractor import Extractor
@@ -121,12 +121,38 @@ def get_document_value(document, query_cfg) -> str:
     if len(value_list) > 1:
         logger.warning(f"Retreived {len(value_list)} document values when 1 was expected.  Using first.")
         
+    location = ""
+
     if not isinstance(value_list[0], str):
         logger.warning(f"Expected results 'str', got '{type(value_list[0])}', for query '{query_cfg[XPATH_FIELD]}'")
-
+    else:
+        # It's a string, so we can't extract a location from it.  Try to strip away the xpath path that makes the result a string to get to the
+        # element that contains the string.
+        query = query_cfg[XPATH_FIELD]
+        if query.endswith("//text()"):
+            query = query[:-8]
+        if query.endswith("/text()"):
+            query = query[:-7]
+        elif "/@" in query:
+            query = query[0:query.rfind("/@")]
+        
+        try:
+            value_element = document.xpath(query)
+        except (XPathError, XPathEvalError):
+            logger.warning(f"XPath query '{query}' caused an error")
+            value_list = []
+        if len(value_element) == 1:
+            if hasattr(value_element[0], "xpath"):
+                location = document.getroottree().getpath(value_element[0])
+        
     # Despite checking this is a str, it could be a _ElementUnicodeResult, which doesn't serialise to JSON nicely.  So explicitly convert.
 
-    return str(value_list[0])
+    #return str(value_list[0])
+    if location:
+        return pstr(str(value_list[0]), properties = {"location":location})
+    
+    logger.info(f"Returning value '{str(value_list[0])}' without location")
+    return pstr(str(value_list[0]))
 
 def _remove_rows_if_empty(proc_def, table_data):
 
