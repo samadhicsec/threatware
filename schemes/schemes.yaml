@@ -1,4 +1,5 @@
 ---
 schemes:
+  # These map the 'scheme' value passed into threatware as a parameter to a file containing the scheme definition
   "confluence_1.0": "schemes/confluence-scheme-1.0.yaml"
   "googledoc_1.0": "schemes/googledoc-scheme-1.0.yaml"

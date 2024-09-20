@@ -14,9 +14,9 @@ output-texts:
       html: |
         The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; 
         <ul>
-        <li>the asset name i.e. '{{ issue_key.value }}',</li>
-        <li>the asset category i.e. '{{ issue_key.row.category.value }}', or<\li>
-        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}'</li>
+        <li>the asset name i.e. '{{ issue_key.value }}', </li>
+        <li>the asset category i.e. '{{ issue_key.row.category.value }}', or </li>
+        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}' </li>
         </ul>
     no-covering-threat-fix-no-threat-or-asset: 
       default: "The {{ threats_and_controls_table }} must include a row with one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
@@ -129,4 +129,3 @@ output-texts:
           <li>All assets</li>
           <li>All Functional Assets</li>
         </ul>
-  

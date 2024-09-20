@@ -104,9 +104,9 @@ response-config:
                   return `<div id="tippytip">
                   <h3>${finding["type"]} (${finding["verifier"]})</h3>
                   <p><b>Description:</b> ${finding["error-description"]}</p>
+                  <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
                   <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
                   <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
-                  <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
                   </div>`
               }
             // Call `tippy()` with a CSS selector and a `content` prop:
