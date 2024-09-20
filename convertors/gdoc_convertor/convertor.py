@@ -15,34 +15,6 @@ from response.response import Response
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/documents.readonly', 'https://www.googleapis.com/auth/drive.readonly']
-
-# def _getCredentials():
-    
-#     creds = None
-#     token_path = str(Path(__file__).absolute().parent.joinpath("token.json"))
-#     credentials_path = str(Path(__file__).absolute().parent.joinpath("credentials.json"))
-
-#     # The file token.json stores the user's access and refresh tokens, and is
-#     # created automatically when the authorization flow completes for the first
-#     # time.
-#     if os.path.exists(token_path):
-#         creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-#     # If there are no (valid) credentials available, let the user log in.
-#     if not creds or not creds.valid:
-#         if creds and creds.expired and creds.refresh_token:
-#             creds.refresh(Request())
-#         else:
-#             flow = InstalledAppFlow.from_client_secrets_file(
-#                 credentials_path, SCOPES)
-#             creds = flow.run_local_server(port=0)
-#         # Save the credentials for the next run
-#         with open(token_path, 'w') as token:
-#             token.write(creds.to_json())
-
-#     return creds
-
 def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict, store_doc:bool):
 
     # Establish connection to document location

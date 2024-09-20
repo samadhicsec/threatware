@@ -15,16 +15,6 @@ from utils import match, transform
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# def _strip_context(config:dict, value:str):
-
-#     start_char = config["start-char"]
-#     end_char = config["end-char"]
-
-#     if(start_char_index := value.find(start_char)) != -1:
-#         if(end_char_index := value.find(end_char, start_char_index)) != -1:
-#             return value[:start_char_index] + value[end_char_index + 1:]
-
-#     return value
 
 def template_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 

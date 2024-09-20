@@ -20,12 +20,6 @@ PROCESS_REMOVE_HEADER_ROW = 'remove-header-row'
 PROCESS_REMOVE_ROWS_IF_EMPTY = "remove-rows-if-empty"
 PROCESS_SPLIT_TYPE = "split-type"
 
-# def _strip_element_list(ele_list):
-
-#     for ele in ele_list:
-#         etree.strip_elements(ele, "*")
-#     return
-
 def get_document(document_str, mapping):
 
     document = lxml.html.document_fromstring(document_str)
@@ -58,15 +52,6 @@ def get_document(document_str, mapping):
 
     return document
 
-    # try:
-    #     h1_list = document.xpath("//h1")
-    #     _strip_element_list(h1_list)
-    # except XPathError:
-    #     logger.warning(f"XPath query to find headers caused an error")
-
-    # return document
-    # Note, can't do much pre-processing of the XML here as the scheme might be referencing something that we might change
-    #return lxml.html.document_fromstring(document_str)
 
 def get_document_section(document, query_cfg):
 
@@ -147,7 +132,6 @@ def get_document_value(document, query_cfg) -> str:
         
     # Despite checking this is a str, it could be a _ElementUnicodeResult, which doesn't serialise to JSON nicely.  So explicitly convert.
 
-    #return str(value_list[0])
     if location:
         return pstr(str(value_list[0]), properties = {"location":location})
     
@@ -192,18 +176,6 @@ def get_table_xpaths(table_element):
             #cell_xpath = f"{table_element.getroottree().getpath(table_element)}//tr[{row_index + 1}]//{cell.tag}[{cell_index + 1}]"
             cell_xpath = roottree.getpath(cell)    # This is dangerous though as pre-processing may make the xpath here invalid when applied to the original document
             col_xpaths.append(cell_xpath)
-        # td_count = 0
-        # th_count = 0
-        # for cell in cells:
-        #     if cell.tag == "td":
-        #         td_count += 1
-        #         cell_index = td_count
-        #     elif cell.tag == "th":
-        #         th_count += 1
-        #         cell_index = th_count
-        #     # Since the cell element could be a td or th, we must make sure we get the correct xpath
-        #     cell_xpath = f"{table_element.getroottree().getpath(table_element)}//tr[{row_index + 1}]//{cell.tag}[{cell_index}]"
-        #     col_xpaths.append(cell_xpath)
         
         row_xpaths.append(col_xpaths)
     

@@ -41,8 +41,5 @@ def get_provider(provider_name:str, no_config_mode:bool = False):
     else:
         return provider_loaders[provider_name]({})
 
-    #if match.is_empty(provider_name):
-    #    provider_name = provider_config["provider"]
 
-    #return provider_loaders[provider_name](provider_config[provider_name])
 

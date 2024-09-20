@@ -37,7 +37,7 @@ def parse(map_data_def, input) -> dict:
         
         logger.debug(f"Mapping '{key_def}':'{value}'")
 
-        # We have a value to map to the key, but it might not be a simple value, or it might be and alrady processed value mapping to 
+        # We have a value to map to the key, but it might not be a simple value, or it might be an already processed value mapping to 
         # a key up in the hierarchy.  Need to figure out if it's a value with additional information we need to store against the key.
         if isinstance(value, pstr):
             for dict_key, dict_value in value.properties.items():
@@ -45,18 +45,6 @@ def parse(map_data_def, input) -> dict:
             output[key_def] = value.to_str()
         else:
             output[key_def] = value
-        # if isinstance(value, dict) and "value" in value:
-        #     # value is a dict, but is it just a value with extra info?
-        #     # This is a simple value (e.g. string) with extra info
-        #     for dict_key, dict_value in value.items():
-        #         if dict_key == "value":
-        #             output[key_def] = dict_value
-        #         else:
-        #             key_def.addProperty(dict_key, dict_value)
-        # #elif isinstance(value, list):
-        # #    logger.error(f"Value for key '{key_def}' is a list, this is not supported")
-        # else:
-        #     output[key_def] = value
 
         if key_def.getProperty("section") is not None:
             # Let the key reference the value for these high level sections. Makes searching sections e.g. tables, easier given only a tagged key.

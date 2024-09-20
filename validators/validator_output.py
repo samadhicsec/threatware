@@ -11,11 +11,6 @@ from utils.load_yaml import yaml_register_class
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# from jinja2 import Environment, FileSystemLoader, select_autoescape
-# env = Environment(
-#     loader = FileSystemLoader(searchpath="./"),
-#     autoescape=select_autoescape()
-# )
 
 class ValidatorOutput:
     """
@@ -83,32 +78,6 @@ class ValidatorOutput:
             output["error"] = self.error
         
         return output
-
-    # def _get_state(self):
-
-    #     output = {}
-    #     output['validator'] = self.validator_tag
-    #     if not self.error:
-    #         output['validates'] = self.validator_result
-            
-    #         context = {}
-    #         #context["translate"] = self.templated_translations["translate"]
-    #         context["key"] = {}
-    #         context["key"]["name"] = self.validating_key.name
-    #         context["key"]["colname"] = self.validating_key.getProperty("colname")
-    #         context["key"]["value"] = self.validating_value
-    #         context["config"] = ValidatorOutput.validator_config.get(self.validator_tag, {}).get("config")
-            
-    #         validator_output_texts = self.templated_output_texts.get(self.validator_tag, {}).get("text", {})
-    #         if self.validator_result:
-    #             output['description'] = Translate.localise(validator_output_texts, "output_text_valid", context)
-    #         else:
-    #             output['description'] = Translate.localise(validator_output_texts, "output_text_invalid", context)
-
-    #     else:
-    #         output["error"] = self.error
-        
-    #     return output
 
     def __getstate__(self):
         """ Used by jsonpickle to state of class to output """

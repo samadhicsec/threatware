@@ -106,7 +106,6 @@ class Translate:
             cls._cache[(cache_key, texts_key, ignore_format)] = output
 
         return output
-        #return env.from_string(texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"}).get(texts_key, f"Could not find text for key '{texts_key}'")).render(context | cls.translations | cls.global_context)
 
     @classmethod
     def localiseYamlFile(cls, filepath:Path) -> dict:
