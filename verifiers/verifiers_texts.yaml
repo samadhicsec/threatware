@@ -2,46 +2,130 @@
 output-texts:
   default:
     success-no-issues: "The threat model verified with no issues"
-    error-issues: "The threat model is not valid"
+    error-issues: 
+      default: "The threat model is not valid"
+      html: "<p>The threat model is not valid.</p><p>Please see the highlighted parts of the threat model and mouse over them for a description of the errors.</p>"
     warn-info-issues: "The threat model verified, but with some potential issues"
     location-text: "In {{ issue_table }}"
     entry-text: "Where '{{ issue_key.rowID.colname }}' column has value '{{ issue_key.rowID.value }}'"
     no-covering-threat: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
-    no-covering-threat-fix: "The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
-    no-covering-threat-fix-no-threat-or-asset: "The {{ threats_and_controls_table }} must include a row with one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
+    no-covering-threat-fix: 
+      default: "The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
+      html: |
+        The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; 
+        <ul>
+        <li>the asset name i.e. '{{ issue_key.value }}', </li>
+        <li>the asset category i.e. '{{ issue_key.row.category.value }}', or </li>
+        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}' </li>
+        </ul>
+    no-covering-threat-fix-no-threat-or-asset: 
+      default: "The {{ threats_and_controls_table }} must include a row with one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
+      html: |
+        The {{ threats_and_controls_table }} must include a row with one of; 
+        <ul>
+        <li>the asset name i.e. '{{ issue_key.value }}',</li>
+        <li>the asset category i.e. '{{ issue_key.row.category.value }}', or</li>
+        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}'</li>
+        </ul>
     missing-mandatory: "A value for the column '{{ issue_key.colname }}' is mandatory"
     conditional-mandatory: "The value for the field '{{ if_key.colname }}' is '{{ if_key.value }}', so a value for the field '{{ then_key.colname }}' is mandatory"
+    conditional-mandatory-url: "The text '{{ if_key.value }}' must be a hyperlink, but no hyperlink was found."
     conditional-mandatory-any-value: "A value for the field '{{ if_key.colname }}' exists, so a value for the field '{{ then_key.colname }}' is mandatory"
     conditional-mandatory-exists: "'{{ then_key.table }}' has a row where '{{ then_key.colname }}' is '{{ then_key.value }}' and '{{ if_key.colname }}' is '{{ if_key.value }}', so there must be a matching entry in '{{ issue_table }}'"
     conditional-mandatory-exists-fix: "Add a row in '{{ issue_table }}' with '{{ issue_key.colname }}' set to '{{ then_key.value }}'"
-    conditional-mandatory-authnz: "No entry in the '{{ issue_table }}' in the '{{ issue_key.colname }}' column that matches the in-scope component '{{ then_key.value }}' was found."
-    conditional-mandatory-authnz-fix: "Authentication and authorisation information must be captured for each in-scope component.  Specifically, the '{{ issue_table }}' must include at least one row where the '{{ issue_key.colname }}' column matches the '{{ then_key.colname }}' column in the '{{ then_key.table }}', for each in-scope component.  By convention if the component exposes no functionality (not counting health/mointoring endpoints) then add a row with 'Not Applicable' for both authentication and authorisation.  If the component has authentication but not authorisation (or vice-versa), then by convention 'None' is used to capture the lack of authorisation (or authentication as the case may be)"
+    conditional-mandatory-authnz: "No entry in the '{{ issue_table }}' in the '{{ issue_table_col }}' column that matches the in-scope component '{{ then_key.value }}' was found."
+    conditional-mandatory-authnz-fix: "Authentication and authorisation information must be captured for each in-scope component.  Specifically, the '{{ issue_table }}' must include at least one row where the '{{ issue_table_col }}' column matches the '{{ then_key.colname }}' column in the '{{ then_key.table }}', for each in-scope component.  By convention if the component exposes no functionality (not counting health/mointoring endpoints) then add a row with 'Not Applicable' for both authentication and authorisation.  If the component has authentication but not authorisation (or vice-versa), then by convention 'None' is used to capture the lack of authorisation (or authentication as the case may be)"
     conditional-is-empty: "If '{{ if_key.colname }}' is empty then '{{ then_key.colname }}' must also be empty"
     conditional-authnz-na: "If '{{ if_key.colname }}' is '{{ if_key.value }}' then '{{ then_key.colname }}' must also be '{{ if_key.value }}'."
     conditional-authnz-na-fix: "If there is no '{{ if_key.colname }}' but there is '{{ then_key.colname }}' then by convention we set '{{ if_key.colname }}' to '{{ translate.none }}'"
     document-unique: "The value '{{ entryvalue }}' in field '{{ entryname }}' must be unique in the document amongst the following section/field name pairs - {}.  Duplicate value(s) were found in the following section/field name pairs - {}"
     not-unique: "The '{{ issue_key.colname }}' column with value '{{ issue_key.value }}' must be unique.  See error-data for locations with the same values"
+    not-unique-data:
+      html: |
+        <ul>
+        {% for location in errordata %}
+          <li>Value also exists in the '{{ location.column }}' column in the {{ location.table }}</li>
+        {% endfor %}
+        </ul>
     not-unique-fix: "The value must be unique so it can be used throughout the document without confusion about what is being referred to.  You can change the value at either location to make it unique.  See fixdata for the locations it must be unique with respect to" 
+    not-unique-fix-data:
+      html: |
+        <ul>
+        {% for location in fixdata %}
+          <li>The column '{{ location.column }}' in the {{ location.table }}</li>
+        {% endfor %}
+        </ul>
     value-invalid: Field validation failed for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}'.  See error-data for specific details.
     value-valid: At least 1 validation criteria for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}' was successful, but some failed.  See errordata for specific details.
+    value-error-data:
+      html: |
+        <table>
+          <tr><th>Validator</th><th>Status</th><th>Description</th></tr>
+          {% for validator in errordata %}
+          <tr>
+            <td>{{ validator.tag() }}</td>
+            <td>{% if validator.result() %}SUCCEEDED{% else %}<b>FAILED</b>{% endif %}</td>
+            <td>{{ validator.details() }}</td>
+          </tr>
+          {% endfor %}
+        </table>
     major.minor: "The value for the field '{{ entryname }}' must be of the format 'X.Y' where X is the major version, Y the minor version, and both are positive integers"
     date: "The value for the field '{{ entryname }}'' must be a Date e.g. YYYY-MM-DD, YYYY-DD-MM, DD-MM-YYYY, MM-DD-YYYY etc."
     yes-no: "The value for the field '{{ entryname }}' must be either '{{ translate.yes }}'' or '{{ translate.no }}'"
     template-value: "The value for the field '{{ entryname }}' should come from the document template"
-    reference-not-found: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
+    reference-not-found: 
+      default: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
+      html: "The value '{{ issue_key.value }}' does not match any appropriate existing value."
     reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
-grouped-text:
-  storage-expression:
-    default:
-      start-assets-grouped-by-storage: 
+    reference-not-found-fix-data:
+      html: |
+        <br/>
+        {% if fixdata.document %}
+        In this threat model document:
+        <ul>
+        {% for location in fixdata.document %}
+          {% if location.get('match-type') == 'storage-expression' %}
+          <li>Must match a '{{ location.get('match-type') }}' (e.g. 'All assets stored in ') using a value in the column '{{ location.column }}' in the {{ location.table }}</li>
+          {% else %}
+          <li>The column '{{ location.column }}' in the {{ location.table }}</li>
+          {% endif %}  
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if fixdata.template %}
+        In the threat model template:
+        <ul>
+        {% for location in fixdata.template %}
+          <li>The column '{{ location.column }}' in the {{ location.table }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    start-assets-grouped-by-storage: 
+      default:
         - "All assets stored in "
         - "All assets stored in component - "
         - "All assets stored in location - "
-      all-assets:
+      html: |
+        <ul>
+          <li>All assets stored in</li>
+          <li>All assets stored in component -</li>
+          <li>All assets stored in location -</li>
+        </ul>
+    all-assets:
+      default:
         - "All assets"
-  asset-expression:
-    default:
-      all-functional-assets:
+      html: |
+        <ul>
+          <li>All assets</li>
+        </ul>
+    all-functional-assets:
+      default:
         - "All"
         - "All assets"
         - "All Functional Assets"
+      html: |
+        <ul>
+          <li>All</li>
+          <li>All assets</li>
+          <li>All Functional Assets</li>
+        </ul>

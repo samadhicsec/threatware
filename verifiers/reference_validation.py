@@ -15,16 +15,6 @@ from utils import match, transform
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
-# def _strip_context(config:dict, value:str):
-
-#     start_char = config["start-char"]
-#     end_char = config["end-char"]
-
-#     if(start_char_index := value.find(start_char)) != -1:
-#         if(end_char_index := value.find(end_char, start_char_index)) != -1:
-#             return value[:start_char_index] + value[end_char_index + 1:]
-
-#     return value
 
 def template_reference_callback(callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value):
 
@@ -57,18 +47,20 @@ def reference_callback(callback_config, tag_tuple, compare_value, compare_to_key
     if tag_comparison == "storage-expression":
         # TODO this just checks the value endswith the value from where it has a tag referencing, but really we should check for a complete
         # text match e.g. "All assets stored in environment variables"
-        grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+        #grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), strip_fn(compare_to_value)):
+        # Since we are trying to match text we don't want the localised version to be output specific, we just want the default output format
+        if match.starts_ends(compare_value, Translate.localise(callback_config.get("output-texts", {}), "start-assets-grouped-by-storage", ignore_format=True), strip_fn(compare_to_value)):
             return True
-        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key = "grouped_text")):
+        if match.equals(compare_value, Translate.localise(callback_config.get("output-texts", {}), "all-assets", ignore_format=True)):
             return True
 
     # TODO- make this more generic so you can dynamically add more grouped text.
     if tag_comparison == "asset-expression":
-        asset_text = callback_config.get("grouped-text", {}).get("asset-expression")
+        #asset_text = callback_config.get("grouped-text", {}).get("asset-expression")
 
-        if match.equals(compare_value, Translate.localise(asset_text, "all-functional-assets", cache_key="asset_text")):
+        #if match.equals(compare_value, Translate.localise(callback_config.get("output-texts", {}), "all-functional-assets", cache_key="asset_text", ignore_format=True)):
+        if match.equals(compare_value, Translate.localise(callback_config.get("output-texts", {}), "all-functional-assets", ignore_format=True)):
             return True
 
     return False
@@ -83,7 +75,8 @@ def _get_possible_fixed_texts(common_config:dict, key_entry:Key) -> list:
         # TODO- make this more generic so you can dynamically add more grouped text.
         if tag_comparison == "asset-expression":
 
-            return Translate.localise(common_config["grouped-text"]["asset-expression"], "all-functional-assets")
+            #return Translate.localise(common_config["grouped-text"]["asset-expression"], "all-functional-assets")
+            return Translate.localise(common_config["output-texts"], "all-functional-assets")
 
     return []
 
@@ -95,7 +88,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
     template_reference_tag_prefix = common_config["references"]["templ-tag-prefix"]
 
     reference_callback_config = {}
-    reference_callback_config["grouped-text"] = common_config["grouped-text"]
+    #reference_callback_config["grouped-text"] = common_config["grouped-text"]
+    reference_callback_config["output-texts"] = common_config["output-texts"]
     reference_callback_config["strip-context"] = common_config["strip-context"]
 
     # Find every key with a tag that starts with the configured prefix.
@@ -136,9 +130,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             if len(fixed_texts) > 0:
                 issue_dict["fixdata"]["static-texts"] = fixed_texts
 
-            verify_return_list.append(VerifierIssue("reference-not-found", 
-                                                    "reference-not-found-fix", 
-                                                    issue_dict
-                                                    ))
+            verify_return_list.append(VerifierIssue(
+                error_text_key="reference-not-found", 
+                fix_text_key="reference-not-found-fix", 
+                fix_data_key="reference-not-found-fix-data", 
+                issue_dict=issue_dict))
 
     return verify_return_list

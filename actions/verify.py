@@ -5,7 +5,6 @@ Verify a threat model
 
 import logging
 from utils.error import VerifyError
-from language.translate import Translate
 from utils.output import FormatOutput
 from utils import match
 from verifiers.verifiers_config import VerifiersConfig

@@ -11,6 +11,7 @@ from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from storage.gitrepo import GitStorage
 from utils.error import ThreatwareError
+from utils.request import Request
 from utils.config import ConfigBase
 from utils.output import FormatOutput
 import utils.logging
@@ -22,6 +23,7 @@ import actions.verify as verify
 import actions.manage as manage
 import actions.measure as measure
 from utils.output import FormatOutput, OutputType
+from response.response import Response
 from data.key import key as Key
 
 utils.logging.configureLogging()
@@ -43,29 +45,7 @@ def lambda_handler(event, context):
     # Fitler the set of query string parameters to just ones we know about
     if (qsp := event.get("queryStringParameters", {})) is None:
         qsp = {}
-    filtered_qsp = {"request":{}}
-    if (action := qsp.get("action", None)) is not None:
-        filtered_qsp["request"]["action"] = action
-    if (schemeID := qsp.get("scheme", None)) is not None:
-        filtered_qsp["request"]["scheme"] = schemeID
-    if (docloc := qsp.get("docloc", None)) is not None:
-        filtered_qsp["request"]["docloc"] = docloc
-    if (doctemplate := qsp.get("doctemplate", None)) is not None:
-        filtered_qsp["request"]["doctemplate"] = doctemplate
-    if (id := qsp.get("ID", None)) is not None:
-        filtered_qsp["request"]["ID"] = id
-    if (IDprefix := qsp.get("IDprefix", None)) is not None:
-        filtered_qsp["request"]["IDprefix"] = IDprefix
-    if (lang := qsp.get("lang", None)) is not None:
-        filtered_qsp["request"]["lang"] = lang
-    if (output_format := qsp.get("format", None)) is not None:
-        filtered_qsp["request"]["format"] = output_format
-    if (convert_meta := qsp.get("meta", None)) is not None:
-        filtered_qsp["request"]["meta"] = convert_meta
-    if (verify_reports := qsp.get("reports", None)) is not None:
-        filtered_qsp["request"]["reports"] = verify_reports
-
-    logger.info(f"Threatware called with parameters = '{ filtered_qsp['request'] }'")
+    Request.set(qsp)
 
     # Very first thing we need to do is find where all the configuration files are, and if they are not already present, download them.
     # How we do that depends what env we are in.  Providers usually take a config file, but we don't have them yet, so load without config (which limits what methods we can use)
@@ -93,50 +73,51 @@ def lambda_handler(event, context):
             ###
 
             # We need this to support localisation of keywords
-            Translate.init(lang, filtered_qsp)
-
-            # Determine output Content-Type
-            if "format" in filtered_qsp["request"] and filtered_qsp["request"]["format"].lower() in ["json", "yaml"]:
-                FormatOutput.output_format = filtered_qsp["request"]["format"].lower()
-            content_type = "application/json"
-
-            # We can treat the parameters as static
-            FormatOutput.request_parameters = filtered_qsp
+            Translate.init()
 
             # Load the texts file with localised error messages
             handler_output = FormatOutput({"template-text-file":ConfigBase.getConfigPath(HANDLER_TEXTS_YAML_PATH)})
-
+            # Create a response in case of an unexpected error
+            response = Response(handler_output)
     
 
         # Validate input
-        if action is None:
+        if Request.format == "html":
+            if Request.action not in [ACTION_VERIFY]:
+                Request.format = "json"
+                logger.warning(f"'html' format is only supported for the 'verify' action, defaulting format to 'json'")
+            if Request.reports != "none":
+                Request.reports = "none"
+                logger.warning(f"Additional reports are not supported in 'html' format, defaulting reports to 'none'")
+
+        if Request.action is None:
             logger.error("action is a mandatory parameter")
             handler_output.setError("action-is-mandatory", {})
-            content_type, body = handler_output.getContent()
-        elif action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
+            response = Response(handler_output)
+        elif Request.action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
             logger.error(f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}")
             handler_output.setError("action-value", {"actions":[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]})
-            content_type, body = handler_output.getContent()
-        elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and schemeID is None:
+            response = Response(handler_output)
+        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.scheme is None:
             logger.error("scheme is a mandatory parameter")
             handler_output.setError("scheme-is-mandatory", {})
-            content_type, body = handler_output.getContent()
-        elif action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and docloc is None:
+            response = Response(handler_output)
+        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None:
             logger.error("docloc is a mandatory parameter")
             handler_output.setError("docloc-is-mandatory", {})
-            content_type, body = handler_output.getContent()
-        elif action in [ACTION_VERIFY, ACTION_MEASURE] and  doctemplate is None:
-            logger.error(f"doctemplate is a mandatory parameter when action = {action}")
-            handler_output.setError("doctemplate-is-mandatory", {"action":action})
-            content_type, body = handler_output.getContent()
-        elif action in [ACTION_MANAGE_INDEXDATA] and id is None:
-            logger.error(f"ID is a mandatory parameter when action = {action}")
-            handler_output.setError("id-is-mandatory", {"action":action})
-            content_type, body = handler_output.getContent()
-        elif action in [ACTION_MANAGE_CREATE] and IDprefix is None:
-            logger.error(f"IDprefix is a mandatory parameter when action = {action}")
-            handler_output.setError("idprefix-is-mandatory", {"action":action})
-            content_type, body = handler_output.getContent()
+            response = Response(handler_output)
+        elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
+            logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
+            handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
+            response = Response(handler_output)
+        elif Request.action in [ACTION_MANAGE_INDEXDATA] and id is None:
+            logger.error(f"ID is a mandatory parameter when action = {Request.action}")
+            handler_output.setError("id-is-mandatory", {"action":Request.action})
+            response = Response(handler_output)
+        elif Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
+            logger.error(f"IDprefix is a mandatory parameter when action = {Request.action}")
+            handler_output.setError("idprefix-is-mandatory", {"action":Request.action})
+            response = Response(handler_output)
 
         else:
             # Load the execution environment again, as this time we have configuration files to enable full functionality
@@ -149,19 +130,20 @@ def lambda_handler(event, context):
                 # We are being called as a lambda, so get credentials from cloud
                 execution_env = provider.get_provider("aws.lambda")
 
-            if schemeID is not None:
-                schemeDict = load_scheme(schemeID)
+            if Request.scheme is not None:
+                schemeDict = load_scheme(Request.scheme)
 
-            if action == ACTION_CONVERT:
+            if Request.action == ACTION_CONVERT:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                output = convert.convert(convert_config, execution_env, schemeDict, docloc)
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
-                if output.getResult() != OutputType.ERROR:
+                if convert_output.getResult() != OutputType.ERROR:
 
-                    doc_model = output.getDetails()
+                    doc_model = convert_output.getDetails()
 
                     verify_config = verify.config(schemeDict)
 
@@ -169,23 +151,23 @@ def lambda_handler(event, context):
                     # This will update the model in place
                     verify.assign_default_tags(verify_config, doc_model)
 
-                content_type, body = output.getContent(lambda : Key.config_serialisation(convert_meta))
+                response = Response(convert_output, Request.meta)
 
-            elif action == ACTION_VERIFY:
+            elif Request.action == ACTION_VERIFY:
 
                 convert_config = convert.config()
                 
                 # Convert the TM template
-                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-                content_type, body = convert_output.getContent()
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Request.doctemplate)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
 
                     template_model = convert_output.getDetails()
 
                     # Convert the TM document
-                    convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                    content_type, body = convert_output.getContent()
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                    response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                     if convert_output.getResult() != OutputType.ERROR:
 
@@ -195,33 +177,32 @@ def lambda_handler(event, context):
 
                         # Verify the TM document
                         verify_output = verify.verify(verify_config, doc_model, template_model)
-                        content_type, body = verify_output.getContent()
+                        response = Response(verify_output, force_api_format=True)     # In case verify failed
 
                         if verify_output.getResult() != OutputType.ERROR:
                             
                             issues = verify_output.getDetails()
 
                             # Generate a report on verification issues and analysis
-                            verify_output = verify.report(verify_config, doc_model, issues, verify_reports)
+                            verify_output = verify.report(verify_config, doc_model, issues, Request.reports)
 
-                            #body = verify_output.tojson()
-                            content_type, body = verify_output.getContent()
+                            response = Response(verify_output)
 
-            elif action == ACTION_MANAGE_INDEXDATA:
+            elif Request.action == ACTION_MANAGE_INDEXDATA:
                 
                 manage_config = manage.config()
 
                 output = manage.indexdata(manage_config, execution_env, id)
 
-                content_type, body = output.getContent()
+                response = Response(output)
 
-            elif action == ACTION_MANAGE_CREATE:
+            elif Request.action == ACTION_MANAGE_CREATE:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                content_type, body = convert_output.getContent()
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
 
@@ -229,17 +210,17 @@ def lambda_handler(event, context):
 
                     manage_config = manage.config()
 
-                    output = manage.create(manage_config, execution_env, IDprefix, schemeID, docloc, doc_model)
+                    output = manage.create(manage_config, execution_env, Request.IDprefix, Request.scheme, Request.docloc, doc_model)
 
-                    content_type, body = output.getContent()
+                    response = Response(output)
 
-            elif action == ACTION_MANAGE_CHECK:
+            elif Request.action == ACTION_MANAGE_CHECK:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                content_type, body = convert_output.getContent()
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
 
@@ -250,17 +231,17 @@ def lambda_handler(event, context):
                     # 'check' relies on measure
                     measure_config = measure.config()
 
-                    output = manage.check(manage_config, execution_env, docloc, schemeID, doc_model, measure_config, measure.distance)
+                    output = manage.check(manage_config, execution_env, Request.docloc, Request.scheme, doc_model, measure_config, measure.distance)
 
-                    content_type, body = output.getContent()
+                    response = Response(output)
             
-            elif action == ACTION_MANAGE_SUBMIT:
+            elif Request.action == ACTION_MANAGE_SUBMIT:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                content_type, body = convert_output.getContent()
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
 
@@ -268,25 +249,25 @@ def lambda_handler(event, context):
 
                     manage_config = manage.config()
 
-                    output = manage.submit(manage_config, execution_env, docloc, schemeID, doc_model)
+                    output = manage.submit(manage_config, execution_env, Request.docloc, Request.scheme, doc_model)
 
-                    content_type, body = output.getContent(lambda : Key.config_serialisation("none"))
+                    response = Response(output, "none")
 
-            elif action == ACTION_MEASURE:
+            elif Request.action == ACTION_MEASURE:
 
                 convert_config = convert.config()
 
                 # Convert the TM template
-                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, doctemplate)
-                content_type, body = convert_output.getContent()
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Request.doctemplate)
+                response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
 
                     template_model = convert_output.getDetails()
 
                     # Convert the TM document
-                    convert_output = convert.convert(convert_config, execution_env, schemeDict, docloc)
-                    content_type, body = convert_output.getContent()
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                    response = Response(convert_output)     # In case convert failed
 
                     if convert_output.getResult() != OutputType.ERROR:
 
@@ -296,7 +277,7 @@ def lambda_handler(event, context):
                         
                         output = measure.distance_to_template(measure_config, execution_env, doc_model, template_model)
 
-                        content_type, body = output.getContent()
+                        response = Response(output)
     
     except Exception as e:
         logger.error(e)
@@ -304,15 +285,15 @@ def lambda_handler(event, context):
             handler_output.setError(e.text_key, e.template_values)
         else:
             handler_output.setError("internal-error", {})
-        content_type, body = handler_output.getContent()
+        response = Response(handler_output, force_api_format=True)
 
     # Respond
     return {
         'statusCode': 200,
         "headers": {
-            "Content-Type": f"{content_type}"
+            "Content-Type": f"{response.getContentType()}"
         },
-        'body': body
+        'body': response.getBody()
     }
 
 def getVersion(prog):
@@ -348,7 +329,7 @@ def main():
     version_str = f"{parser.prog} v{getVersion(parser.prog)}"
     parser.add_argument("-v", "--version", action="version", version=version_str)
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
-    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml'])
+    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml', 'html'])
 
     subparsers = parser.add_subparsers(dest="action", required=True)
 

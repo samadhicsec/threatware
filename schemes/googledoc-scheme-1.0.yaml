@@ -274,13 +274,21 @@ scheme:
               type: html-ul
               xpath: "//html/body/h2[text()='References']/following::ul[following::h1[1][text()='Components']]/li"
           map-data:
-            - key: "description"
+            - key: 
+                name: "description"
+                tags:
+                  - url-description
+                  - row-identifier
               value:
                 get-data:
                   query:
                     type: html-text
-                    xpath: ".//a/text()"
-            - key: "URL"
+                    xpath: ".//text()"
+            - key: 
+                name: "URL"
+                tags:
+                  - url
+                  - not-mandatory   # We have a separate if-then validation for URL so the error message is more specific
               value:
                 get-data:
                   - query:

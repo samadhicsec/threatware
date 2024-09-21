@@ -3,10 +3,11 @@
 import logging
 from lxml import etree
 import lxml.html
-from lxml.etree import XPathError
+from lxml.etree import XPathError, XPathEvalError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
 #from html_table_extractor.extractor import Extractor
+from utils.property_str import pstr
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -18,12 +19,6 @@ PROCESS_IGNORE_COLS = "ignore-cols"
 PROCESS_REMOVE_HEADER_ROW = 'remove-header-row'
 PROCESS_REMOVE_ROWS_IF_EMPTY = "remove-rows-if-empty"
 PROCESS_SPLIT_TYPE = "split-type"
-
-# def _strip_element_list(ele_list):
-
-#     for ele in ele_list:
-#         etree.strip_elements(ele, "*")
-#     return
 
 def get_document(document_str, mapping):
 
@@ -57,15 +52,6 @@ def get_document(document_str, mapping):
 
     return document
 
-    # try:
-    #     h1_list = document.xpath("//h1")
-    #     _strip_element_list(h1_list)
-    # except XPathError:
-    #     logger.warning(f"XPath query to find headers caused an error")
-
-    # return document
-    # Note, can't do much pre-processing of the XML here as the scheme might be referencing something that we might change
-    #return lxml.html.document_fromstring(document_str)
 
 def get_document_section(document, query_cfg):
 
@@ -120,12 +106,37 @@ def get_document_value(document, query_cfg) -> str:
     if len(value_list) > 1:
         logger.warning(f"Retreived {len(value_list)} document values when 1 was expected.  Using first.")
         
+    location = ""
+
     if not isinstance(value_list[0], str):
         logger.warning(f"Expected results 'str', got '{type(value_list[0])}', for query '{query_cfg[XPATH_FIELD]}'")
-
+    else:
+        # It's a string, so we can't extract a location from it.  Try to strip away the xpath path that makes the result a string to get to the
+        # element that contains the string.
+        query = query_cfg[XPATH_FIELD]
+        if query.endswith("//text()"):
+            query = query[:-8]
+        if query.endswith("/text()"):
+            query = query[:-7]
+        elif "/@" in query:
+            query = query[0:query.rfind("/@")]
+        
+        try:
+            value_element = document.xpath(query)
+        except (XPathError, XPathEvalError):
+            logger.warning(f"XPath query '{query}' caused an error")
+            value_list = []
+        if len(value_element) == 1:
+            if hasattr(value_element[0], "xpath"):
+                location = document.getroottree().getpath(value_element[0])
+        
     # Despite checking this is a str, it could be a _ElementUnicodeResult, which doesn't serialise to JSON nicely.  So explicitly convert.
 
-    return str(value_list[0])
+    if location:
+        return pstr(str(value_list[0]), properties = {"location":location})
+    
+    logger.info(f"Returning value '{str(value_list[0])}' without location")
+    return pstr(str(value_list[0]))
 
 def _remove_rows_if_empty(proc_def, table_data):
 
@@ -152,6 +163,24 @@ def _remove_rows_if_empty(proc_def, table_data):
 
     return new_table_data
 
+def get_table_xpaths(table_element):
+    row_xpaths = []
+    roottree = table_element.getroottree()
+    rows = table_element.xpath('.//tr')
+    
+    for row_index, row in enumerate(rows):
+        col_xpaths = []
+        cells = row.xpath('.//td | .//th')
+        for cell_index, cell in enumerate(cells):
+            # Since the cell element could be a td or th, we must make sure we get the correct xpath
+            #cell_xpath = f"{table_element.getroottree().getpath(table_element)}//tr[{row_index + 1}]//{cell.tag}[{cell_index + 1}]"
+            cell_xpath = roottree.getpath(cell)    # This is dangerous though as pre-processing may make the xpath here invalid when applied to the original document
+            col_xpaths.append(cell_xpath)
+        
+        row_xpaths.append(col_xpaths)
+    
+    return row_xpaths
+
 def get_document_row_table(document, query_cfg):
 
     if not query_key_defined(query_cfg, XPATH_FIELD):
@@ -171,6 +200,9 @@ def get_document_row_table(document, query_cfg):
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' returned more than 1 result, only using first")
 
     table_ele = table_list[0]
+
+    # Get the XPath to each table element
+    table_xpaths = get_table_xpaths(table_ele)
 
     # For future reference:
     #  'strip_tags' will remove the element tag and attributes but not the content
@@ -232,6 +264,29 @@ def get_document_row_table(document, query_cfg):
     
     # Return list of lists.  There is only 1 table so only the first is returned
     table_output = p.tables[0]
+
+    # Combine the XPath to each table cell wit the value in each table cell
+    table_values = table_output
+    if len(table_values) != len(table_xpaths):
+        # We'll cope with this by using empty XPath vlaues
+        logger.warning(f"Table values '{len(table_values)}' did not match the table xpaths '{len(table_xpaths)}'")
+    for row_index, row in enumerate(table_values):
+        if row_index >= len(table_xpaths):
+            # Make entire row empty XPath values
+            logger.warning(f"Table value row '{row_index}' did not have a corresponding table xpath")
+            row_xpath = [""]*len(row)
+        else:
+            row_xpath = table_xpaths[row_index]
+        for col_index, value in enumerate(row):
+            if col_index >= len(row_xpath):
+                # Make column XPath entry empty.  Remember, this row could contain real XPath values, just not enough of them
+                logger.warning(f"Table value '{value}' did not have a corresponding table xpath")
+                col_xpath = ""
+            else:
+                col_xpath = row_xpath[col_index]
+            
+            #table_output[row_index][col_index] = {"location":col_xpath, "value":value}
+            table_output[row_index][col_index] = pstr(value, properties={"location":col_xpath})
 
     if query_cfg.get(PROCESS_REMOVE_HEADER_ROW, False):
         table_output = table_output[1:]
@@ -355,7 +410,7 @@ def get_text_section(document, query_cfg):
     for paragraph in paragraphs:
         output += (str(paragraph) + "/n")
 
-    return output
+    return pstr(output, properties={"location":query_cfg[XPATH_FIELD]})
 
 html_dispatch_table = {
     "html-ul":get_document_list_items,

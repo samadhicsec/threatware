@@ -144,21 +144,21 @@ class Validator:
         # Check the validator tag can be found
         if (validator_entry := self.validator_config_dict.get(validator_tag)) is None:
             logger.error(f"No validator tag '{validator_tag}' is configured")
-            output.result = False
+            output.validator_result = False
             output.error = f"No validator tag '{validator_tag}' is configured"
             return output
 
         # Check the validator is present
         if validator_entry.get('validator') is None:
             logger.error(f"No 'validator' key is configured for '{validator_tag}'")
-            output.result = False
+            output.validator_result = False
             output.error = f"No 'validator' key is configured for '{validator_tag}'"
             return output
 
         # Get the validator
         if (validate := self.dispatch.get(validator_entry.get('validator'))) is None:
             logger.error(f"No validator called '{validator_entry['validator']}' is configured")
-            output.result = False
+            output.validator_result = False
             output.error = f"No validator called '{validator_entry['validator']}' is configured"
             return output
 
@@ -166,7 +166,7 @@ class Validator:
 
         # Validate
         #logger.info(f"Entering validator '{validator_entry['validator']}'")
-        output.result = validate(validator_entry['config'], key, value, references)
+        output.validator_result = validate(validator_entry['config'], key, value, references)
         #logger.info(f"Exiting validator '{validator_entry['validator']}'")
         
         output.validator_name = validator_entry["validator"]

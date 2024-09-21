@@ -40,6 +40,9 @@ class VerifiersReport:
                     if covered_asset.asset_value not in self.control_coverage[control_value][covered_asset.storage_location_value]:
                         self.control_coverage[control_value][covered_asset.storage_location_value].append(covered_asset.asset_value)
 
+    def getIssues(self):
+        return self.verifier_issues_list
+
     def _get_state(self):
 
         def _covered_assets_sort(value):

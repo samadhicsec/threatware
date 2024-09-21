@@ -49,6 +49,17 @@ def parse(get_data_def, input):
     data = input
     for query_def in get_data_defs:
         data = _process_query(query_def.get("query", {}), data)
+        # data_value = data
+        # if isinstance(data, dict) and "value" in data:
+        #     data_value = data["value"]
+        
+        # new_data = _process_query(query_def.get("query", {}), data_value)
+
+        # if isinstance(data, dict) and "value" in data:
+        #     data["value"] = new_data
+        # else:
+        #     data = new_data
+
 
     logger.debug(f"Leaving get.parse having processed {get_data_def}")
 

@@ -22,6 +22,8 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
         def _inner_is_empty(key, value, context):
             is_empty = False
             if not key.hasTag(verifier_config["exceptions-tag"]):
+                if value is None:
+                    is_empty = True
                 if isinstance(value, str):
                     if match.is_empty(value):
                         is_empty = True
@@ -33,41 +35,15 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict = {}
                 issue_dict["issue_key"] = key
                 issue_dict["issue_value"] = value
-                verify_return_list.append(VerifierIssue("missing-mandatory", 
-                                                        None,
-                                                        issue_dict))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="missing-mandatory", 
+                    fix_text_key=None, 
+                    issue_dict=issue_dict))
                 return True, True
             else:
                 return True, False
 
         recurse(model, _inner_is_empty, None)
-
-        # Inner function here makes it easy to create VerifierIssue without passing lots of variables
-        # def traverse_model(model):
-
-        #     if isinstance(model, dict):
-        #         for dict_key, dict_value in model.items():
-                    
-        #             if not (isinstance(dict_value, dict) or isinstance(dict_value, list)) and (not dict_key.hasTag(verifier_config["exceptions-tag"])):
-        #                 #print(f"key = {dict_key}, value = {dict_value}")
-        #                 if match.is_empty(dict_value):
-        #                     issue_dict = {}
-        #                     issue_dict["issue_key"] = dict_key
-        #                     issue_dict["issue_value"] = dict_value
-        #                     verify_return_list.append(VerifierIssue("missing-mandatory", 
-        #                                                             None,
-        #                                                             issue_dict))
-        #             if isinstance(dict_value, dict) or isinstance(dict_value, list):
-        #                 traverse_model(dict_value)
-
-        #     if isinstance(model, list):
-        #         for list_entry in model:
-        #             traverse_model(list_entry)
-                
-        #     return
-
-        # # Need to search the entire model looking for empty values
-        # traverse_model(model)
 
     else:
         # Need to just those keys marked as "mandatory"
@@ -80,10 +56,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                 issue_dict = {}
                 issue_dict["issue_key"] = tagged_key
                 issue_dict["issue_value"] = tagged_value
-                verify_return_list.append(VerifierIssue("missing-mandatory", 
-                                            None,
-                                            issue_dict
-                                            ))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="missing-mandatory", 
+                    fix_text_key=None, 
+                    issue_dict=issue_dict))
 
 
     return verify_return_list

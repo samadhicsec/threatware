@@ -8,6 +8,7 @@ from pathlib import Path
 from utils import match
 from utils.config import ConfigBase
 from utils.load_yaml import yaml_file_to_str, yaml_str_to_dict, yaml_file_to_dict
+from utils.request import Request
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -26,13 +27,17 @@ class Translate:
     translations:dict = {}
     global_context:dict = {}
     defLanguageCode:str = "default"
+    defOutputFormatKey:str = "default"
     languageCode:str = ""
     _cache:dict = {}
 
     @classmethod
-    def init(cls, languageCode:str = "", global_context:dict = {}):
+    def init(cls):
+    #def init(cls, languageCode:str = "", global_context:dict = {}):
 
-        cls.global_context = global_context
+        #cls.global_context = global_context
+        cls.global_context = {"request": Request.get()}
+        languageCode = Request.lang
 
         yaml_config_dict = yaml_file_to_dict(ConfigBase.getConfigPath(TRANSLATE_CONFIG_YAML_PATH))
 
@@ -49,14 +54,14 @@ class Translate:
         cls.translations = yaml_config_dict.get(cls.languageCode, {})
 
     @classmethod
-    def localise(cls, texts:dict, texts_key:str = None, context:dict = {}, cache_key = None):
+    def localise(cls, texts:dict, texts_key:str = None, context:dict = {}, cache_key = None, ignore_format:bool = False):
 
         # localise is expensive to call a lot, so cache context free values.  This is fine as language does not change per execution
         if context is None or len(context) == 0:
             if cache_key is None:
                 # TODO making texts hashable via str(texts) is one way, there might be faster other ways e.g. frozenset
                 cache_key = str(texts)
-            if (cached_value := cls._cache.get((cache_key, texts_key), None)) is not None:
+            if (cached_value := cls._cache.get((cache_key, texts_key, ignore_format), None)) is not None:
                 return cached_value
 
         languageCode = cls.languageCode
@@ -73,6 +78,19 @@ class Translate:
             # textsLanguage is the actual string
             textsLanguageText = textsLanguage
 
+        # We may have different versions of the text for different output formats e.g. json vs html
+        if isinstance(textsLanguageText, dict):
+            format = Request.format
+            if ignore_format is True:
+                format = "default"
+            # Check if the requested output format text is available, otherwise use the default
+            if format in textsLanguageText:
+                textsLanguageText = textsLanguageText.get(format)
+            elif cls.defOutputFormatKey in textsLanguageText:
+                textsLanguageText = textsLanguageText.get(cls.defOutputFormatKey)
+            else:
+                logger.warning(f"The localised texts didn't have a format entry matching '{format}' or the default '{cls.defOutputFormatKey}'.")
+                
         if isinstance(textsLanguageText, str):
             output = env.from_string(textsLanguageText).render(context | cls.translations | cls.global_context)
         elif isinstance(textsLanguageText, list):
@@ -85,10 +103,9 @@ class Translate:
             output = textsLanguageText
 
         if context is None or len(context) == 0:
-            cls._cache[(cache_key, texts_key)] = output
+            cls._cache[(cache_key, texts_key, ignore_format)] = output
 
         return output
-        #return env.from_string(texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"}).get(texts_key, f"Could not find text for key '{texts_key}'")).render(context | cls.translations | cls.global_context)
 
     @classmethod
     def localiseYamlFile(cls, filepath:Path) -> dict:
