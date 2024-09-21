@@ -84,23 +84,6 @@ def replace(input, query_cfg):
 
     return output
 
-def _wrapper(text_fn, input_value, query_cfg):
-    
-    if isinstance(input_value, dict) and "value" in input_value:
-            
-        output = text_fn(input_value["value"], query_cfg)
-    else:
-        output = text_fn(input_value, query_cfg)
-
-    if isinstance(output, dict):
-        return
-            
-# text_dispatch_table = {
-#     "text-split": lambda input_value, query_cfg: _wrapper(split, input_value, query_cfg),
-#     "text-match": lambda input_value, query_cfg: _wrapper(match, input_value, query_cfg),
-#     "text-replace": lambda input_value, query_cfg: _wrapper(replace, input_value, query_cfg),
-# }
-
 text_dispatch_table = {
     "text-split": split,
     "text-match": match,
