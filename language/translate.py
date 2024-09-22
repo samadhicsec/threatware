@@ -64,19 +64,35 @@ class Translate:
             if (cached_value := cls._cache.get((cache_key, texts_key, ignore_format), None)) is not None:
                 return cached_value
 
+        if texts is None or len(texts) == 0:
+            logger.error("Translate requires a dict of texts to localise from, but an empty dict was provided.")
+            return ""
+
+        # Get the language code (set in init)
         languageCode = cls.languageCode
         if languageCode not in texts:
             logger.warning(f"Could not find language code '{languageCode}' in text dict.  Using default.")
             if (languageCode := cls.defLanguageCode) not in texts:
                 logger.warning(f"Could not find language code '{languageCode}' in text dict.")
 
+        # Get the set of texts for that language
         textsLanguage = texts.get(languageCode, {texts_key:f"Could not find texts in language '{languageCode}'"})
+
         if not match.is_empty(texts_key):
             # textsLanguage is a dict
+            # Lookup the texts_key in the set of texts for that language
             textsLanguageText = textsLanguage.get(texts_key, f"Could not find text for key '{texts_key}'")
-        else:
+        elif isinstance(textsLanguage, str):
             # textsLanguage is the actual string
+            # Edge case where we want aren't looking for a key in a set of language texts, but rather 
+            # have a set of language texts for a single key (which hasn't been passed in), so we want to 
+            # just return the text associated with the language code
             textsLanguageText = textsLanguage
+        else:
+            # Since no texts_key has been passed in, and we can't translate an empty string, we'll just return an empty string
+            # This can happen in error handling when an unexpected error occurs and we are trying to localise the error message
+            logger.debug(f"No localisation text key passed in, so we can't choose a localised text from the supplied texts.  Returning an empty string.")
+            return ""
 
         # We may have different versions of the text for different output formats e.g. json vs html
         if isinstance(textsLanguageText, dict):
