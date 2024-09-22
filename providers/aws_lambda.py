@@ -128,13 +128,10 @@ class AWSLambdaContext:
 
         return key
 
-    def setupGit(self, gitrepo_config):
+    def setupGit(self, remote:str, base_storage_dir:str):
 
         # On AWS Lambda, to setup git, since we can't write to the local user's /home directory, we must
         # configure git in the only location we can write to, which is /tmp
-
-        base_storage_dir = gitrepo_config.get("base-storage-dir", "/tmp/")
-        remote = gitrepo_config.get("remote")
 
         if remote.startswith("git@"):
             logger.info("Setting up git to use SSH credentials in /tmp")
@@ -200,8 +197,8 @@ class AWSLambdaContext:
             # GIT_CONFIG_SYSTEM to /dev/null to prevent git from reading the system config file (or set GIT_CONFIG_NOSYSTEM to 1)
 
             # Git must know who the user is before it can commit. Configure git user.name and user.email
-            shell.run(self.repodir, git.config, ["--global", "user.name", gitrepo_config.get("git-user-name", git_email)])
-            shell.run(self.repodir, git.config, ["--global", "user.email", gitrepo_config.get("git-user-email", git_email)])
+            shell.run(base_storage_dir, git.config, ["--global", "user.name", "threatware"])
+            shell.run(base_storage_dir, git.config, ["--global", "user.email", "threatware"])
 
         elif remote.startswith("http"):
             logger.info("Using git with anonymous HTTP")
