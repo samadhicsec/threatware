@@ -6,7 +6,9 @@ Custom Exception
 class ThreatwareError(Exception):
 
     def __init__(self, text_key:str = "", template_values:dict = {}, *args: object) -> None:
-        self.text_key = text_key
+        self.text_key = "internal-error"
+        if text_key is not None and len(text_key.strip()) > 0:
+            self.text_key = text_key
         self.template_values = template_values
         super().__init__(*args)
 
