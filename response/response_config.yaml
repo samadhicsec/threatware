@@ -4,6 +4,32 @@ response-config:
     template-text-file: response/response_texts.yaml
   html:
     scheme-specific:
+      - regex: "^confluence"
+        inject:
+          location:
+            element: "//html/body"
+            index: -1                                        # The index of the child element to insert the content at.  -1 means the last element
+          inline:
+            style: |
+              body { 
+                background-color: #ffffff;
+                padding: 72pt 72pt 72pt 72pt;
+                width: 75vw;
+                margin:auto;
+              }
+
+              table {
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 3px;
+                margin-left: auto;
+                margin-right: auto;
+              }
+            script: |
+              colGroups = document.querySelectorAll("colgroup");
+              colGroups.forEach((colGroup) => {
+                colGroup.remove();
+              });
       - regex: "^googledoc"
         inject:
           location:
@@ -79,13 +105,13 @@ response-config:
             - "https://unpkg.com/tippy.js@6/animations/scale.css"
         inline:
           style: |
-            [threatwarefinding-type="error"] {
+            [threatwarefinding-show=true][threatwarefinding-type="error"] {
               box-shadow: 0 0 5px 5px red;
             }
-            [threatwarefinding-type="warning"] {
+            [threatwarefinding-show=true][threatwarefinding-type="warning"] {
               box-shadow: 0 0 5px 5px gold;
             }
-            [threatwarefinding-type="info"] {
+            [threatwarefinding-show=true][threatwarefinding-type="info"] {
               box-shadow: 0 0 5px 5px lightblue;
             }
             #tippytip {
@@ -101,32 +127,85 @@ response-config:
             }
           script: |
             function formatfinding(finding) {
-                  return `<div id="tippytip">
-                  <h3>${finding["type"]} (${finding["verifier"]})</h3>
-                  <p><b>Description:</b> ${finding["error-description"]}</p>
-                  <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
-                  <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
-                  <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
-                  </div>`
-              }
-            // Call `tippy()` with a CSS selector and a `content` prop:
-            tippy('[threatwarefinding]', {
-              theme: 'light-border',
-              animation: 'scale',
-              placement: 'right',
-              maxWidth: 650,
-              content(reference) {
+                return `<div id="tippytip">
+                <h3>${finding["type"]} (${finding["verifier"]})</h3>
+                <p><b>Description:</b> ${finding["error-description"]}</p>
+                <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
+                <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
+                <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
+                </div>`
+            }
+            // Need to read this from localStorage
+            //var verifier_filter = [];
+            if (typeof verifier_filter === 'undefined') {
+              verifier_filter = [];
+            }
+        
+            function setContent(reference) {
                 const id = reference.getAttribute('threatwarefinding');
                 // There can be multiple findings for the same location, so the 'id' can be a space separated list of indexes
                 const indexes = id.split(" ");
                 template = "";
                 for (let i = 0; i < indexes.length; i++) {
+                    if (verifier_filter.includes(threatwarefindings[indexes[i]]["verifier"])) {
+                        continue;
+                    }
                     template += formatfinding(threatwarefindings[indexes[i]]);
                     if (indexes.length > 1) {
                         template += "<hr>";
                     }
                 }
                 return template;
-              },
-              allowHTML: true,
+            }
+            tippy.setDefaultProps({
+                theme: 'light-border',
+                animation: 'scale',
+                placement: 'right',
+                maxWidth: 650,
+                content: (reference) => setContent(reference),
+                allowHTML: true,
             });
+            function tippySelector() {
+                findings = document.querySelectorAll('[threatwarefinding]')
+                findingsArray = Array.from(findings);
+
+                // Since we may not want to show all the findings, hide them all first (in the sense of applying a CSS style)
+                findingsArray.forEach((finding) => {
+                    finding.setAttribute('threatwarefinding-show', false);
+                });
+
+                // Need to remove any elements that we are filtering by verifier class
+                filteredFindingsArray = findingsArray.filter((finding) => {
+                    return finding.getAttribute('threatwarefinding-class').split(" ").some((className) => { return !(verifier_filter.includes(className)) });
+                });
+
+                // Now show the filtered findings
+                filteredFindingsArray.forEach((finding) => {
+                    finding.setAttribute('threatwarefinding-show', true);
+                });
+                return filteredFindingsArray;
+            }
+
+            // Call `tippy()` with a CSS selector and a `content` prop:
+            //tippy_obj = tippy('[threatwarefinding]');
+            tippy_obj = tippy(tippySelector());
+
+            function filterverifiers(event) {
+                var checked = event.target.checked;
+                if (typeof verifier_filter === 'undefined') {
+                  verifier_filter = [];
+                }
+                if (checked) {
+                    verifier_filter.push(event.target.name);
+                } else {
+                    verifier_filter = verifier_filter.filter(item => item !== event.target.name);
+                }
+                if (typeof tippy_obj !== 'undefined') {
+                    tippy_obj.forEach((instance) => {
+                      //instance.unmount();
+                      instance.destroy();
+                    });
+                    tippy_obj = tippy(tippySelector());
+                }
+                return
+            }
