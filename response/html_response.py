@@ -9,12 +9,27 @@ from response.response_config import HTMLConfig, SchemeSpecificConfig, FindingsC
 from utils.output import FormatOutput
 from language.translate import Translate
 
+import utils.logging
+logger = logging.getLogger(utils.logging.getLoggerName(__name__))
+
 THREATWARE_RESULT_ERRORS = "errors"
 THREATWARE_RESULT_NO_ERRORS = "no-errors"
 
 def _inject_into_HTML(document, config:HTMLInject):
 
-    element = document.xpath(config.location_element)[0]
+    try:
+        elements = document.xpath(config.location_element)
+    except XPathError:
+        logger.warning(f"XPath query '{config.location_element}' caused an error")
+        
+    if len(elements) == 0:
+        logger.warning(f"XPath query '{config.location_element}' returned no elements")
+        return
+    if len(elements) > 1:
+        logger.warning(f"XPath query '{config.location_element}' returned multiple elements, using first")
+        
+    element = elements[0]
+
     element_index = config.location_index
 
     element_list = []
@@ -114,7 +129,7 @@ def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsCo
                 element.attrib[findings_config.finding_type] = "info"
 
             if findings_config.finding_class in element.attrib:
-                element.attrib[findings_config.finding_class] = f"multiple"
+                element.attrib[findings_config.finding_class] = f"{element.attrib[findings_config.finding_class]} {issue.verifier}"
             else:
                 element.attrib[findings_config.finding_class] = f"{issue.verifier}"
 
