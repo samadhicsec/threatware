@@ -17,7 +17,7 @@ class HTMLInject:
     def __init__(self, inject_config:dict):
             
         self.location_element = inject_config.get("location", {}).get("element", "")
-        self.location_index = inject_config.get("location", {}).get("index", "")
+        self.location_index = inject_config.get("location", {}).get("index", -1)  # By default assume -1, which means append to the end
         self.include_scripts = inject_config.get("include", {}).get("scripts", [])
         if self.include_scripts is None:
             self.include_scripts = []
