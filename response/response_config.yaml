@@ -60,9 +60,6 @@ response-config:
           stylesheets:
         inline:
           element: |
-            <div id="threatware-banner"></div>
-          style: |
-            element: |
             <div id="threatware-banner-div">
               <div id="threatware-banner"></div>
               <details>
@@ -172,7 +169,7 @@ response-config:
             .tippy-box[data-theme~=light-border] {
               background-color: #fcfcfc;
             }
-            #tippytip > table, th, td {
+            #tippytip :is(table, th, td) {
               border: 1px solid black;
               border-collapse: collapse;
               padding: 3px;
