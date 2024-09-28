@@ -37,12 +37,16 @@ def get_document(document_str, mapping):
                 continue
             
             for ele in selection:
-                if tags_to_strip := processor.get("strip-tags", None):
-                    etree.strip_tags(ele, tags_to_strip)
-                if elements_to_strip := processor.get("strip-elements", None):
-                    etree.strip_elements(ele, elements_to_strip)
+                # Order here matters, do attributes first because that is irresptive of tags or elements
                 if attributes_to_strip := processor.get("strip-attributes", None):
                     etree.strip_attributes(ele, attributes_to_strip)
+                # Do elements before tags because we may want to strip all tags and so if we did tags first we couldn't strip the elements
+                if elements_to_strip := processor.get("strip-elements", None):
+                    etree.strip_elements(ele, elements_to_strip)
+                if tags_to_strip := processor.get("strip-tags", None):
+                    etree.strip_tags(ele, tags_to_strip)
+                
+                
 
     # This is a hack.  For reasons unknown XPath queries start failing for no obvious reason
     # once strip_* methods are called.  So we reload the processed XML from a string.  Lame.
