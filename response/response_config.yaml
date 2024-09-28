@@ -38,8 +38,15 @@ response-config:
           inline:
             style: |
               body { 
-                min-width: 80vh; 
+                min-width: 80vw;
                 margin:auto;
+              }
+              table {
+                border: 1px solid black;
+                border-collapse: collapse;
+                padding: 3px;
+                margin-left: auto !important;
+                margin-right: auto !important;
               }
     banner:                                                 # The banner content will get added as the first child of the <body> tag
       text-keys:
