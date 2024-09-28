@@ -247,15 +247,13 @@ response-config:
 
                 // Write new filter to local storage
                 if (docloc) {
-                  localStorage.setItem("threatware." + docloc) = JSON.stringify({"verifier_filter": verifier_filter});
+                  localStorage.setItem("threatware." + docloc, JSON.stringify({"verifier_filter": verifier_filter}));
                 }
 
                 // Update the banner to show that filters are being applied
                 if (document.querySelectorAll('#threatware-banner-div input[type="checkbox"]:checked').length > 0) {
-                  //document.querySelector('#threatware-banner-div #active-filters').style.display = "none";
                   document.querySelector('#threatware-banner-div #active-filters').removeAttribute("threatware-no-filter")
                 } else {
-                  //document.querySelector('#threatware-banner-div #active-filters').style.display = "initial";
                   document.querySelector('#threatware-banner-div #active-filters').setAttribute("threatware-no-filter", "")
                 }
 
@@ -269,14 +267,12 @@ response-config:
             }
 
             document.addEventListener('DOMContentLoaded', function() {
-              const queryString = window.location.search;
-              const urlParams = new URLSearchParams(queryString);
-              docloc = urlParams.get('docloc')
+              docloc = threatwareRequest["docloc"];
               
               // Read filter from localStorage
               verifier_filter = [];
               if (docloc) {
-                if (!localStorage.getItem("threatware." + docloc)) {
+                if (localStorage.getItem("threatware." + docloc) !== null) {
                   verifier_filter = JSON.parse(localStorage.getItem("threatware." + docloc))["verifier_filter"];
                 }
               }
