@@ -55,7 +55,41 @@ response-config:
           element: |
             <div id="threatware-banner"></div>
           style: |
-            #threatware-banner {
+            element: |
+            <div id="threatware-banner-div">
+              <div id="threatware-banner"></div>
+              <details>
+                <summary>Filter verify errors<span id="active-filters"> (filters are currently being applied)</span>:</summary>
+                <fieldSet>
+                  <div>
+                    <input type="checkbox" id="coverage" name="coverage-validation" onchange="filterverifiers(event)"/>
+                    <label for="coverage">Hide coverage verify errors (useful if threats have not been populated yet)</label>
+                  </div>
+                  <div>
+                    <input type="checkbox" id="reference" name="reference-validation" onchange="filterverifiers(event)"/>
+                    <label for="coverage">Hide reference verify errors</label>
+                  </div>
+                  <div>
+                    <input type="checkbox" id="mandatory" name="field-validation-mandatory" onchange="filterverifiers(event)"/>
+                    <label for="mandatory">Hide mandatory verify errors</label>
+                  </div>
+                  <div>
+                    <input type="checkbox" id="value" name="field-validation-value" onchange="filterverifiers(event)"/>
+                    <label for="mandatory">Hide invalid value verify errors</label>
+                  </div>
+                  <div>
+                    <input type="checkbox" id="conditional" name="field-validation-conditional" onchange="filterverifiers(event)"/>
+                    <label for="mandatory">Hide conditional verify errors</label>
+                  </div>
+                  <div>
+                    <input type="checkbox" id="uniqueness" name="field-validation-uniqueness" onchange="filterverifiers(event)"/>
+                    <label for="mandatory">Hide uniqueness verify errors</label>
+                  </div>
+                </fieldSet>
+              </details>
+            </div>
+          style: |
+            #threatware-banner-div {
               /*display: flex;*/
               justify-content: left;
               width: 100%;
@@ -71,20 +105,31 @@ response-config:
               color: #181818;
               border-radius: 10px;
             }
-            #threatware-banner[threatware-result="errors"] {
+            #threatware-banner-div[threatware-result="errors"] {
               background-color: #ffd6d6;
             }
-            #threatware-banner[threatware-result="no-errors"] {
+            #threatware-banner-div[threatware-result="no-errors"] {
               background-color: #d6ffd6;
             }
-          script: |
-            const banner = document.getElementById("threatware-banner");
-            if (banner) {
-              // 'banner_msg' is set by a system added script
-              banner.innerHTML = banner_msg;
-              // 'threatware_result' is set by a system added script
-              banner.setAttribute("threatware-result", threatware_result);
+            #threatware-banner-div[threatware-result="no-errors"] > details {
+              display: none;
             }
+            #threatware-banner-div #active-filters[threatware-no-filter] {
+              display: none;
+            }
+          script: |
+            document.addEventListener('DOMContentLoaded', function() {
+              const bannerDiv = document.getElementById("threatware-banner-div");
+              if (bannerDiv) {
+                // 'threatware_result' is set by a system added script
+                bannerDiv.setAttribute("threatware-result", threatware_result);
+              }
+              const banner = document.getElementById("threatware-banner");
+              if (banner) {
+                // 'banner_msg' is set by a system added script
+                banner.innerHTML = banner_msg;
+              }
+            });
     findings:                                               # The findings content will get added after the last child of the <body> tag
       finding-attributes:
         finding-index: "threatwarefinding"                  # The attribute that will be added to the locations of findings in the HTML, and contain the index of the finding in the results
@@ -127,68 +172,61 @@ response-config:
             }
           script: |
             function formatfinding(finding) {
-                return `<div id="tippytip">
-                <h3>${finding["type"]} (${finding["verifier"]})</h3>
-                <p><b>Description:</b> ${finding["error-description"]}</p>
-                <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
-                <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
-                <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
-                </div>`
+              return `<div id="tippytip">
+              <h3>${finding["type"]} (${finding["verifier"]})</h3>
+              <p><b>Description:</b> ${finding["error-description"]}</p>
+              <p>${finding["error-data"] ? `<b>Error-Data:</b> ${finding["error-data"]}` : ""}</p>
+              <p>${finding["fix-description"] ? `<b>Fix-Description:</b> ${finding["fix-description"]}` : ""}</p>
+              <p>${finding["fix-data"] ? `<b>Fix-Data:</b> ${finding["fix-data"]}` : ""}</p>
+              </div>`
             }
-            // Need to read this from localStorage
-            //var verifier_filter = [];
-            if (typeof verifier_filter === 'undefined') {
-              verifier_filter = [];
-            }
-        
+            
             function setContent(reference) {
-                const id = reference.getAttribute('threatwarefinding');
-                // There can be multiple findings for the same location, so the 'id' can be a space separated list of indexes
-                const indexes = id.split(" ");
-                template = "";
-                for (let i = 0; i < indexes.length; i++) {
-                    if (verifier_filter.includes(threatwarefindings[indexes[i]]["verifier"])) {
-                        continue;
-                    }
-                    template += formatfinding(threatwarefindings[indexes[i]]);
-                    if (indexes.length > 1) {
-                        template += "<hr>";
-                    }
+              const id = reference.getAttribute('threatwarefinding');
+              // There can be multiple findings for the same location, so the 'id' can be a space separated list of indexes
+              const indexes = id.split(" ");
+              template = "";
+              for (let i = 0; i < indexes.length; i++) {
+                if (verifier_filter.includes(threatwarefindings[indexes[i]]["verifier"])) {
+                  continue;
                 }
-                return template;
+                template += formatfinding(threatwarefindings[indexes[i]]);
+                if (indexes.length > 1) {
+                  template += "<hr>";
+                }
+              }
+              return template;
             }
+            
             tippy.setDefaultProps({
-                theme: 'light-border',
-                animation: 'scale',
-                placement: 'right',
-                maxWidth: 650,
-                content: (reference) => setContent(reference),
-                allowHTML: true,
+              theme: 'light-border',
+              animation: 'scale',
+              placement: 'right',
+              maxWidth: 650,
+              content: (reference) => setContent(reference),
+              allowHTML: true,
             });
+
             function tippySelector() {
-                findings = document.querySelectorAll('[threatwarefinding]')
-                findingsArray = Array.from(findings);
+              findings = document.querySelectorAll('[threatwarefinding]')
+              findingsArray = Array.from(findings);
 
-                // Since we may not want to show all the findings, hide them all first (in the sense of applying a CSS style)
-                findingsArray.forEach((finding) => {
-                    finding.setAttribute('threatwarefinding-show', false);
-                });
+              // Since we may not want to show all the findings, hide them all first (in the sense of applying a CSS style)
+              findingsArray.forEach((finding) => {
+                finding.setAttribute('threatwarefinding-show', false);
+              });
 
-                // Need to remove any elements that we are filtering by verifier class
-                filteredFindingsArray = findingsArray.filter((finding) => {
-                    return finding.getAttribute('threatwarefinding-class').split(" ").some((className) => { return !(verifier_filter.includes(className)) });
-                });
+              // Need to remove any elements that we are filtering by verifier class
+              filteredFindingsArray = findingsArray.filter((finding) => {
+                return finding.getAttribute('threatwarefinding-class').split(" ").some((className) => { return !(verifier_filter.includes(className)) });
+              });
 
-                // Now show the filtered findings
-                filteredFindingsArray.forEach((finding) => {
-                    finding.setAttribute('threatwarefinding-show', true);
-                });
-                return filteredFindingsArray;
+              // Now show the filtered findings
+              filteredFindingsArray.forEach((finding) => {
+                finding.setAttribute('threatwarefinding-show', true);
+              });
+              return filteredFindingsArray;
             }
-
-            // Call `tippy()` with a CSS selector and a `content` prop:
-            //tippy_obj = tippy('[threatwarefinding]');
-            tippy_obj = tippy(tippySelector());
 
             function filterverifiers(event) {
                 var checked = event.target.checked;
@@ -196,16 +234,55 @@ response-config:
                   verifier_filter = [];
                 }
                 if (checked) {
+                  if (!verifier_filter.includes(event.target.name)) {
                     verifier_filter.push(event.target.name);
+                  }
                 } else {
-                    verifier_filter = verifier_filter.filter(item => item !== event.target.name);
+                  verifier_filter = verifier_filter.filter(item => item !== event.target.name);
                 }
+
+                // Write new filter to local storage
+                if (docloc) {
+                  localStorage.setItem("threatware." + docloc) = JSON.stringify({"verifier_filter": verifier_filter});
+                }
+
+                // Update the banner to show that filters are being applied
+                if (document.querySelectorAll('#threatware-banner-div input[type="checkbox"]:checked').length > 0) {
+                  //document.querySelector('#threatware-banner-div #active-filters').style.display = "none";
+                  document.querySelector('#threatware-banner-div #active-filters').removeAttribute("threatware-no-filter")
+                } else {
+                  //document.querySelector('#threatware-banner-div #active-filters').style.display = "initial";
+                  document.querySelector('#threatware-banner-div #active-filters').setAttribute("threatware-no-filter", "")
+                }
+
                 if (typeof tippy_obj !== 'undefined') {
-                    tippy_obj.forEach((instance) => {
-                      //instance.unmount();
-                      instance.destroy();
-                    });
-                    tippy_obj = tippy(tippySelector());
+                  tippy_obj.forEach((instance) => {
+                    instance.destroy();
+                  });
+                  tippy_obj = tippy(tippySelector());
                 }
                 return
             }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              const queryString = window.location.search;
+              const urlParams = new URLSearchParams(queryString);
+              docloc = urlParams.get('docloc')
+              
+              // Read filter from localStorage
+              verifier_filter = [];
+              if (docloc) {
+                if (!localStorage.getItem("threatware." + docloc)) {
+                  verifier_filter = JSON.parse(localStorage.getItem("threatware." + docloc))["verifier_filter"];
+                }
+              }
+
+              // Set the initial state of the checkboxes
+              document.querySelectorAll('#threatware-banner-div input[type="checkbox"]').forEach((element) => {
+                element.checked = verifier_filter.includes(element.name);
+                element.dispatchEvent(new Event('change', { 'bubbles': true }));
+              });
+              
+              // Call `tippy()` with a CSS selector and a `content` prop:
+              tippy_obj = tippy(tippySelector());
+            });
