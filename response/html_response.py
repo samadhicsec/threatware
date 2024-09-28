@@ -1,5 +1,5 @@
 import logging
-import jsonpickle
+import jsonpickle, json
 from typing import List
 from lxml import etree
 import lxml.html
@@ -147,7 +147,10 @@ def _inject_findings_into_HTML(document, issues:dict, findings_config:FindingsCo
             "index": -1
         }, 
         "inline": {
-            "script": f"var threatwarefindings = {json_issues}"
+            "script": f"""
+                const threatwarefindings = {json_issues};
+                const threatwareRequest = {json.dumps(Request.get())};
+            """
         }
     }))
 
