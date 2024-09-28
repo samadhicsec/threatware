@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Schemes have been updated to grab all text in the list items under the References heading.  A new verification check was added when the text does not contain a hyperlink.
 - ** BREAKING CHANGE ** The texts under `grouped-by` in `verifiers/verifiers_texts.yaml` have been moved to the same lcoation as all the other texts and the `grouped-by` section removed.  If you have edited these then they'll need to be moved.
 
+### Fixed
+
+- Updated the preprocessor for `schemes/googledoc-scheme-1.0.yaml` to also strip `sup` elements from headings.  If the googledoc had a comment on certain headings this was causing issues.
+
 ### Removed
 
 ## [0.9.4] - 2024-08-28
