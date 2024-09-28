@@ -24,6 +24,7 @@ scheme:
     # This removes all tags (but not their contents) from heading elements.  
     # Since our queries match on heading text, we need to strip any tags in headings
     - selector: "//h1|//h2|//h3|//h4|//h5|//h6"   # Comment out this for 0.9.2 compat
+      strip-elements: "sup"                       # Comment out this for 0.9.2 compat
       strip-tags: "*"                             # Comment out this for 0.9.2 compat
      
     # This removes all <span> tags (but not their contents) from table elements.
