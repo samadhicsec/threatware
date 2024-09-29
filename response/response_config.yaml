@@ -38,7 +38,7 @@ response-config:
           inline:
             style: |
               body { 
-                min-width: 80vw;
+                min-width: 70vw;
                 margin:auto;
               }
               table {
@@ -195,7 +195,7 @@ response-config:
                   continue;
                 }
                 template += formatfinding(threatwarefindings[indexes[i]]);
-                if (indexes.length > 1) {
+                if (i < indexes.length - 1) {
                   template += "<hr>";
                 }
               }
@@ -205,7 +205,7 @@ response-config:
             tippy.setDefaultProps({
               theme: 'light-border',
               animation: 'scale',
-              placement: 'right',
+              placement: 'auto',
               maxWidth: 650,
               content: (reference) => setContent(reference),
               allowHTML: true,
