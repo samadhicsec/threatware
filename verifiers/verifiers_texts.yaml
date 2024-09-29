@@ -8,7 +8,9 @@ output-texts:
     warn-info-issues: "The threat model verified, but with some potential issues"
     location-text: "In {{ issue_table }}"
     entry-text: "Where '{{ issue_key.rowID.colname }}' column has value '{{ issue_key.rowID.value }}'"
-    no-covering-threat: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
+    no-covering-threat: 
+      default: "No threat was found in the '{{ threats_and_controls_table }}' that covered the asset '{{ issue_key.value }}' (from the '{{ issue_key.table }}') when stored in location '{{ storage_location }}'."
+      html: No threat was found in the "{{ threats_and_controls_table }}" that covered the asset "{{ issue_key.value }}" when stored in location "{{ storage_location }}".
     no-covering-threat-fix: 
       default: "The {{ threats_and_controls_table }} must include a row where the '{{ asset_key.colname }}' column includes one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
       html: |
@@ -16,7 +18,7 @@ output-texts:
         <ul>
         <li>the asset name i.e. '{{ issue_key.value }}', </li>
         <li>the asset category i.e. '{{ issue_key.row.category.value }}', or </li>
-        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}' </li>
+        <li>a 'storage-expression' text (see fix data) followed by the storage location i.e. '{{ storage_location }}' </li>
         </ul>
     no-covering-threat-fix-no-threat-or-asset: 
       default: "The {{ threats_and_controls_table }} must include a row with one of; the asset name i.e. '{{ issue_key.value }}', the asset category i.e. '{{ issue_key.row.category.value }}', or text referencing (see fix data) the storage location i.e. '{{ storage_location }}'"
@@ -25,7 +27,7 @@ output-texts:
         <ul>
         <li>the asset name i.e. '{{ issue_key.value }}',</li>
         <li>the asset category i.e. '{{ issue_key.row.category.value }}', or</li>
-        <li>text referencing (see fix data) the storage location i.e. '{{ storage_location }}'</li>
+        <li>a 'storage-expression' text (see fix data) followed by the storage location i.e. '{{ storage_location }}' </li>
         </ul>
     missing-mandatory: "A value for the column '{{ issue_key.colname }}' is mandatory"
     conditional-mandatory: "The value for the field '{{ if_key.colname }}' is '{{ if_key.value }}', so a value for the field '{{ then_key.colname }}' is mandatory"
@@ -55,7 +57,12 @@ output-texts:
           <li>The column '{{ location.column }}' in the {{ location.table }}</li>
         {% endfor %}
         </ul>
-    value-invalid: Field validation failed for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}'.  See error-data for specific details.
+    value-invalid: 
+      default: Field validation failed for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}'.  See error-data for specific details.
+      html: |
+        Field validation failed for value: 
+        <blockquote>"{{ issue_key.value }}"</blockquote>
+        See error-data for specific details.
     value-valid: At least 1 validation criteria for value '{{ issue_key.value }}' in column '{{ issue_key.colname }}' was successful, but some failed.  See errordata for specific details.
     value-error-data:
       html: |
@@ -65,7 +72,7 @@ output-texts:
           <tr>
             <td>{{ validator.tag() }}</td>
             <td>{% if validator.result() %}SUCCEEDED{% else %}<b>FAILED</b>{% endif %}</td>
-            <td>{{ validator.details() }}</td>
+            <td>{{ validator.details() | safe }}</td>
           </tr>
           {% endfor %}
         </table>
@@ -75,7 +82,12 @@ output-texts:
     template-value: "The value for the field '{{ entryname }}' should come from the document template"
     reference-not-found: 
       default: "The entry for '{{ issue_key.colname }}' includes the value '{{ issue_key.value }}', but does not match any appropriate existing value."
-      html: "The value '{{ issue_key.value }}' does not match any appropriate existing value."
+      html: |
+        The value "{{ issue_key.value }}" must reference an existing value in this threat model (or template), but doesn't.  Usually this is because:
+        <ul>
+          <li>The value is correct, and needs to be added to the corresponding table it must reference</li>
+          <li>The value is misspelled</li>
+        </ul>
     reference-not-found-fix: "The value must match a value in one of the table and columns listed in fix-data"
     reference-not-found-fix-data:
       html: |

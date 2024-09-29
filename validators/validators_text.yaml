@@ -44,7 +44,13 @@ validators-text:
           html: "Value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
         output_text_invalid:  
           default: "Column '{{ key.colname }}' with value '{{ key.value }}' must begin with either; '{{ translate.confidentiality }}:', '{{ translate.integrity }}:' or '{{ translate.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
-          html: "Value '{{ key.value }}' must begin with either; '{{ translate.confidentiality }}:', '{{ translate.integrity }}:' or '{{ translate.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
+          html: |
+            The value must begin with either; 
+            <ul>
+              <li>"{{ translate.confidentiality }}:" or "C:", </li>
+              <li>"{{ translate.integrity }}:" or "I:", </li>
+              <li>"{{ translate.availability }}:" or "A:"</li>
+            </ul>
   - tag: validate-as-status
     text:
       default:
