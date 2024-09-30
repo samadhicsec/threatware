@@ -1,4 +1,4 @@
-¬---
+---
 default:
   translate:
     # This file should not contain any templated values, as it will be used to provide values to the other templated files
