@@ -80,7 +80,7 @@ class FormatOutput:
             
         self.type = OutputType.INFO
         #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
         
         return
@@ -93,7 +93,7 @@ class FormatOutput:
 
         self.type = OutputType.SUCCESS
         #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
 
         return
@@ -106,7 +106,7 @@ class FormatOutput:
 
         self.type = OutputType.ERROR
         #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | Request.get())
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
 
         return
