@@ -35,8 +35,20 @@ output-texts:
     conditional-mandatory-any-value: "A value for the field '{{ if_key.colname }}' exists, so a value for the field '{{ then_key.colname }}' is mandatory"
     conditional-mandatory-exists: "'{{ then_key.table }}' has a row where '{{ then_key.colname }}' is '{{ then_key.value }}' and '{{ if_key.colname }}' is '{{ if_key.value }}', so there must be a matching entry in '{{ issue_table }}'"
     conditional-mandatory-exists-fix: "Add a row in '{{ issue_table }}' with '{{ issue_key.colname }}' set to '{{ then_key.value }}'"
-    conditional-mandatory-authnz: "No entry in the '{{ issue_table }}' in the '{{ issue_table_col }}' column that matches the in-scope component '{{ then_key.value }}' was found."
-    conditional-mandatory-authnz-fix: "Authentication and authorisation information must be captured for each in-scope component.  Specifically, the '{{ issue_table }}' must include at least one row where the '{{ issue_table_col }}' column matches the '{{ then_key.colname }}' column in the '{{ then_key.table }}', for each in-scope component.  By convention if the component exposes no functionality (not counting health/mointoring endpoints) then add a row with 'Not Applicable' for both authentication and authorisation.  If the component has authentication but not authorisation (or vice-versa), then by convention 'None' is used to capture the lack of authorisation (or authentication as the case may be)"
+    conditional-mandatory-authnz: 
+      default: "No entry in the '{{ issue_table }}' in the '{{ issue_table_col }}' column that matches the in-scope component '{{ then_key.value }}' was found."
+      html: |
+        Authentication and authorisation information must be captured for each in-scope component.
+        <p>No entry in the '{{ issue_table }}' in the '{{ issue_table_col }}' column that matches the in-scope component '{{ then_key.value }}' was found.</p>
+    conditional-mandatory-authnz-fix: 
+      default: "Authentication and authorisation information must be captured for each in-scope component.  Specifically, the '{{ issue_table }}' must include at least one row where the '{{ issue_table_col }}' column matches the '{{ then_key.colname }}' column in the '{{ then_key.table }}', for each in-scope component.  By convention if the component exposes no functionality (not counting health/monitoring endpoints) then add a row with 'Not Applicable' for both authentication and authorisation.  If the component has authentication but not authorisation (or vice-versa), then by convention 'None' is used to capture the lack of authorisation (or authentication as the case may be)"
+      html: |
+        The <a href="https://threatware.readthedocs.io/en/main/create/components.html#examples" target="_blank">documentation</a> gives examples and detailed instructions on how to populate authentication and authorisation information.
+        <p>Also, by convention:
+        <ul>
+          <li>If the component exposes no functionality (not counting health/monitoring endpoints) then add a row with 'Not Applicable' for both authentication and authorisation.</li>
+          <li>If the component has authentication but not authorisation (or vice-versa), then by convention 'None' is used to capture the lack of authorisation (or authentication as the case may be)</li>
+        </ul></p>
     conditional-is-empty: "If '{{ if_key.colname }}' is empty then '{{ then_key.colname }}' must also be empty"
     conditional-authnz-na: "If '{{ if_key.colname }}' is '{{ if_key.value }}' then '{{ then_key.colname }}' must also be '{{ if_key.value }}'."
     conditional-authnz-na-fix: "If there is no '{{ if_key.colname }}' but there is '{{ then_key.colname }}' then by convention we set '{{ if_key.colname }}' to '{{ translate.none }}'"
