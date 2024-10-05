@@ -147,10 +147,7 @@ response-config:
             - "https://unpkg.com/@popperjs/core@2.9.3/dist/umd/popper.min.js"
             - "https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js"
           stylesheets:
-            - "https://unpkg.com/tippy.js@6/themes/light.css"
             - "https://unpkg.com/tippy.js@6/themes/light-border.css"
-            - "https://unpkg.com/tippy.js@6/themes/material.css"
-            - "https://unpkg.com/tippy.js@6/themes/translucent.css"
             - "https://unpkg.com/tippy.js@6/animations/scale.css"
         inline:
           style: |
@@ -172,7 +169,7 @@ response-config:
             #tippytip :is(table, th, td) {
               border: 1px solid black;
               border-collapse: collapse;
-              padding: 3px;
+              padding: 8px;
             }
           script: |
             function formatfinding(finding) {
@@ -209,6 +206,7 @@ response-config:
               maxWidth: 650,
               content: (reference) => setContent(reference),
               allowHTML: true,
+              interactive: true,
             });
 
             function tippySelector() {
