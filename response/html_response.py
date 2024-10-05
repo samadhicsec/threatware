@@ -81,7 +81,7 @@ def _inject_banner_into_HTML(document, banner_config:BannerConfig, issues, showi
     if len(issues) > 0:
         threatware_result = THREATWARE_RESULT_ERRORS
         if not showing_all_errors:
-            banner_msg = f"{banner_msg}<br />{Translate.localise(template_values, banner_config.missingfindingstextkey)}"
+            banner_msg = f"{banner_msg}{Translate.localise(template_values, banner_config.missingfindingstextkey)}"
             
     # Inject the banner to inform the user of the state of the action
     _inject_into_HTML(document, banner_config.htmlinject)
