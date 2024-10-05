@@ -235,7 +235,7 @@ scheme:
           get-data:
             query:
               type: html-text-section
-              xpath: "//html/body/h1[text()='Description']/following::p[following::h2[1][text()='References']]/text()"
+              xpath: "//html/body/h1[text()='Description']/following-sibling::*[following::h2[1][text()='References']]"
       - key: 
           name: references
           section: References
@@ -249,14 +249,19 @@ scheme:
               value:
                 get-data:
                   query:
-                    type: html-text
-                    xpath: ".//a/text()"
-            - key: "URL"
+                    type: html-element-text
+                    xpath: "."
+            - key:
+                name: "URL"
+                tags:
+                  - url
+                  - not-mandatory   # We have a separate if-then validation for URL so the error message is more specific
               value:
                 get-data:
                   query:
-                    type: html-text
-                    xpath: ".//a/@href"
+                    type: html-element-attribute
+                    attribute-name: "href"
+                    xpath: ".//a"
       - key: components
         value:
           map-data:

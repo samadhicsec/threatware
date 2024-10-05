@@ -265,7 +265,7 @@ scheme:
           get-data:
             query:
               type: html-text-section
-              xpath: "//html/body/h1[text()='Description']/following::p[following::h2[1][text()='References']]/text()"
+              xpath: "//html/body/h1[text()='Description']/following-sibling::*[following::h2[1][text()='References']]"
       - key: 
           name: references
           section: References
@@ -283,8 +283,8 @@ scheme:
               value:
                 get-data:
                   query:
-                    type: html-text
-                    xpath: ".//text()"
+                    type: html-element-text
+                    xpath: "."
             - key: 
                 name: "URL"
                 tags:
@@ -293,8 +293,9 @@ scheme:
               value:
                 get-data:
                   - query:
-                      type: html-text
-                      xpath: ".//a/@href"
+                      type: html-element-attribute
+                      attribute-name: "href"
+                      xpath: ".//a"
                   # href in a google doc gets converted to a Google link, so we remove that
                   - query:
                       type: value-extract

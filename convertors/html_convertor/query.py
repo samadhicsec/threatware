@@ -7,12 +7,15 @@ from lxml.etree import XPathError, XPathEvalError
 #from lxml.html.clean import clean_html
 from html_table_parser import HTMLTableParser
 #from html_table_extractor.extractor import Extractor
+from utils import match
 from utils.property_str import pstr
+from html2text import html2text
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
 XPATH_FIELD = "xpath"
+ATTR_NAME = "attribute-name"
 COLUMN_NUM = "column-num"
 ROW_NUM = "row-num"
 PROCESS_IGNORE_COLS = "ignore-cols"
@@ -141,6 +144,34 @@ def get_document_value(document, query_cfg) -> str:
     
     logger.info(f"Returning value '{str(value_list[0])}' without location")
     return pstr(str(value_list[0]))
+
+def get_element_text(document, query_cfg) -> str:
+
+    if (element := _get_element(document, query_cfg)) is None:
+        return None
+    
+    text = element.text_content()
+
+    # The output from lxml is usually not a string, so explicitly convert
+    return pstr(str(text), properties = {"location": element.getroottree().getpath(element)})
+
+
+def get_element_attribute(document, query_cfg) -> str:
+
+    if (element := _get_element(document, query_cfg)) is None:
+        return None
+    
+    if not query_key_defined(query_cfg, ATTR_NAME):
+        logger.warning(f"'{ATTR_NAME}' not specified in query configuration")
+
+    attribute = element.get(query_cfg[ATTR_NAME], None)
+
+    if attribute is None:
+        logger.warning(f"Attribute '{query_cfg[ATTR_NAME]}' not found in element")
+
+    # The output from lxml is usually not a string, so explicitly convert
+    return pstr(str(attribute), properties = {"location": element.getroottree().getpath(element)})
+    
 
 def _remove_rows_if_empty(proc_def, table_data):
 
@@ -368,6 +399,26 @@ def query_key_defined(query_cfg, query_cfg_key):
     
     return True
 
+def _get_element(document, query_cfg) -> str:
+
+    if not query_key_defined(query_cfg, XPATH_FIELD):
+        return None
+
+    try:
+        value_list = document.xpath(query_cfg[XPATH_FIELD])
+    except XPathError:
+        logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
+        value_list = []
+
+    logger.debug(f"Query '{query_cfg[XPATH_FIELD]}' return {len(value_list)} elements")
+
+    if len(value_list) == 0:
+        return None
+    if len(value_list) > 1:
+        logger.warning(f"Retreived {len(value_list)} document values when 1 was expected.  Using first.")
+
+    return value_list[0]
+
 def does_col_index_match(query_cfg, index):
 
     if not query_key_defined(query_cfg, COLUMN_NUM):
@@ -398,21 +449,60 @@ def set_table_entry(row, query_cfg, value):
 
     return
 
-# Expecting the xpath to return a list of text nodes,whcih get concatenated
+# def _render_list(ele_list, indent_size = 0):
+
+#     output = ""
+#     list_index = 1
+#     for listitem in ele_list:
+#         if listitem.tag == "li":
+#             if len(listitem) > 0 and (listitem.get("ul") is not None or listitem.get("ol") is not None):
+#                 text = listitem.text if not match.is_empty(listitem.text) else ""
+#                 text += _render_content(listitem, indent_size + 2)
+#             else:
+#                 text = listitem.text_content() + "\n" if not match.is_empty(listitem.text_content()) else "\n"
+#             #text = _render_content(listitem, indent_size + 2)
+            
+#             if ele_list.tag == "ol":
+#                 output = output + " "*indent_size + f"{list_index}. " + text
+#                 list_index += 1
+#             elif ele_list.tag == "ul":
+#                 output = output + " "*indent_size + "- " + text
+#         else:
+#             logger.warning(f"Unsupported tag '{listitem.tag}' in text section list")
+#     return output
+    
+# def _render_content(ele_list, indent_size = 0):
+
+#     output = ""
+#     for ele in ele_list:
+#         if ele.tag == "ul" or ele.tag == "ol":
+#             output += _render_list(ele, indent_size)
+#         else:
+#             if not match.is_empty(ele.text_content()):
+#                 output += str(ele.text_content())
+#             output += "\n"
+#         # else:
+#         #     logger.warning(f"Unsupported tag '{ele.tag}' in text section")
+    
+#     return output
+
+# Expecting the xpath to return a list of nodes, which get text exrtacted and concatenated
 def get_text_section(document, query_cfg):
 
     if not query_key_defined(query_cfg, XPATH_FIELD):
         return None
 
     try: 
-        paragraphs = document.xpath(query_cfg[XPATH_FIELD])
+        nodes = document.xpath(query_cfg[XPATH_FIELD])
     except XPathError:
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
-        paragraphs = []
+        nodes = []
 
-    output = ""
-    for paragraph in paragraphs:
-        output += (str(paragraph) + "/n")
+    #output = _render_content(nodes)
+    input = ""
+    for node in nodes:
+        input += lxml.html.tostring(node, encoding='unicode')
+    output = html2text(str(input))
 
     return pstr(output, properties={"location":query_cfg[XPATH_FIELD]})
 
@@ -424,5 +514,7 @@ html_dispatch_table = {
     "html-split-table":get_split_table,
     "html-table-transpose":get_transposed_table,
     "html-text":get_document_value,
+    "html-element-text":get_element_text,
+    "html-element-attribute": get_element_attribute,
     "html-text-section":get_text_section
 }
