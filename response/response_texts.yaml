@@ -1,4 +1,4 @@
 output-texts:
   default:
     html-banner-missing-findings:
-      html: "<p>Not all errors could be highlighted in the document.  Please re-run threatware with the parameter 'format=json' to see all errors.<p>"
+      html: "<p>Not all errors could be highlighted in the document.  Please re-run threatware with the parameter 'format=json' to see all errors.</p>"
