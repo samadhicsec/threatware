@@ -3,6 +3,7 @@
 import logging
 import re
 from utils.property_str import pstr
+from utils.match import is_empty
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
@@ -22,6 +23,11 @@ def _trim(value):
 def split(text_value, query_cfg):
 
     output = text_value
+
+    # If the output has values, but some are empty, we want to ignore those, this is done by the len(i) > 0 condition in teh return
+    # If the input is empty, we want to return a list with a single empty string so we have properties (of the value) to pass to the key e.g. location
+    if is_empty(output):
+        return [pstr("", properties = text_value.properties)]
 
     if splitby := query_cfg.get("split-by"):
     
