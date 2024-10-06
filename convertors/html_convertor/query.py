@@ -9,7 +9,7 @@ from html_table_parser import HTMLTableParser
 #from html_table_extractor.extractor import Extractor
 from utils import match
 from utils.property_str import pstr
-from html2text import html2text
+from html2text import HTML2Text
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -22,6 +22,42 @@ PROCESS_IGNORE_COLS = "ignore-cols"
 PROCESS_REMOVE_HEADER_ROW = 'remove-header-row'
 PROCESS_REMOVE_ROWS_IF_EMPTY = "remove-rows-if-empty"
 PROCESS_SPLIT_TYPE = "split-type"
+HTML2TEXT_OPTIONS = "html2text-options"
+HTML2TEXT_ALLOWLIST = [
+    "unicode_snob",
+    "escape_snob",
+    "links_each_paragraph",
+    "body_width",
+    "skip_internal_links",
+    "inline_links",
+    "protect_links",
+    "google_list_indent",
+    "ignore_links",
+    "ignore_mailto_links",
+    "ignore_images",
+    "images_as_html",
+    "images_to_alt",
+    "images_with_size",
+    "ignore_emphasis",
+    "bypass_tables",
+    "ignore_tables",
+    "google_doc",
+    "ul_item_mark",
+    "emphasis_mark", 
+    "strong_mark",
+    "single_line_break",
+    "use_automatic_links",
+    "hide_strikethrough",
+    "mark_code",
+    "wrap_list_items",
+    "wrap_links",
+    "wrap_tables",
+    "pad_tables",
+    "default_image_alt",
+    "open_quote", 
+    "close_quote", 
+    "include_sup_sub"
+]
 
 def get_document(document_str, mapping):
 
@@ -383,7 +419,7 @@ def get_constrained_table_entry(row, query_cfg, current_row_index, current_col_i
 
     return None
 
-def query_key_defined(query_cfg, query_cfg_key):
+def query_key_defined(query_cfg, query_cfg_key, optional = False):
 
     if query_cfg is None:
         logger.warning(f"Query configuration is not specified")
@@ -394,7 +430,8 @@ def query_key_defined(query_cfg, query_cfg_key):
         return False
 
     if query_cfg_key not in query_cfg:
-        logger.warning(f"Query configuration '{COLUMN_NUM}' was not present in '{query_cfg}'")
+        if not optional:
+            logger.warning(f"Query configuration '{query_cfg_key}' was not present in '{query_cfg}'")
         return False
     
     return True
@@ -449,43 +486,6 @@ def set_table_entry(row, query_cfg, value):
 
     return
 
-# def _render_list(ele_list, indent_size = 0):
-
-#     output = ""
-#     list_index = 1
-#     for listitem in ele_list:
-#         if listitem.tag == "li":
-#             if len(listitem) > 0 and (listitem.get("ul") is not None or listitem.get("ol") is not None):
-#                 text = listitem.text if not match.is_empty(listitem.text) else ""
-#                 text += _render_content(listitem, indent_size + 2)
-#             else:
-#                 text = listitem.text_content() + "\n" if not match.is_empty(listitem.text_content()) else "\n"
-#             #text = _render_content(listitem, indent_size + 2)
-            
-#             if ele_list.tag == "ol":
-#                 output = output + " "*indent_size + f"{list_index}. " + text
-#                 list_index += 1
-#             elif ele_list.tag == "ul":
-#                 output = output + " "*indent_size + "- " + text
-#         else:
-#             logger.warning(f"Unsupported tag '{listitem.tag}' in text section list")
-#     return output
-    
-# def _render_content(ele_list, indent_size = 0):
-
-#     output = ""
-#     for ele in ele_list:
-#         if ele.tag == "ul" or ele.tag == "ol":
-#             output += _render_list(ele, indent_size)
-#         else:
-#             if not match.is_empty(ele.text_content()):
-#                 output += str(ele.text_content())
-#             output += "\n"
-#         # else:
-#         #     logger.warning(f"Unsupported tag '{ele.tag}' in text section")
-    
-#     return output
-
 # Expecting the xpath to return a list of nodes, which get text exrtacted and concatenated
 def get_text_section(document, query_cfg):
 
@@ -498,11 +498,19 @@ def get_text_section(document, query_cfg):
         logger.warning(f"XPath query '{query_cfg[XPATH_FIELD]}' caused an error")
         nodes = []
 
-    #output = _render_content(nodes)
     input = ""
     for node in nodes:
         input += lxml.html.tostring(node, encoding='unicode')
-    output = html2text(str(input))
+
+    h2t = HTML2Text()
+    if query_key_defined(query_cfg, HTML2TEXT_OPTIONS, optional=True) and isinstance(query_cfg[HTML2TEXT_OPTIONS], dict):
+        for option, value in query_cfg[HTML2TEXT_OPTIONS].items():
+            if option in HTML2TEXT_ALLOWLIST:
+                setattr(h2t, option, value)
+            else:
+                logger.warning(f"html2text option '{option}' not in allowed list")
+    
+    output = h2t.handle(str(input))
 
     return pstr(output, properties={"location":query_cfg[XPATH_FIELD]})
 
