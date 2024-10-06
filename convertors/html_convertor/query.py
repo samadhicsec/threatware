@@ -505,10 +505,10 @@ def get_text_section(document, query_cfg):
     h2t = HTML2Text()
     if query_key_defined(query_cfg, HTML2TEXT_OPTIONS, optional=True) and isinstance(query_cfg[HTML2TEXT_OPTIONS], dict):
         for option, value in query_cfg[HTML2TEXT_OPTIONS].items():
-            if option in HTML2TEXT_ALLOWLIST:
-                setattr(h2t, option, value)
+            if isinstance(option, str) and option.lower() in HTML2TEXT_ALLOWLIST:
+                setattr(h2t, option.lower(), value)
             else:
-                logger.warning(f"html2text option '{option}' not in allowed list")
+                logger.warning(f"html2text option '{option.lower()}' not in allowed list")
     
     output = h2t.handle(str(input))
 
