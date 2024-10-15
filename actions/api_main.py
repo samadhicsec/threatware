@@ -6,7 +6,7 @@ app = FastAPI()
 
 def apicall(lang: str = None, format: str = None, action: str = None, scheme: str = None, docloc: str = None, meta: str = None, doctemplate: str = None, ID: str = None, IDprefix: str = None, reports: str = None):
 
-    if format not in ['json', 'yaml']:
+    if format not in ['json', 'yaml', 'html']:
         format = 'json'
 
     if meta not in ['none', 'tags', 'properties']:
