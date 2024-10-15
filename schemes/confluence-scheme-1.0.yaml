@@ -118,7 +118,7 @@ scheme:
                 name: "version-date"
                 tags:
                   - "version-date"
-                  - "validate-as-data"
+                  - "validate-as-date"
               value: 
                 get-data:
                   query:
