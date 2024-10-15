@@ -48,7 +48,10 @@ def parse(map_data_def, input) -> dict:
 
         if key_def.getProperty("section") is not None:
             # Let the key reference the value for these high level sections. Makes searching sections e.g. tables, easier given only a tagged key.
-            key_def.addProperty("value", value)
+            if isinstance(value, pstr):
+                key_def.addProperty("value", value.to_str())
+            else:
+                key_def.addProperty("value", value)
 
     logger.debug(f'Leaving: Key count = {len(map_data_def)}, data count = {len(input) if isinstance(input, list) else 1}')
 
