@@ -62,10 +62,10 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             validatorOutput = vlad.validate(validator_entry["tag"], tagged_key, tagged_value, references)
 
             # Culmultatively record success
-            tagged_value_validates = tagged_value_validates or validatorOutput.result
+            tagged_value_validates = tagged_value_validates or validatorOutput.validator_result
 
             # Track if a validator fails though
-            if not validatorOutput.result:
+            if not validatorOutput.validator_result:
                 a_validator_failed = True
 
             # Gather the responses from each validator so we can report them in the error
@@ -78,13 +78,17 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
 
         if at_least_one_validator_ran:
             if not tagged_value_validates:    
-                verify_return_list.append(VerifierIssue("value-invalid", 
-                                                        None,
-                                                        issue_dict))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="value-invalid", 
+                    error_data_key="value-error-data",
+                    fix_text_key=None, 
+                    issue_dict=issue_dict))
             elif a_validator_failed:
-                verify_return_list.append(VerifierIssue("value-valid", 
-                                                        None,
-                                                        issue_dict,
-                                                        ErrorType.INFO))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key="value-valid", 
+                    error_data_key="value-error-data",
+                    fix_text_key=None,
+                    issue_dict=issue_dict,
+                    errortype=ErrorType.INFO))
 
     return verify_return_list

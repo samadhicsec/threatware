@@ -1,18 +1,18 @@
 ---
 validator-config:
-  - tag: validate-as-version
-    validator: regex
+  - tag: validate-as-version    # for any data tagged with 'validate-as-version'
+    validator: regex            # invoke the regex validator
     config:
-      pattern: "^\\d+.\\d+$"
+      pattern: "^\\d+.\\d+$"    # ensure the value matches this pattern
   - tag: validate-as-date
     validator: date
     config:
-  - tag: validate-as-single-entry
-    validator: string
+  - tag: validate-as-single-entry   # for any data tagged with 'validate-as-single-entry'
+    validator: string               # invoke the string validator 
     config:
-      method: "count"
-      input-parameter: "\n"
-      expected-result: 0
+      method: "count"               # cound the number of occurances in the string (see validators/string.py for a list of methods)
+      input-parameter: "\n"         # of the value "\n"
+      expected-result: 0            # which should equal 0
   - tag: validate-as-yes-no
     validator: regex
     config:

@@ -9,12 +9,12 @@ providers:
       token_file: "token.json"
   cli:
     confluence:
-      creds_config_file: "~/.atlassian"
-      creds_config_section: "DEFAULT"
+      creds_config_file: "~/.atlassian"     # The location of the file containing the credentials for Confluence.  Location can be relative to the root config directory.
+      creds_config_section: "DEFAULT"       # The section to load confgiuration from.
     google:
-      credentials_file: "credentials.json"
-      token_file: "token.json"
+      credentials_file: "credentials.json"  # The GCP identity credentials file
+      token_file: "token.json"              # The token file generated after access is granted to the GCP identity
   aws.lambda:
-    secret_name: "threatware"
-    region: "eu-west-2"
+    secret_name: "threatware"            # The name of the secret in AWS SecretsManager to load credentials from
+    region: "eu-west-2"                  # The region where the secret is stored
   provider: aws.lambda

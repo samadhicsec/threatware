@@ -1,6 +1,5 @@
 ---
 measure-config:
-  #template-values-file: "verifiers/verifiers_values.yaml"
   measure-tag:
     prefix: "measure"
     measure-this-model-against-other-model: "from-this"
@@ -9,10 +8,12 @@ measure-config:
     measure-compare-missing: "missing"
     measure-compare-extra: "extra"
   filters:
+    # A list of values that if found in the 'Hosting Stack' column of the 'Component Details' table, would indicate that component is a 3rd party component
     3rd-parties:
       - {{ translate.third_party }}
       - {{ translate.threerd_party }}
       - {{ translate.SaaS }}
+    # A list of values that if found in the 'Hosting Stack' column of the 'Component Details' table, would indicate that component is an internal service
     internal-service:
       - {{ translate.internal_service }}
   output:

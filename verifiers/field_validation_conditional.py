@@ -46,6 +46,7 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             # Get the rowID for the 'if' tagged key
             rowIDkey = keymaster.get_row_identifier_for_key(if_tagged_key)
             row_data = rowIDkey.getProperty("row")
+            
             # Get the 'then' key and value
             then_tagged_key, then_tagged_value = find.key_with_tag(row_data, then_value_tag)
 
@@ -53,8 +54,13 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             if if_lambda(if_tagged_key, if_tagged_value) and not then_lambda(then_tagged_key, then_tagged_value):
 
                 issue_dict = {}
-                issue_dict["issue_key"] = if_tagged_key
-                issue_dict["issue_value"] = if_tagged_value
+                issue_dict["issue_key"] = then_tagged_key
+                issue_dict["issue_value"] = then_tagged_value
+                if (issue_location := conditional.get("issue-location", None)) is not None:
+                    # Override which of the 'if'/'then' keys is the 'issue_key', as sometimes errors can't report the 'then' key e.g. when testing for existence
+                    if (issue_location == "if"):
+                        issue_dict["issue_key"] = if_tagged_key
+                        issue_dict["issue_value"] = if_tagged_value
                 issue_dict["if_key"] = if_tagged_key
                 issue_dict["if_value"] = if_tagged_value
                 issue_dict["then_key"] = then_tagged_key
@@ -74,13 +80,17 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
                     if match.is_empty(issue_table_row):
                         issue_dict["issue_table_row"] = None
 
-                # Use "issue-key-tag" to override the "issue_key" passed to VerifierIssue
-                if (issue_key_tag := conditional.get("issue-key-tag", None)) is not None:
+                # Use "issue-table-col-tag" to set the "issue_table_col" passed to VerifierIssue
+                if (issue_key_tag := conditional.get("issue-table-col-tag", None)) is not None:
                     issue_key_key, _ = find.key_with_tag(issue_table_value, issue_key_tag)
                     if issue_key_key is not None:
-                        issue_dict["issue_key"] = issue_key_key
-                        issue_dict["issue_value"] = None
+                        issue_dict["issue_table_col"] = issue_key_key.getProperty("colname")
+                        #issue_dict["issue_key"] = issue_key_key
+                        #issue_dict["issue_value"] = None
 
-                verify_return_list.append(VerifierIssue(conditional["issue-text-key"], conditional.get("fix-text-key", None), issue_dict))
+                verify_return_list.append(VerifierIssue(
+                    error_text_key=conditional["issue-text-key"], 
+                        fix_text_key=conditional.get("fix-text-key", None), 
+                        issue_dict=issue_dict))
 
     return verify_return_list

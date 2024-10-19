@@ -9,6 +9,7 @@ from utils.output import FormatOutput
 from convertors import convertors_config
 import convertors.confluence_convertor.convertor
 import convertors.gdoc_convertor.convertor
+from utils.output import FormatOutput
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -23,7 +24,7 @@ def _output(config:dict):
     return FormatOutput(config.get("output", {}))
 
 
-def convert(config:dict, execution_env, scheme:dict, doc_location:str):
+def convert(config:dict, execution_env, scheme:dict, doc_location:str, store_doc:bool=True):
 
     logger.info("Entering convert")
     
@@ -31,9 +32,9 @@ def convert(config:dict, execution_env, scheme:dict, doc_location:str):
 
     try: 
         if scheme['document-storage'] == "confluence":
-            model = convertors.confluence_convertor.convertor.convert(config, execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location})
+            model = convertors.confluence_convertor.convertor.convert(config, execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location}, store_doc)
         elif scheme['document-storage'] == "googledoc":
-            model = convertors.gdoc_convertor.convertor.convert(config, execution_env.getGoogleCredentials(), scheme, {"id":doc_location})
+            model = convertors.gdoc_convertor.convertor.convert(config, execution_env.getGoogleCredentials(), scheme, {"id":doc_location}, store_doc)
         else:
             logger.error(f"Unknown document storage type '{scheme['document-storage']}'")
             raise ConvertError("unknown-doc-storage", {"doc_storage":scheme['document-storage']})
@@ -61,7 +62,7 @@ def convert_template(config:dict, execution_env, scheme:dict, doc_location:str):
             if not doc_location:
                 logger.error("No template document location provided as input or defined in the scheme")
         
-        return convert(config, execution_env, scheme, doc_location)
+        return convert(config, execution_env, scheme, doc_location, store_doc=False)
     
     except ConvertError as error:
         output.setError(error.text_key, error.template_values)
@@ -70,18 +71,3 @@ def convert_template(config:dict, execution_env, scheme:dict, doc_location:str):
 
     return output
 
-# def tojson(model):
-
-#     return jsonpickle.encode(model, unpicklable=False)
-
-# if __name__ == "__main__":
-
-#     parser = argparse.ArgumentParser(description='Threat Model Convertor')
-
-#     parser.add_argument('-s', '--scheme', required=True, help='Identifier for the scheme to load')
-#     parser.add_argument('-d', '--docloc', required=True, help='Identifier for the document to verify')
-#     args = parser.parse_args()
-
-#     output = convert(args.scheme, args.docloc)
-
-#     print(output)

@@ -3,35 +3,69 @@ validators-text:
   - tag: validate-as-version
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+        output_text_valid: 
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
   - tag: validate-as-date
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' is a valid date"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' is an invalid date"
+        output_text_valid:  
+          default: Column '{{ key.colname }}' with value '{{ key.value }}' is a valid date"
+          html: "Value '{{ key.value }}' is a valid date"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' is an invalid date"
+          html: "Value '{{ key.value }}' is an invalid date"
   - tag: validate-as-single-entry
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matches just a single entry i.e. no newlines were found"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' must contain a single value, which does not contain a newline.  If you need to enter two or more values then please use multiple rows (if supported by the table)"
+        output_text_valid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matches just a single entry i.e. no newlines were found"
+          html:  "Value '{{ key.value }}' matches just a single entry i.e. no newlines were found"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' must contain a single value, which does not contain a newline.  If you need to enter two or more values then please use multiple rows (if supported by the table)"
+          html:  "Value '{{ key.value }}' must contain a single value, which does not contain a newline.  If you need to enter two or more values then please use multiple rows (if supported by the table)"
   - tag: validate-as-yes-no
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+        output_text_valid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
   - tag: validate-as-CIA
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' must begin with either; '{{ translate.confidentiality }}:', '{{ translate.integrity }}:' or '{{ translate.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
+        output_text_valid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' must begin with either; '{{ translate.confidentiality }}:', '{{ translate.integrity }}:' or '{{ translate.availability }}:' (values 'C:', 'I:', 'A:' are also accepted as shorthand)"
+          html: |
+            The value must begin with either; 
+            <ul>
+              <li>"{{ translate.confidentiality }}:" or "C:", </li>
+              <li>"{{ translate.integrity }}:" or "I:", </li>
+              <li>"{{ translate.availability }}:" or "A:"</li>
+            </ul>
   - tag: validate-as-status
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+        output_text_valid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' matched the regular expression pattern '{{ config.pattern }}'"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
+          html: "Value '{{ key.value }}' does not match the regular expression pattern '{{ config.pattern }}'"
   - tag: validate-from-template
     text:
       default:
-        output_text_valid: "Column '{{ key.colname }}' with value '{{ key.value }}' matched value from template"
-        output_text_invalid: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match a template value"
+        output_text_valid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' matched value from template"
+          html: "Value '{{ key.value }}' matched value from template"
+        output_text_invalid:  
+          default: "Column '{{ key.colname }}' with value '{{ key.value }}' does not match a template value"
+          html: "Value '{{ key.value }}' does not match a template value"

@@ -8,6 +8,7 @@ from enum import Enum
 from utils.load_yaml import yaml_register_class
 from language.translate import Translate
 from utils import keymaster
+from utils.request import Request
 from data.key import key as Key
 
 import utils.logging
@@ -53,7 +54,7 @@ class VerifierIssue:
         "fixdata"
     ]
 
-    def __init__(self, error_text_key:str, fix_text_key:str, issue_dict:dict, errortype:ErrorType = ErrorType.NOT_SET):
+    def __init__(self, *, error_text_key:str, error_data_key:str = None, fix_text_key:str = None, fix_data_key:str = None, issue_dict:dict =None, errortype:ErrorType = ErrorType.NOT_SET):
 
         yaml_register_class(VerifierIssue)
 
@@ -69,6 +70,7 @@ class VerifierIssue:
             logger.error("The 'issue_dict' dict must include an 'issue_key' key with a Key object as it's value")
             self.error_desc = f"There was an problem generating the VerifierIssue"
             return
+        self.issue_key = issue_dict["issue_key"]
 
         context = {}
 
@@ -134,12 +136,17 @@ class VerifierIssue:
         # Set the error description
         self.error_desc = Translate.localise(self.templated_error_texts, error_text_key, context)
         self.errordata = issue_dict.get("errordata")
+        if error_data_key is not None and not Request.isAPIFormat():
+            # For APIs (json/yaml) we want just the data, for other formats we want the data to be formatted
+            self.errordata = Translate.localise(self.templated_error_texts, error_data_key, issue_dict)
         
         # Set any fix text specified
-        #if fix_text_key is not None and self.templated_error_texts.get(fix_text_key, None) is not None:
         if fix_text_key is not None:
             self.fix_desc = Translate.localise(self.templated_error_texts, fix_text_key, context)
         self.fixdata = issue_dict.get("fixdata")
+        if fix_data_key is not None and not Request.isAPIFormat():
+            # For APIs (json/yaml) we want just the data, for other formats we want the data to be formatted
+            self.fixdata = Translate.localise(self.templated_error_texts, fix_data_key, issue_dict)
 
     def isError(self):
         return self.errortype == ErrorType.ERROR
@@ -153,6 +160,8 @@ class VerifierIssue:
     def _get_state(self):
 
         # TODO - it would be good to substitute dict key names using the verifier_values.yaml file.  Probably need to recurse on things like fix-data
+
+        # TODO - should probably move everything after the 'context' is set in __init__ to here, so we can late bind the output format to decide how to format the output
 
         output = {}
         output['type'] = self.errortype.name

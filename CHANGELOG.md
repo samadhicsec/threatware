@@ -8,7 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 ### Changed
+### Fixed
 ### Removed
+
+## [0.9.5] - 2024-10-19
+
+### Added
+
+- New output format `html` can be used with the `format` parameter, but only for the `verify` action.  This returns the web page representation of the threat model, and findings are displayed via tooltips at the locations in the document where the issue exists.
+- A new `response/response_config.yaml` file has been added to the configuration files to allow for the complete customisation of the HTML/JavaScript/CSS that is added to the HTML version of the threat model i.e. when `format='html'`.  A new `response/response_texts.yaml` has also been added for associated texts to be localised.
+- scheme query types `html-element-text` (to replace `html-text`) and `html-element-attribute`.  This means all the `html-*` query types now are consistent and all expect to be passed elements (rather than before when some expected text).
+
+### Changed
+
+- The format of all `*_text.yaml` configuration files can now include (in addition to language) a version of the output string specific to the output format e.g. specific texts have been added when the output is `html` in order to appropriately format the content.
+- Schemes have been updated to grab all text in the list items under the References heading.  A new verification check was added when the text does not contain a hyperlink.
+- ** BREAKING CHANGE ** The texts under `grouped-by` in `verifiers/verifiers_texts.yaml` have been moved to the same lcoation as all the other texts and the `grouped-by` section removed.  If you have edited these then they'll need to be moved.
+- scheme query `html-text-section` now outputs a markdown representation of the nodes passed to it ()
+
+### Fixed
+
+- Updated the preprocessor for `schemes/googledoc-scheme-1.0.yaml` to also strip `sup` elements from headings.  If the googledoc had a comment on certain headings this was causing issues.
+- Fixed how request parameters were being passed to the template engine, making them work again
+- Fixed manage.indexdata action so it passes through the correct ID
+- Fixed AWS lambda git setup to allow git config to be called successfully
+- Updated scheme query `html-text-section` from just converting `p` nodes to text, to now outputting a markdown representation of all the nodes passed to it
 
 ## [0.9.4] - 2024-08-28
 

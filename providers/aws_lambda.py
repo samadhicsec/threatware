@@ -128,16 +128,13 @@ class AWSLambdaContext:
 
         return key
 
-    def setupGit(self, gitrepo_config):
+    def setupGit(self, remote:str, base_storage_dir:str):
 
         # On AWS Lambda, to setup git, since we can't write to the local user's /home directory, we must
         # configure git in the only location we can write to, which is /tmp
 
-        base_storage_dir = gitrepo_config.get("base-storage-dir", "/tmp/")
-        remote = gitrepo_config.get("remote")
-
         if remote.startswith("git@"):
-            logger.info("Setting up git to use SSH credentials in /tmp")
+            logger.info(f"Setting up git to use SSH credentials in {base_storage_dir}")
             ssh_path = Path.joinpath(Path(base_storage_dir), ".ssh")
             ssh_config_path = str(Path.joinpath(ssh_path, "config"))
             ssh_private_key_path = str(Path.joinpath(ssh_path, "key"))
@@ -149,9 +146,20 @@ class AWSLambdaContext:
             shell.global_kwargs["_close_fds"] = False
             # To work in lambda, which seems to have no or few TTYs (because you get errors about it running out of them), set this to False
             shell.global_kwargs["_tty_out"] = False
+
+            # Change the location where git config looks for the config file
+            os.makedirs(os.path.join(base_storage_dir, "git"), exist_ok=True)
+            #with open(os.path.join(base_storage_dir, "git", "config"), mode='a'): pass
+            # Other options are to set
+            # GIT_CONFIG_GLOBAL to the name of the global config file to use
+            # GIT_CONFIG_SYSTEM to /dev/null to prevent git from reading the system config file (or set GIT_CONFIG_NOSYSTEM to 1)
+
             # To work in lambda which only allows us to write to /tmp, we need to configure ssh to use the config file there, and we need to set this env var so git uses ssh with this file
             git_env = os.environ.copy()
             git_env["GIT_SSH_COMMAND"] = "ssh -F " + ssh_config_path
+            # git config complains if HOME is not set
+            git_env["HOME"] = base_storage_dir
+            git_env["XDG_CONFIG_HOME"] = base_storage_dir
             shell.global_kwargs["_env"] = git_env
 
             # The dockerfile created a symlink to /tmp/.ssh, but in AWS lambda that doesn't exist, so we need to create it.
@@ -192,16 +200,9 @@ class AWSLambdaContext:
             # Need to populate .ssh/known_hosts with remote pub key i.e. ssh-keyscan -t ed25519 github.com >> /tmp/.ssh/known_hosts
             shell.run(base_storage_dir, ssh_keyscan, ["-t", git_alg, git_host], _out=ssh_known_hosts_path)
 
-            # Change the location where git config looks for the config file
-            os.environ["XDG_CONFIG_HOME"] = base_storage_dir
-            os.makedirs(os.path.join(base_storage_dir, "git"), exist_ok=True)
-            # Other options are to set
-            # GIT_CONFIG_GLOBAL to the name of the global config file to use
-            # GIT_CONFIG_SYSTEM to /dev/null to prevent git from reading the system config file (or set GIT_CONFIG_NOSYSTEM to 1)
-
             # Git must know who the user is before it can commit. Configure git user.name and user.email
-            shell.run(self.repodir, git.config, ["--global", "user.name", gitrepo_config.get("git-user-name", git_email)])
-            shell.run(self.repodir, git.config, ["--global", "user.email", gitrepo_config.get("git-user-email", git_email)])
+            shell.run(base_storage_dir, git.config, ["--global", "user.name", "threatware"])
+            shell.run(base_storage_dir, git.config, ["--global", "user.email", "threatware"])
 
         elif remote.startswith("http"):
             logger.info("Using git with anonymous HTTP")

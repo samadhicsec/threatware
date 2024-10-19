@@ -7,6 +7,15 @@ RUN chmod 755 /usr/bin/aws-lambda-rie
 # To upgrade pip for the system we need to run this as root
 RUN python3 -m pip install --no-cache-dir --upgrade pip
 
+# Install aws-lambda-cpp build dependencies for awslambdaric
+RUN apt-get update && \
+  apt-get install -y \
+  g++ \
+  make \
+  cmake \
+  unzip \
+  libcurl4-openssl-dev
+
 # Add user
 RUN useradd --create-home --shell /bin/bash threatuser
 USER threatuser

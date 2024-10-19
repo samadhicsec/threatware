@@ -24,12 +24,12 @@ def location_storage_expression_callback(callback_config, tag_tuple, compare_val
         storage_location_value = callback_config.get("storage_location_value")
         if match.equals(storage_location_value, compare_to_value):
 
-            grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+            #grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
             component_transform = callback_config.get("component-transform", transform.identity)
 
-            if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
+            if match.starts_ends(compare_value, Translate.localise(callback_config.get("output-texts", {}), "start-assets-grouped-by-storage", ignore_format=True), component_transform(compare_to_value)):
                 return True
-            if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
+            if match.equals(compare_value, Translate.localise(callback_config.get("output-texts", {}), "all-assets", ignore_format=True)):
                 return True
             #if match.endswith(compare_value, compare_to_value):
             #    return True
@@ -41,12 +41,12 @@ def component_storage_expression_callback(callback_config, tag_tuple, compare_va
     tag_prefix, tag_data_tag_name, tag_field_tag_name, tag_comparison = tag_tuple
 
     if tag_comparison == "storage-expression":
-        grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
+        #grouped_text = callback_config.get("grouped-text", {}).get("storage-expression")
         component_transform = callback_config.get("component-transform", transform.identity)
 
-        if match.starts_ends(compare_value, Translate.localise(grouped_text, "start-assets-grouped-by-storage", cache_key = "grouped_text"), component_transform(compare_to_value)):
+        if match.starts_ends(compare_value, Translate.localise(callback_config.get("output-texts", {}), "start-assets-grouped-by-storage", ignore_format=True), component_transform(compare_to_value)):
             return True
-        if match.equals(compare_value, Translate.localise(grouped_text, "all-assets", cache_key="asset_text")):
+        if match.equals(compare_value, Translate.localise(callback_config.get("output-texts", {}), "all-assets", ignore_format=True)):
             return True
 
     return False
@@ -99,7 +99,8 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
 
     component_transform = transform.strip(common_config["strip-context"]["start-char"], common_config["strip-context"]["end-char"])
 
-    callback_config = {"grouped-text":common_config["grouped-text"], "component-transform":component_transform}
+    #callback_config = {"grouped-text":common_config["grouped-text"], "component-transform":component_transform}
+    callback_config = {"output-texts":common_config["output-texts"], "component-transform":component_transform}
 
     exclude_callback = lambda callback_config, tag_tuple, compare_value, compare_to_key, compare_to_value: match.contains(compare_value, compare_to_value)
 
@@ -191,7 +192,8 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
                     issue_dict["issue_value"] = row_id_data
                     issue_dict["issue_table"] = threats_and_controls_key.getProperty("section")
                     issue_dict["issue_table_row"] = None    # Disable showing this in the error message
-                    issue_dict["fixdata"] = Translate.localise(common_config["grouped-text"]["storage-expression"], "start-assets-grouped-by-storage")
+                    #issue_dict["fixdata"] = Translate.localise(common_config["grouped-text"]["storage-expression"], "start-assets-grouped-by-storage")
+                    #issue_dict["fixdata"] = common_config["grouped-text"]["storage-expression"]
                     # Need to get some helpful texts relating to the threats and control data
                     # Although we found the issue by looping over asset keys, the problem is in the threats and controls data
                     issue_dict["storage_location"] = storage_location_value
@@ -213,7 +215,12 @@ def assets_verify(common_config:dict, verifier_config:dict, model:dict, template
                     else:
                         fix_text_key = "no-covering-threat-fix"
 
-                    verify_return_list.append(VerifierIssue("no-covering-threat", fix_text_key, issue_dict, ErrorType.NOT_SET))
+                    verify_return_list.append(VerifierIssue(
+                        error_text_key="no-covering-threat", 
+                        fix_text_key=fix_text_key, 
+                        fix_data_key="start-assets-grouped-by-storage",
+                        issue_dict=issue_dict, 
+                        errortype=ErrorType.NOT_SET))
             
                 else:
                     # Store covering threats
@@ -324,6 +331,10 @@ def cov_verify(common_config:dict, verifier_config:dict, model:dict, template_mo
 
                     issue_dict["covering_table"] = covering_section_key.getProperty("section")
                     
-                    verify_return_list.append(VerifierIssue(covered_context_id, covered_context_id + "-fix", issue_dict, ErrorType.NOT_SET))
+                    verify_return_list.append(VerifierIssue(
+                        error_text_key=covered_context_id, 
+                        fix_text_key=covered_context_id + "-fix", 
+                        issue_dict=issue_dict, 
+                        errortype=ErrorType.NOT_SET))
 
     return verify_return_list

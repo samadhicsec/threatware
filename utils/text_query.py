@@ -2,7 +2,8 @@
 
 import logging
 import re
-
+from utils.property_str import pstr
+from utils.match import is_empty
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
 
@@ -22,6 +23,11 @@ def _trim(value):
 def split(text_value, query_cfg):
 
     output = text_value
+
+    # If the output has values, but some are empty, we want to ignore those, this is done by the len(i) > 0 condition in the return
+    # If the input is empty, we want to return a list with a single empty string so we have properties (of the value) to pass to the key e.g. location
+    if is_empty(output):
+        return [pstr("", properties = text_value.properties)]
 
     if splitby := query_cfg.get("split-by"):
     
@@ -44,7 +50,10 @@ def split(text_value, query_cfg):
             
                 output.append(match.group(group))
 
-    return [i for i in _trim(output) if len(i) > 0]
+    #return [i for i in _trim(output) if len(i) > 0]
+    
+    # Maintain the properties of the input pstr in the output
+    return [pstr(i, properties = text_value.properties) for i in _trim(output) if len(i) > 0]
 
 # Returns all values that match.  Returned values are unchanged.
 def match(text_value, query_cfg):
@@ -82,7 +91,7 @@ def replace(input, query_cfg):
     return output
 
 text_dispatch_table = {
-    "text-split":split,
-    "text-match":match,
-    "text-replace":replace,
+    "text-split": split,
+    "text-match": match,
+    "text-replace": replace
 }

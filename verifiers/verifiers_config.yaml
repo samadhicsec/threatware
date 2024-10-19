@@ -87,11 +87,12 @@ verifiers-config:
               template: false
               data-tag: "components-access-control-data"
               value-tag: "threat-component"
-        issue-text-key: conditional-mandatory-exists
-        fix-text-key: conditional-mandatory-exists-fix
+        issue-text-key: conditional-mandatory-authnz
+        fix-text-key: conditional-mandatory-authnz-fix
+        issue-location: if
         issue-table-tag: "components-access-control-data"       # When there's an error, use the table with this tag
         issue-table-row:                                        # When there's an error, leaving this blank means no (row) location is shown
-        issue-key-tag: "threat-component"                       # When there's an error, the 'issue_key' used in templates has this tag
+        issue-table-col-tag: "threat-component"                 # When there's an error, the 'issue_table_col' value used in templates has this tag in teh 'issue_table' table
       # If 'Status' is 'Approved' then 'Approver Name' must not be empty
       - if:
           value-tag: "version-status"
@@ -169,6 +170,21 @@ verifiers-config:
               expected-result: {{ translate.na | safe }}
         issue-text-key: "conditional-authnz-na"
         fix-text-key: "conditional-authnz-na-fix"
+      # If 'Description' is not empty then 'URL' must also be not empty
+      - if:
+          value-tag: "url-description"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
+        then:
+          value-tag: "url"
+          value-condition:
+            validator: "string"
+            config:
+              method: "isnotempty"
+        issue-text-key: "conditional-mandatory-url"
+        issue-location: if
   
   field-validation-uniqueness:                        # verifier to check if a value is unique, according the criteria in it's tag
     unique-tag-prefix: "unique"                       # how to identity tags containing uniqueness criteria

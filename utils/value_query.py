@@ -3,6 +3,7 @@
 import logging
 import re
 import urllib.parse
+from utils.property_str import pstr
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -41,7 +42,7 @@ def extract(input, query_cfg):
         
             output = match.group(group)
 
-    return _trim(output)
+    return pstr(_trim(output), properties = input.properties)
 
 # Returns all values that match.  Returned values are unchanged.
 def match(input, query_cfg):
@@ -78,7 +79,7 @@ def replace(input, query_cfg):
     if match_value := query_cfg.get("match"):
         if replacement_value := query_cfg.get("replacement"):
             if input == match_value:
-                output = replacement_value
+                output = pstr(replacement_value, properties = input.properties)
 
     return output
 
@@ -94,7 +95,7 @@ def url_decode(input, query_cfg):
         logger.error(f"Input was expecting string and got '{type(input)}'")
         return None
 
-    output = urllib.parse.unquote(input)
+    output = pstr(urllib.parse.unquote(input), properties = input.properties)
 
     return output
 

@@ -36,3 +36,4 @@ default:
       - "n.a"
       - "Not Applicable"
     none: "None"
+    in_memory: "In-memory"

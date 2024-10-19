@@ -9,17 +9,12 @@ from pathlib import Path
 from utils.config import ConfigBase
 from utils import load_yaml
 from utils.config import ConfigBase
+from utils.request import Request
 from language.translate import Translate
 import jsonpickle
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
-
-# from jinja2 import Environment, FileSystemLoader, select_autoescape
-# env = Environment(
-#     loader = FileSystemLoader(searchpath="./"),
-#     autoescape=select_autoescape()
-# )
 
 OUTPUT_TEXTS_YAML = "output_texts.yaml"
 OUTPUT_TEXTS_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(OUTPUT_TEXTS_YAML))
@@ -35,17 +30,14 @@ class OutputType(Enum):
 
 class FormatOutput:
 
-    request_parameters:dict
+    #request_parameters:dict
     output_format:str = "json"
     #translator:Translate
+    html_document:str = ""
 
     def __init__(self, output_config:dict):
 
-        #formatoutput_texts = self.translator.localiseYamlFile(OUTPUT_TEXTS_YAML_PATH).get("output-texts")
         formatoutput_texts = load_yaml.yaml_file_to_dict(ConfigBase.getConfigPath(OUTPUT_TEXTS_YAML_PATH)).get("output-texts")
-        # self.information = env.from_string(formatoutput_texts.get("information")).render(self.translator.translations)
-        # self.success = env.from_string(formatoutput_texts.get("success")).render(self.translator.translations)
-        # self.error = env.from_string(formatoutput_texts.get("error")).render(self.translator.translations)
         self.information = Translate.localise(formatoutput_texts, "information")
         self.success = Translate.localise(formatoutput_texts, "success")
         self.error = Translate.localise(formatoutput_texts, "error")
@@ -76,8 +68,7 @@ class FormatOutput:
             output["description"] = self.description
         if self.details is not None:
             output["details"] = self.details
-        if FormatOutput.request_parameters is not None:
-            output["request"] = FormatOutput.request_parameters["request"]
+        output["request"] = Request.get()
 
         return output
 
@@ -88,8 +79,8 @@ class FormatOutput:
             template_values = {}
             
         self.type = OutputType.INFO
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
         
         return
@@ -101,8 +92,8 @@ class FormatOutput:
             template_values = {}
 
         self.type = OutputType.SUCCESS
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
 
         return
@@ -114,8 +105,8 @@ class FormatOutput:
             template_values = {}
 
         self.type = OutputType.ERROR
-        self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
-        #self.description = env.from_string(self.templated_texts.get(text_key, f"Could not find text for key {text_key}")).render(template_values | self.request_parameters | self.translator.translations)
+        #self.description = Translate.localise(self.templated_texts, text_key, template_values | self.request_parameters)
+        self.description = Translate.localise(self.templated_texts, text_key, template_values | {"request": Request.get()})
         self.details = details
 
         return
@@ -149,5 +140,13 @@ class FormatOutput:
 
         if FormatOutput.output_format == "yaml":
             return ("text/yaml", self.toyaml())
+        
+        if FormatOutput.output_format == "html":
+            return ("text/html", self.html_document)
 
         return ("application/json", self.tojson())
+    
+    @classmethod
+    def setDocument(cls, document):
+
+        cls.html_document = document

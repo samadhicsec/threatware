@@ -4,6 +4,7 @@ import logging
 import data.value
 import data.output
 from . import key
+from utils.property_str import pstr
 
 import utils.logging
 logger = logging.getLogger(utils.logging.getLoggerName(__name__))
@@ -35,11 +36,22 @@ def parse(map_data_def, input) -> dict:
         value = data.value.parse(value_def, input)
         
         logger.debug(f"Mapping '{key_def}':'{value}'")
-        output[key_def] = value
+
+        # We have a value to map to the key, but it might not be a simple value, or it might be an already processed value mapping to 
+        # a key up in the hierarchy.  Need to figure out if it's a value with additional information we need to store against the key.
+        if isinstance(value, pstr):
+            for dict_key, dict_value in value.properties.items():
+                key_def.addProperty(dict_key, dict_value)
+            output[key_def] = value.to_str()
+        else:
+            output[key_def] = value
 
         if key_def.getProperty("section") is not None:
             # Let the key reference the value for these high level sections. Makes searching sections e.g. tables, easier given only a tagged key.
-            key_def.addProperty("value", value)
+            if isinstance(value, pstr):
+                key_def.addProperty("value", value.to_str())
+            else:
+                key_def.addProperty("value", value)
 
     logger.debug(f'Leaving: Key count = {len(map_data_def)}, data count = {len(input) if isinstance(input, list) else 1}')
 

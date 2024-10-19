@@ -24,6 +24,7 @@ scheme:
     # This removes all tags (but not their contents) from heading elements.  
     # Since our queries match on heading text, we need to strip any tags in headings
     - selector: "//h1|//h2|//h3|//h4|//h5|//h6"   # Comment out this for 0.9.2 compat
+      strip-elements: "sup"                       # Comment out this for 0.9.2 compat
       strip-tags: "*"                             # Comment out this for 0.9.2 compat
      
     # This removes all <span> tags (but not their contents) from table elements.
@@ -147,7 +148,7 @@ scheme:
                 name: "version-date"
                 tags:
                   - "version-date"
-                  - "validate-as-data"
+                  - "validate-as-date"
               value: 
                 get-data:
                   query:
@@ -264,7 +265,7 @@ scheme:
           get-data:
             query:
               type: html-text-section
-              xpath: "//html/body/h1[text()='Description']/following::p[following::h2[1][text()='References']]/text()"
+              xpath: "//html/body/h1[text()='Description']/following-sibling::*[following::h2[1][text()='References']]"
       - key: 
           name: references
           section: References
@@ -274,18 +275,27 @@ scheme:
               type: html-ul
               xpath: "//html/body/h2[text()='References']/following::ul[following::h1[1][text()='Components']]/li"
           map-data:
-            - key: "description"
+            - key: 
+                name: "description"
+                tags:
+                  - url-description
+                  - row-identifier
               value:
                 get-data:
                   query:
-                    type: html-text
-                    xpath: ".//a/text()"
-            - key: "URL"
+                    type: html-element-text
+                    xpath: "."
+            - key: 
+                name: "URL"
+                tags:
+                  - url
+                  - not-mandatory   # We have a separate if-then validation for URL so the error message is more specific
               value:
                 get-data:
                   - query:
-                      type: html-text
-                      xpath: ".//a/@href"
+                      type: html-element-attribute
+                      attribute-name: "href"
+                      xpath: ".//a"
                   # href in a google doc gets converted to a Google link, so we remove that
                   - query:
                       type: value-extract

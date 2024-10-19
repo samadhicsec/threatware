@@ -66,9 +66,12 @@ def verify(common_config:dict, verifier_config:dict, model:dict, template_model:
             issue_dict["issue_value"] = value_entry
             issue_dict["errordata"] = referenced_data
             issue_dict["fixdata"] = uniq_section_ref
-            verify_return_list.append(VerifierIssue("not-unique",
-                                                    "not-unique-fix", 
-                                                    issue_dict))
+            verify_return_list.append(VerifierIssue(
+                error_text_key="not-unique",
+                error_data_key="not-unique-data",
+                fix_text_key="not-unique-fix", 
+                fix_data_key="not-unique-fix-data",
+                issue_dict=issue_dict))
 
             # Record already found duplicates
             previously_referenced.update([ref[1] for ref in referenced])
