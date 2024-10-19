@@ -8,9 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 ### Changed
+### Fixed
 ### Removed
 
-## [Unreleased]
+## [0.9.5] - 2024-10-19
 
 ### Added
 
@@ -32,8 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Fixed manage.indexdata action so it passes through the correct ID
 - Fixed AWS lambda git setup to allow git config to be called successfully
 - Updated scheme query `html-text-section` from just converting `p` nodes to text, to now outputting a markdown representation of all the nodes passed to it
-
-### Removed
 
 ## [0.9.4] - 2024-08-28
 
