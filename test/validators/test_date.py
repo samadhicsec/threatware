@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import pytest
-import validators.date
-from data.key import key as Key
+import threatware.validators.date
+from threatware.data.key import key as Key
 
 def test_valid_date():
 

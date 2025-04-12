@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import pytest
-from schemes.schemes import load_scheme
-from utils.load_yaml import yaml_file_to_dict
+from threatware.schemes.schemes import load_scheme
+from threatware.utils.load_yaml import yaml_file_to_dict
 
 @pytest.mark.parametrize("scheme, expected_result", [
     ("", "{}"),

@@ -2,8 +2,8 @@
 
 import pytest
 from pathlib import Path
-from validators.validators import Validator
-from data.key import key as Key
+from threatware.validators.validators import Validator
+from threatware.data.key import key as Key
 
 def _get_validator():
     validator_config = {"validator-dispatch-yaml-path":str(Path(__file__).absolute().parent.joinpath("validators.yaml")),

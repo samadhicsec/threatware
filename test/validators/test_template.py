@@ -1,6 +1,6 @@
 import pytest
-import validators.template
-from data.key import key as Key
+import threatware.validators.template
+from threatware.data.key import key as Key
 
 def test_valid_template():
 

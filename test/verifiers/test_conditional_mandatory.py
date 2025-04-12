@@ -2,7 +2,7 @@
 
 import pytest
 from ruamel.yaml import YAML
-from verifiers import field_validation_conditional_mandatory
+from threatware.verifiers import field_validation_conditional_mandatory
 
 def get_field_validation_conditional_mandatory_config():
 

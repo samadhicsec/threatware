@@ -2,7 +2,7 @@
 
 import pytest
 from ruamel.yaml import YAML
-from verifiers import field_validation_value
+from threatware.verifiers import field_validation_value
 from pprint import pprint
 
 def get_value_config():

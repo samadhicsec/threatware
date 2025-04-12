@@ -2,7 +2,7 @@
 
 import pytest
 from ruamel.yaml import YAML
-from verifiers import coverage_validation
+from threatware.verifiers import coverage_validation
 
 def get_coverage_validation_config():
 

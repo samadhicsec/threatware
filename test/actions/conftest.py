@@ -3,9 +3,9 @@
 import pytest
 from pathlib import Path
 from ruamel.yaml import YAML
-import data.key
-import utils.load_yaml
-from verifiers.verifiers import Verifiers
+import threatware.data.key
+import threatware.utils.load_yaml
+from threatware.verifiers.verifiers import Verifiers
 
 # Turn a normal dict with strings for keys, into a dict with data.key.key for keys
 def getKeycopy(sourcedict, destdict):

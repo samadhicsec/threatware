@@ -3,7 +3,7 @@
 import pytest
 import json
 
-import actions.verify as verify
+import threatware.actions.verify as verify
 
 def test_verify(example_threat_model):
 

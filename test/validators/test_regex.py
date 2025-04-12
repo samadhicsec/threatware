@@ -1,6 +1,6 @@
 import pytest
-import validators.regex
-from data.key import key as Key
+import threatware.validators.regex
+from threatware.data.key import key as Key
 
 def test_valid_regex():
 

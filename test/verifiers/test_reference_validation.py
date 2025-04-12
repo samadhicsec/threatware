@@ -2,7 +2,7 @@
 
 import pytest
 from ruamel.yaml import YAML
-from verifiers import reference_validation
+from threatware.verifiers import reference_validation
 from pprint import pprint
 
 def get_ref_val_config():
