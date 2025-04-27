@@ -8,7 +8,6 @@ from threatware.utils.config import ConfigBase
 from threatware.utils.output import FormatOutput
 from threatware.utils.load_yaml import yaml_file_to_dict
 from threatware.data.key import key as Key
-from threatware.language.translate import Translate
 from threatware.utils.request import Request
 from threatware.response.response_config import ResponseConfig
 from threatware.response.html_response import get_html_response

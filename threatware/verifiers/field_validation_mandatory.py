@@ -5,7 +5,6 @@ Verifies that all keys tagged as mandatory have a non-empty value
 
 from threatware.data import find
 import logging
-from threatware.verifiers.verifier_error import ErrorType
 from threatware.verifiers.verifier_error import VerifierIssue
 from threatware.utils import match
 from threatware.utils.model import recurse

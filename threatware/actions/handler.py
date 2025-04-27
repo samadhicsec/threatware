@@ -9,7 +9,6 @@ import argparse
 import configparser
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
-from threatware.storage.gitrepo import GitStorage
 from threatware.utils.error import ThreatwareError
 from threatware.utils.request import Request
 from threatware.utils.config import ConfigBase
@@ -24,9 +23,8 @@ import threatware.actions.manage as manage
 import threatware.actions.measure as measure
 from threatware.utils.output import FormatOutput, OutputType
 from threatware.response.response import Response
-from threatware.data.key import key as Key
 
-utils.logging.configureLogging()
+threatware.utils.logging.configureLogging()
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
 HANDLER_TEXTS_YAML = "handler_texts.yaml"

@@ -5,7 +5,6 @@ Verifies that all keys tagged as unique have a value that is unique
 
 from threatware.data import find
 import logging
-from threatware.data.key import key as Key
 import threatware.utils.keymaster as keymaster
 import threatware.utils.match as match
 import threatware.verifiers.reference as reference

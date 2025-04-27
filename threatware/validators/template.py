@@ -4,7 +4,6 @@ Validates whether a value matches a value from the template
 """
 
 import logging
-from pathlib import Path
 import threatware.data.find as find
 import threatware.utils.match as match
 from threatware.data.key import key as Key

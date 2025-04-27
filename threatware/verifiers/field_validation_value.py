@@ -8,7 +8,6 @@ import logging
 from threatware.verifiers.verifier_error import ErrorType
 from threatware.verifiers.verifier_error import VerifierIssue
 from threatware.validators.validators import Validator
-from threatware.validators.validator_output import ValidatorOutput
 from threatware.utils import match
 
 import threatware.utils.logging

@@ -23,7 +23,7 @@ class ManageOutput:
 
         template_text_file = config.get("template-text-file")
 
-        self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
+        self.templated_texts = threatware.utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
 
     def _getOutput(self, result, description, details = None):
 

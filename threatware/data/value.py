@@ -51,7 +51,7 @@ def parse(value_def, input):
 
                 # Map an item of the data list
                 # If map-data:value exists it will call back into this method with the list item as input
-                output_dict = data.map.parse(map_data_def, list_item)
+                output_dict = threatware.data.map.parse(map_data_def, list_item)
                 
                 logger.debug(f"Mapped data {output_dict}")
                 output_list.append(output_dict)
@@ -60,7 +60,7 @@ def parse(value_def, input):
         else:
             
             # Map the data
-            output_dict = data.map.parse(map_data_def, data_value)
+            output_dict = threatware.data.map.parse(map_data_def, data_value)
 
             logger.debug(f"Mapped data {output_dict}")
             
@@ -73,7 +73,7 @@ def parse(value_def, input):
     #
 
     output_data_def = value_def.get("output-data", {})
-    output = data.output.process(output_data_def, output)
+    output = threatware.data.output.process(output_data_def, output)
 
     logger.debug(f'Leaving: value_def = {value_def.keys()}')
 

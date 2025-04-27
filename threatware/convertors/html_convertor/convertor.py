@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-from threatware.data.data_config import threatware.dataConfig
+from threatware.data.data_config import DataConfig
 import threatware.data.value
 import threatware.convertors.html_convertor.query as query
 
@@ -16,7 +16,7 @@ def doc_to_model(config:dict, document:dict, mapping:dict):
         
         DataConfig.init(config.get("data", {}))
 
-        tm = data.value.parse(mapping['map'], document)
+        tm = threatware.data.value.parse(mapping['map'], document)
 
     except BaseException as err:
         logger.error(f"Unexpected err='{err}', type='{type(err)}'")

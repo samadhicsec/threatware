@@ -8,8 +8,6 @@ Measure the distance between two threat models
 
 import logging
 from pickle import FALSE
-import threatware.data
-import threatware.measure.measure_config as manage_config
 from threatware.measure.measure_output import MeasureOutput
 from threatware.measure.measure_output import Measurement
 from threatware.data import find

@@ -1,5 +1,5 @@
 ---
 providers:
-  api: providers.api
-  cli: providers.cli
-  aws.lambda: providers.aws_lambda
+  api: threatware.providers.api
+  cli: threatware.providers.cli
+  aws.lambda: threatware.providers.aws_lambda

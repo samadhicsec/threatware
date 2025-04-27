@@ -2,7 +2,6 @@
 
 import logging
 import threatware.data.value
-import threatware.data.output
 from . import key
 from threatware.utils.property_str import pstr
 

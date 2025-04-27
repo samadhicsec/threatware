@@ -6,7 +6,6 @@ Abstracts away the execution provider e.g. local, AWS, GCP
 import logging
 from pathlib import Path
 from threatware.utils.config import ConfigBase
-import threatware.utils.match as match
 import threatware.utils.load_modules as load_modules
 from threatware.utils.load_yaml import yaml_file_to_dict
 

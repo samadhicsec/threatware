@@ -6,7 +6,7 @@ Converts a Threat Model document into a model
 import logging
 from threatware.utils.error import ConvertError, ProviderError
 from threatware.utils.output import FormatOutput
-from convertors import convertors_config
+from threatware.convertors import convertors_config
 import threatware.convertors.confluence_convertor.convertor
 import threatware.convertors.gdoc_convertor.convertor
 from threatware.utils.output import FormatOutput
@@ -32,9 +32,9 @@ def convert(config:dict, execution_env, scheme:dict, doc_location:str, store_doc
 
     try: 
         if scheme['document-storage'] == "confluence":
-            model = convertors.confluence_convertor.convertor.convert(config, execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location}, store_doc)
+            model = threatware.convertors.confluence_convertor.convertor.convert(config, execution_env.getConfluenceConnectionCredentials(), scheme, {"id":doc_location}, store_doc)
         elif scheme['document-storage'] == "googledoc":
-            model = convertors.gdoc_convertor.convertor.convert(config, execution_env.getGoogleCredentials(), scheme, {"id":doc_location}, store_doc)
+            model = threatware.convertors.gdoc_convertor.convertor.convert(config, execution_env.getGoogleCredentials(), scheme, {"id":doc_location}, store_doc)
         else:
             logger.error(f"Unknown document storage type '{scheme['document-storage']}'")
             raise ConvertError("unknown-doc-storage", {"doc_storage":scheme['document-storage']})

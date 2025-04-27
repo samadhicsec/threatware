@@ -12,19 +12,19 @@ def _process_query(query_def, input):
 
     query_type = query_def.get("type")
 
-    if query_type in convertors.html_convertor.query.html_dispatch_table:
+    if query_type in threatware.convertors.html_convertor.query.html_dispatch_table:
         # Get document content
-        content = convertors.html_convertor.query.html_dispatch_table[query_type](input, query_def)
+        content = threatware.convertors.html_convertor.query.html_dispatch_table[query_type](input, query_def)
         return content
 
-    if query_type in utils.text_query.text_dispatch_table:
+    if query_type in threatware.utils.text_query.text_dispatch_table:
         # Get document content
-        content = utils.text_query.text_dispatch_table[query_type](input, query_def)
+        content = threatware.utils.text_query.text_dispatch_table[query_type](input, query_def)
         return content
     
-    if query_type in utils.value_query.value_dispatch_table:
+    if query_type in threatware.utils.value_query.value_dispatch_table:
         # Get document content
-        content = utils.value_query.value_dispatch_table[query_type](input, query_def)
+        content = threatware.utils.value_query.value_dispatch_table[query_type](input, query_def)
         return content
 
     logger.error(f"Could not process query of type '{query_type}'")

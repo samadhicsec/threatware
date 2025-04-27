@@ -4,8 +4,7 @@ Class MeasureOutput
 """
 
 import logging
-import threatware.utils.load_yaml
-from threatware.utils.load_yaml import yaml_register_class
+from threatware.utils.load_yaml import yaml_register_class, yaml_file_to_dict
 from threatware.utils.output import FormatOutput
 import jsonpickle
 
@@ -26,7 +25,7 @@ class Measurement:
 
         template_text_file = config.get("output").get("template-text-file")
 
-        self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
+        self.templated_texts = yaml_file_to_dict(template_text_file).get("output-texts")
         self.config = config
         self.this_model_title = this_model_title
         self.this_model_version = this_model_version
@@ -116,7 +115,7 @@ class MeasureOutput(FormatOutput):
 
         #template_text_file = output_config.get("template-text-file")
 
-        #self.templated_texts = utils.load_yaml.yaml_file_to_dict(template_text_file).get("output-texts")
+        #self.templated_texts = yaml_file_to_dict(template_text_file).get("output-texts")
 
         self.measures = []
 

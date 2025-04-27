@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
-from threatware.data.data_config import threatware.dataConfig
+from threatware.data.data_config import DataConfig
 from threatware.data.key import key as Key
 from threatware.language.translate import Translate
 import threatware.utils.match as match

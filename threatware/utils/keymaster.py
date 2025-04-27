@@ -5,7 +5,6 @@ Utility methods for data.key.Key
 
 import logging
 import re
-from threatware.data import find
 from threatware.data.key import key as Key
 
 import threatware.utils.logging
