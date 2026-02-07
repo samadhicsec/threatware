@@ -15,15 +15,21 @@ from threatware.response.response import Response
 import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
-def convert(config:dict, connection:dict, mapping:dict, doc_identifers:dict, store_doc:bool):
+def convert(config:dict, connection:dict, mapping:dict, store_doc:bool):
 
-    # Establish connection to document location
-    doc_store = reader.connect(connection)
+    if Request.isLocationIDProvided():
+        # Establish connection to document location
+        doc_store = reader.connect(connection)
 
-    # TODO Check the document exists
-    
-    # Read the document into a string
-    document = reader.read(doc_store, doc_identifers.get('id', ''))
+        # TODO Check the document exists
+        
+        # Read the document into a string
+        document = reader.read(doc_store, Request.getLocationID())
+    elif Request.isDocumentProvided():
+        document = Request.getDocument()
+    else:
+        logger.error("No document or document location ID provided")
+        raise Exception("No document or document location ID provided")
 
     # Store the string
     if store_doc:
