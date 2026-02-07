@@ -11,12 +11,13 @@ from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 from threatware.utils.error import ThreatwareError
 from threatware.utils.request import Request
+from threatware.utils.location import Location
 from threatware.utils.config import ConfigBase
 from threatware.utils.output import FormatOutput
 import threatware.utils.logging
 from threatware.providers import provider
 from threatware.language.translate import Translate
-from threatware.schemes.schemes import load_scheme
+from threatware.schemes.schemes import load_scheme, get_default_scheme, get_default_template
 import threatware.actions.convert as convert
 import threatware.actions.verify as verify
 import threatware.actions.manage as manage
@@ -80,9 +81,10 @@ def lambda_handler(event, context):
     
 
         # Validate input
-        if Request.format == "html":
+
+        if response.getFormat() == "html":      # The Response object will get the appropriate format to validate, as it may be a parameter or from config
             if Request.action not in [ACTION_VERIFY]:
-                Request.format = "json"
+                Request.format = "json"     # Future Response objects will use this new value for format
                 logger.warning(f"'html' format is only supported for the 'verify' action, defaulting format to 'json'")
             if Request.reports != "none":
                 Request.reports = "none"
@@ -96,18 +98,22 @@ def lambda_handler(event, context):
             logger.error(f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}")
             handler_output.setError("action-value", {"actions":[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]})
             response = Response(handler_output)
-        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.scheme is None:
-            logger.error("scheme is a mandatory parameter")
-            handler_output.setError("scheme-is-mandatory", {})
+        # elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.scheme is None:
+        #     logger.error("scheme is a mandatory parameter")
+        #     handler_output.setError("scheme-is-mandatory", {})
+        #     response = Response(handler_output)
+        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY] and Request.document is None and Request.docloc is None:
+            logger.error("Either document or docloc is a mandatory parameter")
+            handler_output.setError("document-or-docloc-mandatory", {})
             response = Response(handler_output)
-        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None:
+        elif Request.action in [ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None:
             logger.error("docloc is a mandatory parameter")
             handler_output.setError("docloc-is-mandatory", {})
             response = Response(handler_output)
-        elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
-            logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
-            handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
-            response = Response(handler_output)
+        # elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
+        #     logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
+        #     handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
+        #     response = Response(handler_output)
         elif Request.action in [ACTION_MANAGE_INDEXDATA] and id is None:
             logger.error(f"ID is a mandatory parameter when action = {Request.action}")
             handler_output.setError("id-is-mandatory", {"action":Request.action})
@@ -128,15 +134,20 @@ def lambda_handler(event, context):
                 # We are being called as a lambda, so get credentials from cloud
                 execution_env = provider.get_provider("aws.lambda")
 
+            if Request.scheme is None:
+                Request.scheme = get_default_scheme()
             if Request.scheme is not None:
                 schemeDict = load_scheme(Request.scheme)
+            
+            if Request.action in [ACTION_VERIFY, ACTION_MEASURE] and Request.doctemplate is None:
+                Request.doctemplate = get_default_template(schemeDict)
 
             if Request.action == ACTION_CONVERT:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                convert_output = convert.convert(convert_config, execution_env, Location(Request.docloc, Request.document), schemeDict)
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -156,7 +167,7 @@ def lambda_handler(event, context):
                 convert_config = convert.config()
                 
                 # Convert the TM template
-                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Request.doctemplate)
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Location(Request.doctemplate, Request.template))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -164,7 +175,7 @@ def lambda_handler(event, context):
                     template_model = convert_output.getDetails()
 
                     # Convert the TM document
-                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc, Request.document))
                     response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                     if convert_output.getResult() != OutputType.ERROR:
@@ -199,7 +210,7 @@ def lambda_handler(event, context):
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -217,7 +228,7 @@ def lambda_handler(event, context):
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -238,7 +249,7 @@ def lambda_handler(event, context):
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -256,7 +267,7 @@ def lambda_handler(event, context):
                 convert_config = convert.config()
 
                 # Convert the TM template
-                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Request.doctemplate)
+                convert_output = convert.convert_template(convert_config, execution_env, schemeDict, Location(Request.doctemplate))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -264,7 +275,7 @@ def lambda_handler(event, context):
                     template_model = convert_output.getDetails()
 
                     # Convert the TM document
-                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Request.docloc)
+                    convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc))
                     response = Response(convert_output)     # In case convert failed
 
                     if convert_output.getResult() != OutputType.ERROR:
@@ -288,9 +299,7 @@ def lambda_handler(event, context):
     # Respond
     return {
         'statusCode': 200,
-        "headers": {
-            "Content-Type": f"{response.getContentType()}"
-        },
+        "headers": response.getHeaders(),
         'body': response.getBody()
     }
 
@@ -317,9 +326,10 @@ def getVersion(prog):
 
 def main():
 
-    scheme_help = 'Identifier for the threat model scheme (which contains location information)'
-    doc_help = 'Location identifier of the document'
-    template_help = 'Identifier for the document template (overrides template in scheme)'
+    scheme_help = 'Identifier for the threat model scheme (which contains location information).  If not provided, the first entry in config schemes/schemes.yaml will be used as the default scheme.'
+    docloc_help = 'Location identifier of the document'
+    document_help = 'Base64 encoded document.  If no value is provided, the document will be read from stdin.'
+    template_help = 'Identifier for the document template (overrides template in scheme).  If not provided, the template defined in the scheme will be used.'
     reports_help = "Additional reports can be returned with more information.\n'assets' will show the controls covering each asset per (in-scope) storage location.\n'controls' will show which assets each control covers per (in-scope) storage location"
 
     parser = argparse.ArgumentParser(prog='threatware', description='Threatware is a tool to help review threat models and provide a process to manage threat models.  It works directly with threat models as Confluence/Google Docs documents.  For detailed help on deployment, configuration and customisation, see https://threatware.readthedocs.io')
@@ -327,21 +337,24 @@ def main():
     version_str = f"{parser.prog} v{getVersion(parser.prog)}"
     parser.add_argument("-v", "--version", action="version", version=version_str)
     parser.add_argument("-l", "--lang", required=False, help="Language code for output texts")
-    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON or YAML", default="json", choices=['json', 'yaml', 'html'])
+    parser.add_argument("-f", "--format", required=False, help="Format for output, either JSON, YAML or HTML (verify only)", choices=['json', 'yaml', 'html'])
 
     subparsers = parser.add_subparsers(dest="action", required=True)
 
     # convert
     parser_convert = subparsers.add_parser("convert", help='Convert a threat model for analysis')
-    parser_convert.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_convert.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    docloc_group = parser_convert.add_mutually_exclusive_group(required=True)
+    docloc_group.add_argument('-d', '--docloc', help=docloc_help)
+    docloc_group.add_argument('-i', '--document', nargs='?', const='STDIN', help=document_help)
+    #parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
     parser_convert.add_argument("-m", "--meta", required=False, help="What level of meta data about fields should be returned.  Note, 'properties' returns 'tags' as well.", default="tags", choices=['none', 'tags', 'properties'])
 
     # verify
     parser_verify = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval', formatter_class=argparse.RawTextHelpFormatter)
-    parser_verify.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_verify.add_argument('-d', '--docloc', required=True, help=doc_help)
-    parser_verify.add_argument('-t', '--doctemplate', required=True, help=template_help)
+    parser_verify.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    parser_verify.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    parser_verify.add_argument('-t', '--doctemplate', required=False, help=template_help)
     parser_verify.add_argument("-r", "--reports", required=False, help=reports_help, default='none', choices=['none', 'assets', 'controls', 'all'])
 
     # manage
@@ -353,22 +366,22 @@ def main():
     # manage.createdata
     parser_manage_create = manage_subparsers.add_parser("create", help='Create a new document ID for a new threat model')
     parser_manage_create.add_argument('-idprefix', required=True, help='The prefix of the document ID e.g. "CMP.TMD"')
-    parser_manage_create.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_manage_create.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_manage_create.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    parser_manage_create.add_argument('-d', '--docloc', required=True, help=docloc_help)
     # manage.check
     parser_manage_check = manage_subparsers.add_parser("check", help='Check whether the current threat model requires re-approval')
-    parser_manage_check.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_manage_check.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_manage_check.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    parser_manage_check.add_argument('-d', '--docloc', required=True, help=docloc_help)
     # manage.submit
     parser_manage_submit = manage_subparsers.add_parser("submit", help='Submit a threat model for approval')
-    parser_manage_submit.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_manage_submit.add_argument('-d', '--docloc', required=True, help=doc_help)
+    parser_manage_submit.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    parser_manage_submit.add_argument('-d', '--docloc', required=True, help=docloc_help)
     
     # measure
     parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its template')
-    parser_measure.add_argument('-s', '--scheme', required=True, help=scheme_help)
-    parser_measure.add_argument('-d', '--docloc', required=True, help=doc_help)
-    parser_measure.add_argument('-t', '--doctemplate', required=True, help=template_help)
+    parser_measure.add_argument('-s', '--scheme', required=False, help=scheme_help)
+    parser_measure.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    parser_measure.add_argument('-t', '--doctemplate', required=False, help=template_help)
 
     args = parser.parse_args()
 
@@ -393,6 +406,12 @@ def main():
     event["queryStringParameters"]["action"] = action
     event["queryStringParameters"]["scheme"] = args.scheme if "scheme" in args else None
     event["queryStringParameters"]["docloc"] = args.docloc if "docloc" in args else None
+    if (args.document is None or args.document == 'STDIN') and not sys.stdin.isatty():
+        # Read document from stdin
+        document_b64 = sys.stdin.read()
+        event["queryStringParameters"]["document"] = document_b64
+    else:
+        event["queryStringParameters"]["document"] = args.document if "document" in args else None
     event["queryStringParameters"]["meta"] = args.meta if "meta" in args else None
     event["queryStringParameters"]["doctemplate"] = args.doctemplate if "doctemplate" in args else None
     event["queryStringParameters"]["ID"] = args.id if "id" in args else None
