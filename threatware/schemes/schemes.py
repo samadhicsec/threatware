@@ -5,6 +5,7 @@ Loads a scheme file
 
 import logging
 from pathlib import Path
+from tempfile import template
 from threatware.utils.config import ConfigBase
 from threatware.utils.error import SchemeError
 from threatware.utils.load_yaml import yaml_file_to_dict
@@ -14,6 +15,17 @@ logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
 SCHEMES_YAML = "schemes.yaml"
 SCHEMES_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(SCHEMES_YAML))
+
+def get_default_scheme():
+    yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(SCHEMES_YAML_PATH)) 
+    maps = yaml_dict["schemes"]
+    if len(maps) == 0:
+        logger.error("No schemes defined in schemes.yaml")
+        raise SchemeError("scheme.no-schemes-defined", {})
+    
+    default_scheme = list(maps.keys())[0]
+    logger.info(f"Using default scheme '{default_scheme}'")
+    return default_scheme
 
 def load_scheme(template_scheme):
 
@@ -30,6 +42,20 @@ def load_scheme(template_scheme):
     yaml_dict = yaml_file_to_dict(ConfigBase.getConfigPath(modelmap_file))
     return yaml_dict["scheme"]
 
+def get_default_template(schemeDict:dict) -> str:
+    template = schemeDict.get("default-doctemplate", None)
+    if template is None:
+        logger.info("No default template defined in scheme")
+        #raise SchemeError("scheme.no-default-template", {})
+    
+    return template
+
+def get_document_storage(scheme:dict) -> str:
+    if scheme['document-storage'] is None:
+        logger.error("No 'document-storage' defined in scheme")
+        raise SchemeError("scheme.no-document-storage", {})
+    
+    return scheme['document-storage']
 
 # TODO write a validation routine for schemes.  
 # For tags:
