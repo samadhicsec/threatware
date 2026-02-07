@@ -351,6 +351,7 @@ def main():
     scheme_help = 'Identifier for the threat model scheme (which contains location information).  If not provided, the first entry in config schemes/schemes.yaml will be used as the default scheme.'
     docloc_help = 'Location identifier of the document'
     document_help = 'Base64 encoded document.  If no value is provided, the document will be read from stdin.'
+    docID_help = 'Document ID.  If provided without docloc or document, the handler will attempt to look up the document location using the manage.indexdata action.'
     template_help = 'Identifier for the document template (overrides template in scheme).  If not provided, the template defined in the scheme will be used.'
     reports_help = "Additional reports can be returned with more information.\n'assets' will show the controls covering each asset per (in-scope) storage location.\n'controls' will show which assets each control covers per (in-scope) storage location"
 
@@ -369,13 +370,16 @@ def main():
     docloc_group = parser_convert.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
     docloc_group.add_argument('-i', '--document', nargs='?', const='STDIN', help=document_help)
+    docloc_group.add_argument('-id', '--docID', help=docID_help)
     #parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
     parser_convert.add_argument("-m", "--meta", required=False, help="What level of meta data about fields should be returned.  Note, 'properties' returns 'tags' as well.", default="tags", choices=['none', 'tags', 'properties'])
 
     # verify
     parser_verify = subparsers.add_parser("verify", help='Verify a threat model is ready to be submitted for approval', formatter_class=argparse.RawTextHelpFormatter)
     parser_verify.add_argument('-s', '--scheme', required=False, help=scheme_help)
-    parser_verify.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    docloc_group = parser_verify.add_mutually_exclusive_group(required=True)
+    docloc_group.add_argument('-d', '--docloc', help=docloc_help)
+    docloc_group.add_argument('-id', '--docID', help=docID_help)
     parser_verify.add_argument('-t', '--doctemplate', required=False, help=template_help)
     parser_verify.add_argument("-r", "--reports", required=False, help=reports_help, default='none', choices=['none', 'assets', 'controls', 'all'])
 
@@ -393,16 +397,22 @@ def main():
     # manage.check
     parser_manage_check = manage_subparsers.add_parser("check", help='Check whether the current threat model requires re-approval')
     parser_manage_check.add_argument('-s', '--scheme', required=False, help=scheme_help)
-    parser_manage_check.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    docloc_group = parser_manage_check.add_mutually_exclusive_group(required=True)
+    docloc_group.add_argument('-d', '--docloc', help=docloc_help)
+    docloc_group.add_argument('-id', '--docID', help=docID_help)
     # manage.submit
     parser_manage_submit = manage_subparsers.add_parser("submit", help='Submit a threat model for approval')
     parser_manage_submit.add_argument('-s', '--scheme', required=False, help=scheme_help)
-    parser_manage_submit.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    docloc_group = parser_manage_submit.add_mutually_exclusive_group(required=True)
+    docloc_group.add_argument('-d', '--docloc', help=docloc_help)
+    docloc_group.add_argument('-id', '--docID', help=docID_help)
     
     # measure
     parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its template')
     parser_measure.add_argument('-s', '--scheme', required=False, help=scheme_help)
-    parser_measure.add_argument('-d', '--docloc', required=True, help=docloc_help)
+    docloc_group = parser_measure.add_mutually_exclusive_group(required=True)
+    docloc_group.add_argument('-d', '--docloc', help=docloc_help)
+    docloc_group.add_argument('-id', '--docID', help=docID_help)
     parser_measure.add_argument('-t', '--doctemplate', required=False, help=template_help)
 
     args = parser.parse_args()

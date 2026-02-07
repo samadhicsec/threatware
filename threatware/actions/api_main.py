@@ -50,25 +50,25 @@ def version():
     return getVersion('threatware')
 
 @app.get("/convert/")
-def convert(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def convert(scheme: str = None, docloc: str = None, ID: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "convert"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, ID=ID, meta=meta)
 
 @app.post("/convert/")
-def convert(scheme: str, document: str, lang: str = None, format: str = None, meta: str = None):
+def convert(document: str, scheme: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "convert"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, meta=meta)
 
 @app.get("/verify/")
-def verify(scheme: str, docloc: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
+def verify(scheme: str, docloc: str = None, ID: str = None, doctemplate: str = None, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, reports=reports, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, ID=ID, doctemplate=doctemplate, reports=reports, meta=meta)
 
 @app.post("/verify/")
-def verify(scheme: str, document: str, doctemplate: str, template: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
+def verify(scheme: str, document: str, doctemplate: str = None, template: str = None, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, doctemplate=doctemplate, template=template, reports=reports, meta=meta)
@@ -80,29 +80,29 @@ def manage_indexdata(ID: str, lang: str = None, format: str = None, meta: str = 
     return apicall(lang=lang, format=format, action=action, ID=ID, meta=meta)
 
 @app.get("/manage/create")
-def manage_create(IDprefix: str, scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_create(IDprefix: str, docloc: str, scheme: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "manage.create"
 
     return apicall(lang=lang, format=format, action=action, IDprefix=IDprefix, scheme=scheme, docloc=docloc, meta=meta)
 
 @app.get("/manage/check")
-def manage_check(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_check(scheme: str = None, docloc: str = None, ID: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "manage.check"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, ID=ID, meta=meta)
 
 @app.get("/manage/submit")
-def manage_submit(scheme: str, docloc: str, lang: str = None, format: str = None, meta: str = None):
+def manage_submit(scheme: str = None, docloc: str = None, ID: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "manage.submit"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, ID=ID, meta=meta)
 
 @app.get("/measure/")
-def measure(scheme: str, docloc: str, doctemplate: str, lang: str = None, format: str = None, meta: str = None):
+def measure(scheme: str = None, docloc: str = None, ID: str = None, doctemplate: str = None, lang: str = None, format: str = None, meta: str = None):
     action = "measure"
 
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, meta=meta)
-
+    
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
