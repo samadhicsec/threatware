@@ -64,13 +64,13 @@ def convert(scheme: str, document: str, lang: str = None, format: str = None, me
 def verify(scheme: str, docloc: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, reports=reports, meta=meta)
 
 @app.post("/verify/")
 def verify(scheme: str, document: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, doctemplate=doctemplate, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, doctemplate=doctemplate, reports=reports, meta=meta)
 
 @app.get("/manage/indexdata")
 def manage_indexdata(ID: str, lang: str = None, format: str = None, meta: str = None):
