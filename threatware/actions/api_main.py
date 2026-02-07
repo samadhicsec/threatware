@@ -4,7 +4,7 @@ from fastapi import FastAPI, Response
 
 app = FastAPI()
 
-def apicall(lang: str = None, format: str = None, action: str = None, scheme: str = None, docloc: str = None, document: str = None, meta: str = None, doctemplate: str = None, ID: str = None, IDprefix: str = None, reports: str = None):
+def apicall(lang: str = None, format: str = None, action: str = None, scheme: str = None, docloc: str = None, document: str = None, meta: str = None, doctemplate: str = None, template: str = None, ID: str = None, IDprefix: str = None, reports: str = None):
 
     # This default is now specified in response/response_config.yaml
     #if format not in ['json', 'yaml', 'html']:
@@ -34,6 +34,7 @@ def apicall(lang: str = None, format: str = None, action: str = None, scheme: st
     event["queryStringParameters"]["document"] = document
     event["queryStringParameters"]["meta"] = meta
     event["queryStringParameters"]["doctemplate"] = doctemplate
+    event["queryStringParameters"]["template"] = template
     event["queryStringParameters"]["ID"] = ID
     event["queryStringParameters"]["IDprefix"] = IDprefix
     event["queryStringParameters"]["reports"] = reports
@@ -67,10 +68,10 @@ def verify(scheme: str, docloc: str, doctemplate: str, reports:str = None, lang:
     return apicall(lang=lang, format=format, action=action, scheme=scheme, docloc=docloc, doctemplate=doctemplate, reports=reports, meta=meta)
 
 @app.post("/verify/")
-def verify(scheme: str, document: str, doctemplate: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
+def verify(scheme: str, document: str, doctemplate: str, template: str, reports:str = None, lang: str = None, format: str = None, meta: str = None):
     action = "verify"
 
-    return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, doctemplate=doctemplate, reports=reports, meta=meta)
+    return apicall(lang=lang, format=format, action=action, scheme=scheme, document=document, doctemplate=doctemplate, template=template, reports=reports, meta=meta)
 
 @app.get("/manage/indexdata")
 def manage_indexdata(ID: str, lang: str = None, format: str = None, meta: str = None):
