@@ -15,6 +15,9 @@ class ThreatwareError(Exception):
 class SchemeError(ThreatwareError):
     pass
 
+class HandlerError(ThreatwareError):
+    pass
+
 class ConvertError(ThreatwareError):
     pass
 

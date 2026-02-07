@@ -9,7 +9,7 @@ import argparse
 import configparser
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
-from threatware.utils.error import ThreatwareError
+from threatware.utils.error import ThreatwareError, HandlerError
 from threatware.utils.request import Request
 from threatware.utils.location import Location
 from threatware.utils.config import ConfigBase
@@ -134,6 +134,28 @@ def lambda_handler(event, context):
                 # We are being called as a lambda, so get credentials from cloud
                 execution_env = provider.get_provider("aws.lambda")
 
+            # If an ID is passed in try to use manage.indexdata to get a docloc and a scheme (if these are not already provided)
+            if Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CHECK, ACTION_MANAGE_SUBMIT, ACTION_MEASURE] and Request.ID is not None:
+                if Request.docloc is None and Request.document is None:
+                    logger.info(f"ID provided without document or document location, attempting to get document location from ID using manage.indexdata")
+                    # Get the document location from the ID
+                    manage_config = manage.config()
+                    output = manage.indexdata(manage_config, execution_env, Request.ID)
+                    if output.getResult() == OutputType.SUCCESS:
+                        doc_index_data = output.getDetails()
+                        Request.docloc = doc_index_data.get("location", None)
+                        logger.info(f"Got document location '{Request.docloc}' from ID '{Request.ID}' using manage.indexdata")
+                        # Maybe get the scheme from the index data as well, if not already provided
+                        if Request.scheme is None:
+                            Request.scheme = doc_index_data.get("scheme", None)
+                            logger.info(f"scheme not provided, so using scheme '{Request.scheme}' from manage.indexdata result")
+                    else:
+                        logger.error(f"ID '{Request.ID}' was passed in but manage.indexdata was not able to find a document location for it")
+                        logger.error(output.getDescription())
+                        raise HandlerError("id-not-found", {"id":Request.ID})
+
+
+            # These must be checked after we potentially make update to Request parameters if only the ID is passed in.
             if Request.scheme is None:
                 Request.scheme = get_default_scheme()
             if Request.scheme is not None:

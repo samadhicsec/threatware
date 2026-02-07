@@ -6,6 +6,7 @@ output-texts:
     scheme-is-mandatory: "scheme is a mandatory parameter"
     docloc-is-mandatory: "docloc is a mandatory parameter"
     document-or-docloc-mandatory: "Either document or docloc is a mandatory parameter when action = {{ action }}"
+    id-not-found: "No record of a document with ID '{{ id }}' could be found, make sure it exists.  See logs for more details of the error."
     doctemplate-is-mandatory: "doctemplate is a mandatory parameter when action = {{ action }}"
     id-is-mandatory: "ID is a mandatory parameter when action = {{ action }}"
     idprefix-is-mandatory: "IDprefix is a mandatory parameter when action = {{ action }}"
