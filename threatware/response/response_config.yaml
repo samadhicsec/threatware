@@ -1,5 +1,18 @@
 ---
 response-config:
+  format:
+    default: json
+    verify: html
+  http:
+    headers:
+      default:
+        Access-Control-Allow-Headers: "Content-Type"
+      create:
+        Access-Control-Allow-Origin: "*"  
+        Access-Control-Allow-Methods: "GET, POST, OPTIONS"
+      verify:
+        Access-Control-Allow-Origin: "*"  
+        Access-Control-Allow-Methods: "GET, POST, OPTIONS"
   output:
     template-text-file: response/response_texts.yaml
   html:
