@@ -5,12 +5,51 @@ Loads output format confgiuration
 
 import logging
 from pathlib import Path
+from threatware.data import value
 from threatware.utils.config import ConfigBase
 import re
 from threatware.language.translate import Translate
+from threatware.utils.request import Request
 
 import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
+
+def _get_default_or_action_override(config:dict, key:str):
+
+    if key is None:
+        config_local = config
+    else:
+        config_local = config.get(key, {})
+
+    # Get the default value (if it exists)
+    default_value = config_local.get("default", None)
+    # Get the action specific override (if it exists)
+    override_value = config_local.get(Request.action, None)
+
+    # If the default value is None, then just return the action specific override (which may also be None)
+    if default_value is None:
+        return override_value
+    
+    # Otherwise combine the default value and the action specific override (if it exists)
+    return_value = default_value
+    if isinstance(default_value, str):
+        # Check if there is an action specific override
+        if override_value is not None:
+            return override_value
+        return return_value
+    elif isinstance(default_value, list):
+        if override_value is None:
+            override_value = []
+        return_value.append(override_value)
+        return list(set(return_value))  # Remove duplicates
+    elif isinstance(default_value, dict):
+        if override_value is None:
+            override_value = {}
+        return return_value | override_value  # Combine the dictionaries, with the action specific override taking precedence
+    else:
+        logger.error(f"The response config for key '{key}' is of an unsupported type")
+        
+    return None
 
 class HTMLInject:
 
@@ -65,6 +104,24 @@ class HTMLConfig:
         self.bannerConfig = BannerConfig(html_config.get("banner", {}))
         self.findingsConfig = FindingsConfig(html_config.get("findings", {}))
 
+class FormatConfig:
+
+    def __init__(self, format_config:dict):
+
+        self.formatConfig = format_config
+
+    def get(self):
+        return _get_default_or_action_override(self.formatConfig, None)
+
+class HTTPConfig:
+
+    def __init__(self, http_config:dict):
+
+        self.httpConfig = http_config
+
+    def getHeaders(self):
+        return _get_default_or_action_override(self.httpConfig, "headers")
+
 RESPONSE_CONFIG_YAML = "response_config.yaml"
     
 RESPONSE_CONFIG_YAML_PATH = str(Path(__file__).absolute().parent.joinpath(RESPONSE_CONFIG_YAML))
@@ -81,4 +138,6 @@ class ResponseConfig:
 
         self.htmlConfig = HTMLConfig(response_config.get("html", {}))
         self.template_text_file = response_config.get("output").get("template-text-file")
+        self.format = FormatConfig(response_config.get("format", {}))
+        self.http = HTTPConfig(response_config.get("http", {}))
         

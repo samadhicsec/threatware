@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import os
-from pathlib import Path
-import os.path
 import logging
+from threatware.utils.location import Location
 import threatware.convertors.gdoc_convertor.reader as reader
 import threatware.convertors.html_convertor.query as query
 from threatware.convertors.html_convertor.convertor import doc_to_model
@@ -15,18 +13,18 @@ from threatware.response.response import Response
 import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
-def convert(config:dict, connection:dict, mapping:dict, store_doc:bool):
+def convert(config:dict, connection:dict, mapping:dict, location:Location, store_doc:bool):
 
-    if Request.isLocationIDProvided():
+    if location.isDocumentProvided():
+        document = location.getDocument()
+    elif location.isLocationIDProvided():
         # Establish connection to document location
         doc_store = reader.connect(connection)
 
         # TODO Check the document exists
         
         # Read the document into a string
-        document = reader.read(doc_store, Request.getLocationID())
-    elif Request.isDocumentProvided():
-        document = Request.getDocument()
+        document = reader.read(doc_store, location.getLocationID())
     else:
         logger.error("No document or document location ID provided")
         raise Exception("No document or document location ID provided")

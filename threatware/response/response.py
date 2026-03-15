@@ -28,7 +28,7 @@ class Response:
         self.templated_texts = yaml_file_to_dict(ConfigBase.getConfigPath(self.response_config.template_text_file)).get("output-texts")
 
         if Request.format is None:
-            self.format = self._get_default_or_action_override(self.response_config, "format")
+            self.format = self.response_config.format.get()
         else:
             self.format = Request.format
         if self.format is None:
@@ -43,28 +43,6 @@ class Response:
 
     def getFormat(self):
         return self.format
-
-    def _get_default_or_action_override(self, config:dict, key:str):
-
-        value = config.get(key, {}).get("default", None)
-        if not value:
-            return None
-        
-        if isinstance(value, str):
-            # Check if there is an action specific override
-            if (override := config.get(key, {}).get(Request.action, None)) is not None:
-                return override
-            return value
-        elif isinstance(value, list):
-            value.append(config.get(key, []))
-            return list(set(value))
-        elif isinstance(value, dict):
-            override = config.get(key, {})
-            return value | override
-        else:
-            logger.error(f"The response config for key '{key}' is of an unsupported type")
-            
-        return None
     
     def getContentType(self):
 
@@ -77,8 +55,8 @@ class Response:
 
     def getHeaders(self):
     
-        headers = self._get_default_or_action_override(self.response_config.get("http", {}), "headers")
-        if headers is None:
+        headers = self.response_config.http.getHeaders()
+        if headers is None or not isinstance(headers, dict):
             headers = {}
         headers = headers | { "Content-Type": self.getContentType() }
         

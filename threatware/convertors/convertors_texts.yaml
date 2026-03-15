@@ -1,7 +1,7 @@
 ---
 output-texts:
   default:
-    success: "Successfully converted document '{{ request.docloc }}' using scheme '{{ request.scheme }}'"
+    success: "Successfully converted document{% if request.docloc is not none %} '{{ request.docloc }}'{% endif %} using scheme '{{ request.scheme }}'"
     unknown-doc-storage: "Unknown document storage type '{{ doc_storage }}' in scheme '{{ request.scheme }}'"
     no-template-doc: "No template document provided.  There was no 'doctemplate' nor 'template' request parameter provided and no 'default-doctemplate' defined in the '{{ request.scheme }}' scheme configuration file."
     not-found: "Could not find document with ID '{{ ID }}' using URL '{{ url }}'"

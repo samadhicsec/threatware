@@ -2,7 +2,7 @@
 manage-config:
   storage:
     gitrepo:
-      # The git remote value of the repo to interact with e.g. "git@github.com:samadhicsec/threat-models.git"
+      # The git remote value of the repo to interact with e.g. "git@github.com:samadhicsec/threat-models.git", "file:///home/user/threatmodels"
       remote: 
       # The branch containing approved versions of data.  threatware will use this value to ensure it never commits directly to this branch.
       default-branch: "approved"
@@ -25,7 +25,7 @@ manage-config:
     draft-status: {{ translate.draft }}
     # The localised value to compare to in the 'Status' column of the 'Version History' Table to determine if a threat model is approved
     approved-status: {{ translate.approved }}
-    # Whether or not to write a plain (i.e. human-readable) version of the threat model to repo when maange.submit is called to commit the threat model to the repo
+    # Whether or not to write a plain (i.e. human-readable) version of the threat model to repo when manage.submit is called to commit the threat model to the repo
     write-plain-model: True
   check:
     # Number of days until an approved threat model is no longer considered approved

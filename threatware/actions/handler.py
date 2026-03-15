@@ -102,13 +102,13 @@ def lambda_handler(event, context):
         #     logger.error("scheme is a mandatory parameter")
         #     handler_output.setError("scheme-is-mandatory", {})
         #     response = Response(handler_output)
-        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY] and Request.document is None and Request.docloc is None:
-            logger.error("Either document or docloc is a mandatory parameter")
-            handler_output.setError("document-or-docloc-mandatory", {})
+        elif Request.action in [ACTION_CONVERT, ACTION_VERIFY] and Request.document is None and Request.docloc is None and Request.ID is None:
+            logger.error("Either document or docloc or id is a mandatory parameter")
+            handler_output.setError("document-location-mandatory", {})
             response = Response(handler_output)
-        elif Request.action in [ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None:
-            logger.error("docloc is a mandatory parameter")
-            handler_output.setError("docloc-is-mandatory", {})
+        elif Request.action in [ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None and Request.ID is None:
+            logger.error("docloc or id is a mandatory parameter")
+            handler_output.setError("document-ID-is-mandatory", {})
             response = Response(handler_output)
         # elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
         #     logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
@@ -145,7 +145,7 @@ def lambda_handler(event, context):
                         doc_index_data = output.getDetails()
                         Request.docloc = doc_index_data.get("location", None)
                         logger.info(f"Got document location '{Request.docloc}' from ID '{Request.ID}' using manage.indexdata")
-                        # Maybe get the scheme from the index data as well, if not already provided
+                        # Get the scheme from the index data as well, if not already provided
                         if Request.scheme is None:
                             Request.scheme = doc_index_data.get("scheme", None)
                             logger.info(f"scheme not provided, so using scheme '{Request.scheme}' from manage.indexdata result")
@@ -164,12 +164,18 @@ def lambda_handler(event, context):
             if Request.action in [ACTION_VERIFY, ACTION_MEASURE] and Request.doctemplate is None:
                 Request.doctemplate = get_default_template(schemeDict)
 
+            #############################
+            # After this point there should be no more updates to the values of the shared Request class.
+            #############################
+            # Re-init Translate so it has the latest values from Request
+            Translate.init()
+
             if Request.action == ACTION_CONVERT:
                 
                 convert_config = convert.config()
 
                 # Convert the TM document
-                convert_output = convert.convert(convert_config, execution_env, Location(Request.docloc, Request.document), schemeDict)
+                convert_output = convert.convert(convert_config, execution_env, schemeDict, Location(Request.docloc, Request.document))
                 response = Response(convert_output, force_api_format=True)     # In case convert failed
 
                 if convert_output.getResult() != OutputType.ERROR:
@@ -370,7 +376,7 @@ def main():
     docloc_group = parser_convert.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
     docloc_group.add_argument('-i', '--document', nargs='?', const='STDIN', help=document_help)
-    docloc_group.add_argument('-id', '--docID', help=docID_help)
+    docloc_group.add_argument('-id', help=docID_help)
     #parser_convert.add_argument('-d', '--docloc', required=True, help=doc_help)
     parser_convert.add_argument("-m", "--meta", required=False, help="What level of meta data about fields should be returned.  Note, 'properties' returns 'tags' as well.", default="tags", choices=['none', 'tags', 'properties'])
 
@@ -379,7 +385,8 @@ def main():
     parser_verify.add_argument('-s', '--scheme', required=False, help=scheme_help)
     docloc_group = parser_verify.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
-    docloc_group.add_argument('-id', '--docID', help=docID_help)
+    docloc_group.add_argument('-i', '--document', nargs='?', const='STDIN', help=document_help)
+    docloc_group.add_argument('-id', help=docID_help)
     parser_verify.add_argument('-t', '--doctemplate', required=False, help=template_help)
     parser_verify.add_argument("-r", "--reports", required=False, help=reports_help, default='none', choices=['none', 'assets', 'controls', 'all'])
 
@@ -399,20 +406,20 @@ def main():
     parser_manage_check.add_argument('-s', '--scheme', required=False, help=scheme_help)
     docloc_group = parser_manage_check.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
-    docloc_group.add_argument('-id', '--docID', help=docID_help)
+    docloc_group.add_argument('-id', help=docID_help)
     # manage.submit
     parser_manage_submit = manage_subparsers.add_parser("submit", help='Submit a threat model for approval')
     parser_manage_submit.add_argument('-s', '--scheme', required=False, help=scheme_help)
     docloc_group = parser_manage_submit.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
-    docloc_group.add_argument('-id', '--docID', help=docID_help)
+    docloc_group.add_argument('-id', help=docID_help)
     
     # measure
     parser_measure = subparsers.add_parser("measure", help='Measure the distance of a TM from its template')
     parser_measure.add_argument('-s', '--scheme', required=False, help=scheme_help)
     docloc_group = parser_measure.add_mutually_exclusive_group(required=True)
     docloc_group.add_argument('-d', '--docloc', help=docloc_help)
-    docloc_group.add_argument('-id', '--docID', help=docID_help)
+    docloc_group.add_argument('-id', help=docID_help)
     parser_measure.add_argument('-t', '--doctemplate', required=False, help=template_help)
 
     args = parser.parse_args()
@@ -438,7 +445,7 @@ def main():
     event["queryStringParameters"]["action"] = action
     event["queryStringParameters"]["scheme"] = args.scheme if "scheme" in args else None
     event["queryStringParameters"]["docloc"] = args.docloc if "docloc" in args else None
-    if (args.document is None or args.document == 'STDIN') and not sys.stdin.isatty():
+    if (hasattr(args, "document") is False or args.document is None or args.document == 'STDIN') and not sys.stdin.isatty():
         # Read document from stdin
         document_b64 = sys.stdin.read()
         event["queryStringParameters"]["document"] = document_b64
