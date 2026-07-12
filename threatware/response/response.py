@@ -24,17 +24,25 @@ class Response:
 
     def __init__(self, output:FormatOutput, meta_override:str = None, force_api_format:bool = False):
 
-        self.format = Request.format
+        self.response_config = ResponseConfig()
+        self.templated_texts = yaml_file_to_dict(ConfigBase.getConfigPath(self.response_config.template_text_file)).get("output-texts")
+
+        if Request.format is None:
+            self.format = self.response_config.format.get()
+        else:
+            self.format = Request.format
+        if self.format is None:
+            self.format = "json"    # Let's default to json if nothing specified
         if force_api_format:
             # We likely have an error situation and don't want to try and return html
             if self.format != "json" or self.format != "yaml":
                 self.format = "json"
+
         self.output = output
         self.meta_override = meta_override
 
-        self.response_config = ResponseConfig()
-        self.templated_texts = yaml_file_to_dict(ConfigBase.getConfigPath(self.response_config.template_text_file)).get("output-texts")
-
+    def getFormat(self):
+        return self.format
     
     def getContentType(self):
 
@@ -44,6 +52,15 @@ class Response:
             return "text/html"
         
         return "application/json"
+
+    def getHeaders(self):
+    
+        headers = self.response_config.http.getHeaders()
+        if headers is None or not isinstance(headers, dict):
+            headers = {}
+        headers = headers | { "Content-Type": self.getContentType() }
+        
+        return headers
 
     def getBody(self):
 

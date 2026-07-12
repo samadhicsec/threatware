@@ -97,6 +97,10 @@ class FormatOutput:
         self.details = details
 
         return
+    
+    def wasSuccess(self) -> bool:
+        """ Returns True if the output type is SUCCESS """
+        return self.type == OutputType.SUCCESS
 
     def setError(self, text_key:str, template_values:dict, details = None):
         """ Returns a localised Error output message """
