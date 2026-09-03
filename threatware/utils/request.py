@@ -31,7 +31,7 @@ class Request:
         cls.ID = request_parameters.get("ID", None)
         cls.IDprefix = request_parameters.get("IDprefix", None)
         cls.lang = request_parameters.get("lang", None)
-        cls.format = request_parameters.get("format", "json")
+        cls.format = request_parameters.get("format", None)
         cls.meta = request_parameters.get("meta", "tags")
         cls.reports = request_parameters.get("reports", "none")
 
