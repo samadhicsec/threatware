@@ -16,10 +16,10 @@ RUN apt-get update && \
   unzip \
   libcurl4-openssl-dev
 
-# Add user
-RUN useradd --create-home --shell /bin/bash threatuser
-USER threatuser
-WORKDIR /home/threatuser
+# Lambda runs containers as a non-root sandbox user itself; declaring a USER here
+# causes Runtime.InvalidEntrypoint/ProcessSpawnFailed, so run the build as root.
+RUN mkdir -p /threatware
+WORKDIR /threatware
 
 # Install the dependencies
 COPY requirements.txt requirements.txt
@@ -29,8 +29,8 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt --target .
 RUN python3 -m pip install --no-cache-dir --target . awslambdaric
 
 # Copy code
-COPY --chown=threatuser . .
+COPY . .
 RUN chmod 755 entry.sh
 
-ENTRYPOINT [ "/home/threatuser/entry.sh" ]
-CMD [ "actions.handler.lambda_handler" ]
+ENTRYPOINT [ "/threatware/entry.sh" ]
+CMD [ "threatware.actions.handler.lambda_handler" ]
