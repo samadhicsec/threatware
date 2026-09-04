@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         # Validate input
         if Request.format is None:
             Request.format = response.getFormat()     # If no format is passed in via the Request use the value from Response configuration
-            
+
         if response.getFormat() == "html":      # The Response object will get the appropriate format to validate, as it may be a parameter or from config
             if Request.action not in [ACTION_VERIFY]:
                 Request.format = "json"     # Future Response objects will use this new value for format
@@ -95,11 +95,11 @@ def lambda_handler(event, context):
         if Request.action is None:
             logger.error("action is a mandatory parameter")
             handler_output.setError("action-is-mandatory", {})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
         elif Request.action not in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]:
             logger.error(f"the action parameter must be one of {[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]}")
             handler_output.setError("action-value", {"actions":[ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_INDEXDATA, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE]})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
         # elif Request.action in [ACTION_CONVERT, ACTION_VERIFY, ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.scheme is None:
         #     logger.error("scheme is a mandatory parameter")
         #     handler_output.setError("scheme-is-mandatory", {})
@@ -107,11 +107,11 @@ def lambda_handler(event, context):
         elif Request.action in [ACTION_CONVERT, ACTION_VERIFY] and Request.document is None and Request.docloc is None and Request.ID is None:
             logger.error("Either document or docloc or id is a mandatory parameter")
             handler_output.setError("document-location-mandatory", {})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
         elif Request.action in [ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None and Request.ID is None:
             logger.error("docloc or id is a mandatory parameter")
             handler_output.setError("document-ID-is-mandatory", {})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
         # elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
         #     logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
         #     handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
@@ -119,11 +119,11 @@ def lambda_handler(event, context):
         elif Request.action in [ACTION_MANAGE_INDEXDATA] and id is None:
             logger.error(f"ID is a mandatory parameter when action = {Request.action}")
             handler_output.setError("id-is-mandatory", {"action":Request.action})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
         elif Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
             logger.error(f"IDprefix is a mandatory parameter when action = {Request.action}")
             handler_output.setError("idprefix-is-mandatory", {"action":Request.action})
-            response = Response(handler_output)
+            response = Response(handler_output, force_api_format=True)
 
         else:
             # Load the execution environment again, as this time we have configuration files to enable full functionality
