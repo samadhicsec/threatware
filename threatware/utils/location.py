@@ -1,8 +1,7 @@
 import logging
-import threatware.utils.logging
 import base64
 
-threatware.utils.logging.configureLogging()
+import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
 class Location:

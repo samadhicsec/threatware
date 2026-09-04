@@ -1,7 +1,7 @@
 import logging
-import threatware.utils.logging
 
-threatware.utils.logging.configureLogging()
+
+import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
 class Request:

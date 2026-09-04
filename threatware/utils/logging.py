@@ -13,6 +13,9 @@ def configureLogging():
 
     # create logger
     logger = logging.getLogger(LOGGERNAME)
+
+    if logger.handlers:          # already configured, don't add another handler
+        return
     
     #log_level = logging.DEBUG
     log_level = logging.WARNING
