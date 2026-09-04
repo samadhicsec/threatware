@@ -81,7 +81,9 @@ def lambda_handler(event, context):
     
 
         # Validate input
-
+        if Request.format is None:
+            Request.format = response.getFormat()     # If no format is passed in via the Request use the value from Response configuration
+            
         if response.getFormat() == "html":      # The Response object will get the appropriate format to validate, as it may be a parameter or from config
             if Request.action not in [ACTION_VERIFY]:
                 Request.format = "json"     # Future Response objects will use this new value for format
