@@ -8,6 +8,7 @@ import sys
 import argparse
 import configparser
 from pathlib import Path
+from urllib.parse import parse_qs
 from importlib.metadata import version, PackageNotFoundError
 from threatware.utils.error import ThreatwareError, HandlerError
 from threatware.utils.request import Request
@@ -41,10 +42,17 @@ ACTION_MEASURE = 'measure'
 
 def lambda_handler(event, context):
 
-    # Fitler the set of query string parameters to just ones we know about
+    request_parameters = {}
     if (qsp := event.get("queryStringParameters", {})) is None:
         qsp = {}
-    Request.set(qsp)
+    body_params = {}
+    if (body := event.get("body", "")) is not None:
+        # form-urlencoded body -> flatten single values
+        body_params = {k: v[0] for k, v in parse_qs(body).items()}
+    # Merge parameters, if any
+    request_parameters = {**qsp, **body_params}
+    # Filter the set of query string parameters to just ones we know about
+    Request.set(request_parameters)
 
     # Very first thing we need to do is find where all the configuration files are, and if they are not already present, download them.
     # How we do that depends what env we are in.  Providers usually take a config file, but we don't have them yet, so load without config (which limits what methods we can use)
