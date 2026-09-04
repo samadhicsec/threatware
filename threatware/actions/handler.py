@@ -106,11 +106,11 @@ def lambda_handler(event, context):
         #     response = Response(handler_output)
         elif Request.action in [ACTION_CONVERT, ACTION_VERIFY] and Request.document is None and Request.docloc is None and Request.ID is None:
             logger.error("Either document or docloc or id is a mandatory parameter")
-            handler_output.setError("document-location-mandatory", {})
+            handler_output.setError("document-location-mandatory", {"action":Request.action})
             response = Response(handler_output, force_api_format=True)
         elif Request.action in [ACTION_MANAGE_CREATE, ACTION_MANAGE_SUBMIT, ACTION_MANAGE_CHECK, ACTION_MEASURE] and Request.docloc is None and Request.ID is None:
             logger.error("docloc or id is a mandatory parameter")
-            handler_output.setError("document-ID-is-mandatory", {})
+            handler_output.setError("document-ID-is-mandatory", {"action":Request.action})
             response = Response(handler_output, force_api_format=True)
         # elif Request.action in [ACTION_VERIFY, ACTION_MEASURE] and  Request.doctemplate is None:
         #     logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
