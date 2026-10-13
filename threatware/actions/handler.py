@@ -124,7 +124,7 @@ def lambda_handler(event, context):
         #     logger.error(f"doctemplate is a mandatory parameter when action = {Request.action}")
         #     handler_output.setError("doctemplate-is-mandatory", {"action":Request.action})
         #     response = Response(handler_output)
-        elif Request.action in [ACTION_MANAGE_INDEXDATA] and id is None:
+        elif Request.action in [ACTION_MANAGE_INDEXDATA] and Request.ID is None:
             logger.error(f"ID is a mandatory parameter when action = {Request.action}")
             handler_output.setError("id-is-mandatory", {"action":Request.action})
             response = Response(handler_output, force_api_format=True)
