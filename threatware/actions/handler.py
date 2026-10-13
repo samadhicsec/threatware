@@ -15,7 +15,7 @@ from threatware.utils.request import Request
 from threatware.utils.location import Location
 from threatware.utils.config import ConfigBase
 from threatware.utils.output import FormatOutput
-from threatware.utils.match import match
+import threatware.utils.match as match
 import threatware.utils.logging
 from threatware.providers import provider
 from threatware.language.translate import Translate
