@@ -15,6 +15,7 @@ from threatware.utils.request import Request
 from threatware.utils.location import Location
 from threatware.utils.config import ConfigBase
 from threatware.utils.output import FormatOutput
+from threatware.utils.match import match
 import threatware.utils.logging
 from threatware.providers import provider
 from threatware.language.translate import Translate
@@ -128,10 +129,10 @@ def lambda_handler(event, context):
             logger.error(f"ID is a mandatory parameter when action = {Request.action}")
             handler_output.setError("id-is-mandatory", {"action":Request.action})
             response = Response(handler_output, force_api_format=True)
-        elif Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
-            logger.error(f"IDprefix is a mandatory parameter when action = {Request.action}")
-            handler_output.setError("idprefix-is-mandatory", {"action":Request.action})
-            response = Response(handler_output, force_api_format=True)
+        # elif Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
+        #     logger.error(f"IDprefix is a mandatory parameter when action = {Request.action}")
+        #     handler_output.setError("idprefix-is-mandatory", {"action":Request.action})
+        #     response = Response(handler_output, force_api_format=True)
 
         else:
             # Load the execution environment again, as this time we have configuration files to enable full functionality
@@ -164,6 +165,15 @@ def lambda_handler(event, context):
                         logger.error(output.getDescription())
                         raise HandlerError("id-not-found", {"id":Request.ID})
 
+            if Request.action in [ACTION_MANAGE_CREATE] and Request.IDprefix is None:
+                # Get the default ID prefix from the configuration file
+                manage_config = manage.config()
+                manage_create_config = manage.getCreateConfig(manage_config)
+                default_IDprefix = manage_create_config.getDefaultIDPrefix()
+                if match.is_empty(default_IDprefix):
+                    logger.error(f"IDprefix is a mandatory parameter when action = {Request.action} and no default ID prefix is specified in the configuration file")
+                    raise HandlerError("idprefix-is-mandatory", {"action":Request.action})
+                Request.IDprefix = default_IDprefix
 
             # These must be checked after we potentially make update to Request parameters if only the ID is passed in.
             if Request.scheme is None:
@@ -178,7 +188,7 @@ def lambda_handler(event, context):
             # After this point there should be no more updates to the values of the shared Request class.
             #############################
             logger.info(f"Threatware finalised parameters = '{ Request.get() }'")
-            
+
             # Re-init Translate so it has the latest values from Request
             Translate.init()
 

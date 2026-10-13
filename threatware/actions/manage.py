@@ -15,6 +15,7 @@ from threatware.storage.gitrepo import GitStorage
 from threatware.manage import manage_config
 from threatware.manage.metadata import IndexMetaData, ThreatModelMetaData
 from threatware.manage.metadata import MetadataIndexEntry, ThreatModelVersionMetaData
+from threatware.manage.manage_create import CreateConfig
 from threatware.manage.manage_storage import IndexStorage
 from threatware.manage.manage_storage import ThreatModelStorage
 
@@ -25,6 +26,10 @@ logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 def config():
 
     return manage_config.config()
+
+def getCreateConfig(config:dict):
+
+    return CreateConfig(config)
 
 def _output(config:dict):
 

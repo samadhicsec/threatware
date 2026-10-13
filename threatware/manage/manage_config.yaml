@@ -30,5 +30,8 @@ manage-config:
   check:
     # Number of days until an approved threat model is no longer considered approved
     approval-expiry-days: 365
+  create:
+    # The default ID prefix to use if none is specified.  If the default is not specified, the ID prefix must be specified in the request parameters.
+    default-IDprefix: ""
   output:
     template-text-file: "manage/manage_texts.yaml"
