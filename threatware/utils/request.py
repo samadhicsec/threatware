@@ -1,6 +1,5 @@
 import logging
 
-
 import threatware.utils.logging
 logger = logging.getLogger(threatware.utils.logging.getLoggerName(__name__))
 
@@ -29,6 +28,8 @@ class Request:
         cls.doctemplate = request_parameters.get("doctemplate", None)
         cls.template = request_parameters.get("template", None)
         cls.ID = request_parameters.get("ID", None)
+        if cls.ID is None:
+            cls.ID = request_parameters.get("id", None)     # Allows for lowercase variant for requests via HTTP query string as CLI parameter is lowercase so the case to use is confusing
         cls.IDprefix = request_parameters.get("IDprefix", None)
         cls.lang = request_parameters.get("lang", None)
         cls.format = request_parameters.get("format", None)
