@@ -3,7 +3,6 @@
 Verifies that all keys tagged with references actually reference something
 """
 import logging
-from sre_parse import fix_flags
 from threatware.utils import tags
 from threatware.data.key import key as Key
 from threatware.data import find
