@@ -177,6 +177,8 @@ def lambda_handler(event, context):
             #############################
             # After this point there should be no more updates to the values of the shared Request class.
             #############################
+            logger.info(f"Threatware finalised parameters = '{ Request.get() }'")
+            
             # Re-init Translate so it has the latest values from Request
             Translate.init()
 
